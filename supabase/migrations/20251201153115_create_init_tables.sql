@@ -1,4 +1,4 @@
--- supabase gen types typescript --local > lib/database.types.ts
+-- supabase gen types typescript --local > supabase/types/database.types.ts
 
 -- Enums
 CREATE TYPE pet_type AS ENUM ('dog', 'cat', 'other');
@@ -13,7 +13,6 @@ CREATE TYPE user_role AS ENUM ('customer', 'admin');
 CREATE TABLE profiles (
     id uuid PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
     full_name text,
-    phone text,
     role user_role NOT NULL DEFAULT 'customer',
     created_at timestamptz DEFAULT now() NOT NULL,
     updated_at timestamptz DEFAULT now() NOT NULL
@@ -130,6 +129,25 @@ CREATE TRIGGER set_updated_at_order_items
     BEFORE UPDATE ON order_items
     FOR EACH ROW EXECUTE FUNCTION set_updated_at();
 
+-- Function to handle new user creation
+CREATE OR REPLACE FUNCTION public.handle_new_user()
+RETURNS TRIGGER AS $$
+BEGIN
+  INSERT INTO public.profiles (id, full_name, role)
+  VALUES (
+    new.id,
+    new.raw_user_meta_data->>'full_name',
+    COALESCE((new.raw_user_meta_data->>'role')::public.user_role, 'customer'::public.user_role)
+  );
+  RETURN new;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = public;
+
+-- Trigger to call the function on new user creation
+CREATE OR REPLACE TRIGGER on_auth_user_created
+  AFTER INSERT ON auth.users
+  FOR EACH ROW EXECUTE FUNCTION public.handle_new_user();
+
 -- Indexes
 CREATE INDEX idx_grooming_bookings_customer_scheduled ON grooming_bookings(customer_id, scheduled_at);
 CREATE INDEX idx_pets_owner_id ON pets(owner_id);
@@ -171,6 +189,9 @@ CREATE POLICY "Owners can delete own pets" ON pets
 -- Grooming Bookings
 CREATE POLICY "Customers can view own bookings" ON grooming_bookings
     FOR SELECT USING (auth.uid() = customer_id);
+
+CREATE POLICY "Customers can create own bookings" ON grooming_bookings
+    FOR INSERT WITH CHECK (auth.uid() = customer_id);
 
 -- Orders
 CREATE POLICY "Customers can view own orders" ON orders
