@@ -222,7 +222,26 @@ CREATE INDEX idx_facility_bookings_time_range ON facility_bookings USING gist (
 );
 
 -- ----------------------------------------------------------------------------
--- 6. ENABLE ROW LEVEL SECURITY (RLS)
+-- 6. CREATE SECURITY DEFINER FUNCTION TO CHECK ADMIN STATUS
+-- ----------------------------------------------------------------------------
+-- This function runs with elevated privileges and bypasses RLS,
+-- preventing infinite recursion when checking admin status in policies.
+
+CREATE OR REPLACE FUNCTION is_admin(user_id uuid)
+RETURNS boolean
+LANGUAGE sql
+SECURITY DEFINER
+SET search_path = public
+STABLE
+AS $$
+  SELECT EXISTS (
+    SELECT 1 FROM profiles
+    WHERE id = user_id AND role = 'admin'
+  );
+$$;
+
+-- ----------------------------------------------------------------------------
+-- 7. ENABLE ROW LEVEL SECURITY (RLS)
 -- ----------------------------------------------------------------------------
 
 ALTER TABLE profiles ENABLE ROW LEVEL SECURITY;
@@ -233,7 +252,7 @@ ALTER TABLE facilities ENABLE ROW LEVEL SECURITY;
 ALTER TABLE facility_bookings ENABLE ROW LEVEL SECURITY;
 
 -- ----------------------------------------------------------------------------
--- 7. CREATE RLS POLICIES
+-- 8. CREATE RLS POLICIES
 -- ----------------------------------------------------------------------------
 
 -- ============================================================================
@@ -255,15 +274,10 @@ CREATE POLICY "Users can insert own profile"
   ON profiles FOR INSERT
   WITH CHECK (auth.uid() = id);
 
--- Admins can view all profiles
+-- Admins can view all profiles (using security definer function to avoid recursion)
 CREATE POLICY "Admins can view all profiles"
   ON profiles FOR SELECT
-  USING (
-    EXISTS (
-      SELECT 1 FROM profiles
-      WHERE id = auth.uid() AND role = 'admin'
-    )
-  );
+  USING (is_admin(auth.uid()));
 
 -- ============================================================================
 -- COURSES POLICIES
@@ -279,34 +293,19 @@ CREATE POLICY "Authenticated users can view courses"
 CREATE POLICY "Admins can insert courses"
   ON courses FOR INSERT
   TO authenticated
-  WITH CHECK (
-    EXISTS (
-      SELECT 1 FROM profiles
-      WHERE id = auth.uid() AND role = 'admin'
-    )
-  );
+  WITH CHECK (is_admin(auth.uid()));
 
 -- Admins can update courses
 CREATE POLICY "Admins can update courses"
   ON courses FOR UPDATE
   TO authenticated
-  USING (
-    EXISTS (
-      SELECT 1 FROM profiles
-      WHERE id = auth.uid() AND role = 'admin'
-    )
-  );
+  USING (is_admin(auth.uid()));
 
 -- Admins can delete courses
 CREATE POLICY "Admins can delete courses"
   ON courses FOR DELETE
   TO authenticated
-  USING (
-    EXISTS (
-      SELECT 1 FROM profiles
-      WHERE id = auth.uid() AND role = 'admin'
-    )
-  );
+  USING (is_admin(auth.uid()));
 
 -- ============================================================================
 -- COURSE SECTIONS POLICIES
@@ -322,49 +321,31 @@ CREATE POLICY "Authenticated users can view course sections"
 CREATE POLICY "Admins can insert course sections"
   ON course_sections FOR INSERT
   TO authenticated
-  WITH CHECK (
-    EXISTS (
-      SELECT 1 FROM profiles
-      WHERE id = auth.uid() AND role = 'admin'
-    )
-  );
+  WITH CHECK (is_admin(auth.uid()));
 
 -- Admins can update course sections
 CREATE POLICY "Admins can update course sections"
   ON course_sections FOR UPDATE
   TO authenticated
-  USING (
-    EXISTS (
-      SELECT 1 FROM profiles
-      WHERE id = auth.uid() AND role = 'admin'
-    )
-  );
+  USING (is_admin(auth.uid()));
 
 -- Admins can delete course sections
 CREATE POLICY "Admins can delete course sections"
   ON course_sections FOR DELETE
   TO authenticated
-  USING (
-    EXISTS (
-      SELECT 1 FROM profiles
-      WHERE id = auth.uid() AND role = 'admin'
-    )
-  );
+  USING (is_admin(auth.uid()));
 
 -- ============================================================================
 -- STUDENT REGISTRATIONS POLICIES
 -- ============================================================================
 
--- Students can view their own registrations
+-- Students can view their own registrations or admins can view all
 CREATE POLICY "Students can view own registrations"
   ON student_registrations FOR SELECT
   TO authenticated
   USING (
     student_id = auth.uid() OR
-    EXISTS (
-      SELECT 1 FROM profiles
-      WHERE id = auth.uid() AND role = 'admin'
-    )
+    is_admin(auth.uid())
   );
 
 -- Students can insert their own registrations
@@ -389,12 +370,7 @@ CREATE POLICY "Students can update own registrations"
 CREATE POLICY "Admins can update any registration"
   ON student_registrations FOR UPDATE
   TO authenticated
-  USING (
-    EXISTS (
-      SELECT 1 FROM profiles
-      WHERE id = auth.uid() AND role = 'admin'
-    )
-  );
+  USING (is_admin(auth.uid()));
 
 -- Students can delete their own registrations
 CREATE POLICY "Students can delete own registrations"
@@ -406,82 +382,53 @@ CREATE POLICY "Students can delete own registrations"
 CREATE POLICY "Admins can delete any registration"
   ON student_registrations FOR DELETE
   TO authenticated
-  USING (
-    EXISTS (
-      SELECT 1 FROM profiles
-      WHERE id = auth.uid() AND role = 'admin'
-    )
-  );
+  USING (is_admin(auth.uid()));
 
 -- ============================================================================
 -- FACILITIES POLICIES
 -- ============================================================================
 
--- All authenticated users can view active facilities
-CREATE POLICY "Authenticated users can view facilities"
+-- All users (including unauthenticated) can view facilities
+CREATE POLICY "Public can view facilities"
   ON facilities FOR SELECT
-  TO authenticated
   USING (true);
 
 -- Admins can insert facilities
 CREATE POLICY "Admins can insert facilities"
   ON facilities FOR INSERT
   TO authenticated
-  WITH CHECK (
-    EXISTS (
-      SELECT 1 FROM profiles
-      WHERE id = auth.uid() AND role = 'admin'
-    )
-  );
+  WITH CHECK (is_admin(auth.uid()));
 
 -- Admins can update facilities
 CREATE POLICY "Admins can update facilities"
   ON facilities FOR UPDATE
   TO authenticated
-  USING (
-    EXISTS (
-      SELECT 1 FROM profiles
-      WHERE id = auth.uid() AND role = 'admin'
-    )
-  );
+  USING (is_admin(auth.uid()));
 
 -- Admins can delete facilities
 CREATE POLICY "Admins can delete facilities"
   ON facilities FOR DELETE
   TO authenticated
-  USING (
-    EXISTS (
-      SELECT 1 FROM profiles
-      WHERE id = auth.uid() AND role = 'admin'
-    )
-  );
+  USING (is_admin(auth.uid()));
 
 -- ============================================================================
 -- FACILITY BOOKINGS POLICIES
 -- ============================================================================
 
--- Students can view their own bookings
+-- Students can view their own bookings or admins can view all
 CREATE POLICY "Students can view own bookings"
   ON facility_bookings FOR SELECT
   TO authenticated
   USING (
     student_id = auth.uid() OR
-    EXISTS (
-      SELECT 1 FROM profiles
-      WHERE id = auth.uid() AND role = 'admin'
-    )
+    is_admin(auth.uid())
   );
 
--- Admins can view all bookings
+-- Admins can view all bookings (redundant but kept for clarity)
 CREATE POLICY "Admins can view all bookings"
   ON facility_bookings FOR SELECT
   TO authenticated
-  USING (
-    EXISTS (
-      SELECT 1 FROM profiles
-      WHERE id = auth.uid() AND role = 'admin'
-    )
-  );
+  USING (is_admin(auth.uid()));
 
 -- Students can insert their own bookings
 CREATE POLICY "Students can insert own bookings"
@@ -505,12 +452,7 @@ CREATE POLICY "Students can update own bookings"
 CREATE POLICY "Admins can update any booking"
   ON facility_bookings FOR UPDATE
   TO authenticated
-  USING (
-    EXISTS (
-      SELECT 1 FROM profiles
-      WHERE id = auth.uid() AND role = 'admin'
-    )
-  );
+  USING (is_admin(auth.uid()));
 
 -- Students can delete their own bookings
 CREATE POLICY "Students can delete own bookings"
@@ -522,15 +464,10 @@ CREATE POLICY "Students can delete own bookings"
 CREATE POLICY "Admins can delete any booking"
   ON facility_bookings FOR DELETE
   TO authenticated
-  USING (
-    EXISTS (
-      SELECT 1 FROM profiles
-      WHERE id = auth.uid() AND role = 'admin'
-    )
-  );
+  USING (is_admin(auth.uid()));
 
 -- ----------------------------------------------------------------------------
--- 8. HELPER FUNCTIONS AND CONSTRAINTS
+-- 9. HELPER FUNCTIONS AND CONSTRAINTS
 -- ----------------------------------------------------------------------------
 
 -- Function to check for overlapping bookings
