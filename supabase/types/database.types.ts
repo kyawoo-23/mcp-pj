@@ -34,283 +34,277 @@ export type Database = {
   }
   public: {
     Tables: {
-      grooming_bookings: {
+      course_sections: {
         Row: {
+          capacity: number
+          course_id: string
           created_at: string
-          customer_id: string
+          end_time: string | null
+          enrolled_count: number
           id: string
-          notes: string | null
-          pet_id: string
-          scheduled_at: string
-          service_id: string
+          instructor: string | null
+          room_location: string | null
+          schedule_days: string[] | null
+          section_number: string
+          semester: string
+          start_time: string | null
+          updated_at: string
+          year: number
+        }
+        Insert: {
+          capacity?: number
+          course_id: string
+          created_at?: string
+          end_time?: string | null
+          enrolled_count?: number
+          id?: string
+          instructor?: string | null
+          room_location?: string | null
+          schedule_days?: string[] | null
+          section_number: string
+          semester: string
+          start_time?: string | null
+          updated_at?: string
+          year: number
+        }
+        Update: {
+          capacity?: number
+          course_id?: string
+          created_at?: string
+          end_time?: string | null
+          enrolled_count?: number
+          id?: string
+          instructor?: string | null
+          room_location?: string | null
+          schedule_days?: string[] | null
+          section_number?: string
+          semester?: string
+          start_time?: string | null
+          updated_at?: string
+          year?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "course_sections_course_id_fkey"
+            columns: ["course_id"]
+            isOneToOne: false
+            referencedRelation: "courses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      courses: {
+        Row: {
+          code: string
+          created_at: string
+          credits: number
+          department: string | null
+          description: string | null
+          id: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          credits?: number
+          department?: string | null
+          description?: string | null
+          id?: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          credits?: number
+          department?: string | null
+          description?: string | null
+          id?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      facilities: {
+        Row: {
+          amenities: string[] | null
+          building: string | null
+          capacity: number | null
+          created_at: string
+          description: string | null
+          facility_type: Database["public"]["Enums"]["facility_type"]
+          id: string
+          is_active: boolean
+          name: string
+          room_number: string | null
+          updated_at: string
+        }
+        Insert: {
+          amenities?: string[] | null
+          building?: string | null
+          capacity?: number | null
+          created_at?: string
+          description?: string | null
+          facility_type: Database["public"]["Enums"]["facility_type"]
+          id?: string
+          is_active?: boolean
+          name: string
+          room_number?: string | null
+          updated_at?: string
+        }
+        Update: {
+          amenities?: string[] | null
+          building?: string | null
+          capacity?: number | null
+          created_at?: string
+          description?: string | null
+          facility_type?: Database["public"]["Enums"]["facility_type"]
+          id?: string
+          is_active?: boolean
+          name?: string
+          room_number?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      facility_bookings: {
+        Row: {
+          booking_date: string
+          created_at: string
+          end_time: string
+          facility_id: string
+          id: string
+          purpose: string | null
+          start_time: string
           status: Database["public"]["Enums"]["booking_status"]
-          total_price: number
+          student_id: string
           updated_at: string
         }
         Insert: {
+          booking_date: string
           created_at?: string
-          customer_id: string
+          end_time: string
+          facility_id: string
           id?: string
-          notes?: string | null
-          pet_id: string
-          scheduled_at: string
-          service_id: string
+          purpose?: string | null
+          start_time: string
           status?: Database["public"]["Enums"]["booking_status"]
-          total_price: number
+          student_id: string
           updated_at?: string
         }
         Update: {
+          booking_date?: string
           created_at?: string
-          customer_id?: string
+          end_time?: string
+          facility_id?: string
           id?: string
-          notes?: string | null
-          pet_id?: string
-          scheduled_at?: string
-          service_id?: string
+          purpose?: string | null
+          start_time?: string
           status?: Database["public"]["Enums"]["booking_status"]
-          total_price?: number
+          student_id?: string
           updated_at?: string
         }
         Relationships: [
           {
-            foreignKeyName: "grooming_bookings_customer_id_fkey"
-            columns: ["customer_id"]
+            foreignKeyName: "facility_bookings_facility_id_fkey"
+            columns: ["facility_id"]
             isOneToOne: false
-            referencedRelation: "profiles"
+            referencedRelation: "facilities"
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "grooming_bookings_pet_id_fkey"
-            columns: ["pet_id"]
-            isOneToOne: false
-            referencedRelation: "pets"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "grooming_bookings_service_id_fkey"
-            columns: ["service_id"]
-            isOneToOne: false
-            referencedRelation: "grooming_services"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      grooming_services: {
-        Row: {
-          base_price: number
-          created_at: string
-          description: string | null
-          duration_minutes: number
-          id: string
-          is_active: boolean
-          name: string
-          updated_at: string
-        }
-        Insert: {
-          base_price: number
-          created_at?: string
-          description?: string | null
-          duration_minutes: number
-          id?: string
-          is_active?: boolean
-          name: string
-          updated_at?: string
-        }
-        Update: {
-          base_price?: number
-          created_at?: string
-          description?: string | null
-          duration_minutes?: number
-          id?: string
-          is_active?: boolean
-          name?: string
-          updated_at?: string
-        }
-        Relationships: []
-      }
-      order_items: {
-        Row: {
-          created_at: string
-          id: string
-          order_id: string
-          product_id: string
-          quantity: number
-          subtotal: number
-          unit_price: number
-          updated_at: string
-        }
-        Insert: {
-          created_at?: string
-          id?: string
-          order_id: string
-          product_id: string
-          quantity: number
-          subtotal: number
-          unit_price: number
-          updated_at?: string
-        }
-        Update: {
-          created_at?: string
-          id?: string
-          order_id?: string
-          product_id?: string
-          quantity?: number
-          subtotal?: number
-          unit_price?: number
-          updated_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "order_items_order_id_fkey"
-            columns: ["order_id"]
-            isOneToOne: false
-            referencedRelation: "orders"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "order_items_product_id_fkey"
-            columns: ["product_id"]
-            isOneToOne: false
-            referencedRelation: "products"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      orders: {
-        Row: {
-          created_at: string
-          customer_id: string
-          id: string
-          status: Database["public"]["Enums"]["order_status"]
-          total_amount: number
-          updated_at: string
-        }
-        Insert: {
-          created_at?: string
-          customer_id: string
-          id?: string
-          status?: Database["public"]["Enums"]["order_status"]
-          total_amount?: number
-          updated_at?: string
-        }
-        Update: {
-          created_at?: string
-          customer_id?: string
-          id?: string
-          status?: Database["public"]["Enums"]["order_status"]
-          total_amount?: number
-          updated_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "orders_customer_id_fkey"
-            columns: ["customer_id"]
+            foreignKeyName: "facility_bookings_student_id_fkey"
+            columns: ["student_id"]
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
         ]
-      }
-      pets: {
-        Row: {
-          breed: string | null
-          created_at: string
-          id: string
-          name: string
-          notes: string | null
-          owner_id: string
-          size: Database["public"]["Enums"]["pet_size"] | null
-          type: Database["public"]["Enums"]["pet_type"]
-          updated_at: string
-        }
-        Insert: {
-          breed?: string | null
-          created_at?: string
-          id?: string
-          name: string
-          notes?: string | null
-          owner_id: string
-          size?: Database["public"]["Enums"]["pet_size"] | null
-          type: Database["public"]["Enums"]["pet_type"]
-          updated_at?: string
-        }
-        Update: {
-          breed?: string | null
-          created_at?: string
-          id?: string
-          name?: string
-          notes?: string | null
-          owner_id?: string
-          size?: Database["public"]["Enums"]["pet_size"] | null
-          type?: Database["public"]["Enums"]["pet_type"]
-          updated_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "pets_owner_id_fkey"
-            columns: ["owner_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      products: {
-        Row: {
-          created_at: string
-          description: string | null
-          id: string
-          is_active: boolean
-          name: string
-          price: number
-          stock_quantity: number
-          updated_at: string
-        }
-        Insert: {
-          created_at?: string
-          description?: string | null
-          id?: string
-          is_active?: boolean
-          name: string
-          price: number
-          stock_quantity?: number
-          updated_at?: string
-        }
-        Update: {
-          created_at?: string
-          description?: string | null
-          id?: string
-          is_active?: boolean
-          name?: string
-          price?: number
-          stock_quantity?: number
-          updated_at?: string
-        }
-        Relationships: []
       }
       profiles: {
         Row: {
           created_at: string
+          department: string | null
+          email: string | null
           full_name: string | null
           id: string
+          phone: string | null
           role: Database["public"]["Enums"]["user_role"]
+          student_id: string | null
           updated_at: string
         }
         Insert: {
           created_at?: string
+          department?: string | null
+          email?: string | null
           full_name?: string | null
           id: string
+          phone?: string | null
           role?: Database["public"]["Enums"]["user_role"]
+          student_id?: string | null
           updated_at?: string
         }
         Update: {
           created_at?: string
+          department?: string | null
+          email?: string | null
           full_name?: string | null
           id?: string
+          phone?: string | null
           role?: Database["public"]["Enums"]["user_role"]
+          student_id?: string | null
           updated_at?: string
         }
         Relationships: []
+      }
+      student_registrations: {
+        Row: {
+          created_at: string
+          dropped_at: string | null
+          id: string
+          registered_at: string
+          section_id: string
+          status: Database["public"]["Enums"]["registration_status"]
+          student_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          dropped_at?: string | null
+          id?: string
+          registered_at?: string
+          section_id: string
+          status?: Database["public"]["Enums"]["registration_status"]
+          student_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          dropped_at?: string | null
+          id?: string
+          registered_at?: string
+          section_id?: string
+          status?: Database["public"]["Enums"]["registration_status"]
+          student_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "student_registrations_section_id_fkey"
+            columns: ["section_id"]
+            isOneToOne: false
+            referencedRelation: "course_sections"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "student_registrations_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {
@@ -320,11 +314,17 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
-      booking_status: "pending" | "confirmed" | "completed" | "cancelled"
-      order_status: "pending" | "paid" | "shipped" | "completed" | "cancelled"
-      pet_size: "small" | "medium" | "large"
-      pet_type: "dog" | "cat" | "other"
-      user_role: "customer" | "admin"
+      booking_status: "pending" | "confirmed" | "cancelled" | "completed"
+      facility_type:
+        | "study_room"
+        | "lab"
+        | "meeting_room"
+        | "lecture_hall"
+        | "computer_lab"
+        | "library_space"
+        | "other"
+      registration_status: "active" | "dropped" | "completed" | "waitlisted"
+      user_role: "student" | "admin"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -455,11 +455,18 @@ export const Constants = {
   },
   public: {
     Enums: {
-      booking_status: ["pending", "confirmed", "completed", "cancelled"],
-      order_status: ["pending", "paid", "shipped", "completed", "cancelled"],
-      pet_size: ["small", "medium", "large"],
-      pet_type: ["dog", "cat", "other"],
-      user_role: ["customer", "admin"],
+      booking_status: ["pending", "confirmed", "cancelled", "completed"],
+      facility_type: [
+        "study_room",
+        "lab",
+        "meeting_room",
+        "lecture_hall",
+        "computer_lab",
+        "library_space",
+        "other",
+      ],
+      registration_status: ["active", "dropped", "completed", "waitlisted"],
+      user_role: ["student", "admin"],
     },
   },
 } as const
