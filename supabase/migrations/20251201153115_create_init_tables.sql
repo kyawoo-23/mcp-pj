@@ -283,10 +283,9 @@ CREATE POLICY "Admins can view all profiles"
 -- COURSES POLICIES
 -- ============================================================================
 
--- All authenticated users can view courses
-CREATE POLICY "Authenticated users can view courses"
+-- All users (including unauthenticated) can view courses
+CREATE POLICY "Public can view courses"
   ON courses FOR SELECT
-  TO authenticated
   USING (true);
 
 -- Admins can insert courses
@@ -311,10 +310,9 @@ CREATE POLICY "Admins can delete courses"
 -- COURSE SECTIONS POLICIES
 -- ============================================================================
 
--- All authenticated users can view course sections
-CREATE POLICY "Authenticated users can view course sections"
+-- All users (including unauthenticated) can view course sections
+CREATE POLICY "Public can view course sections"
   ON course_sections FOR SELECT
-  TO authenticated
   USING (true);
 
 -- Admins can insert course sections

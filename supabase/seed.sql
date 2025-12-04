@@ -308,3 +308,78 @@ FROM courses WHERE code = 'PSY201';
 INSERT INTO course_sections (course_id, section_number, instructor, semester, year, capacity, schedule_days, start_time, end_time, room_location)
 SELECT id, 'A', 'Prof. Justin Parker', 'Spring', 2025, 30, ARRAY['Tuesday', 'Thursday'], '14:00:00', '15:30:00', 'M102'
 FROM courses WHERE code = 'PSY202';
+
+-- CS401 Sections
+INSERT INTO course_sections (course_id, section_number, instructor, semester, year, capacity, schedule_days, start_time, end_time, room_location)
+SELECT id, 'A', 'Dr. Alex Zhang', 'Spring', 2025, 25, ARRAY['Tuesday', 'Thursday'], '13:00:00', '14:30:00', 'E101'
+FROM courses WHERE code = 'CS401';
+
+-- CS402 Sections
+INSERT INTO course_sections (course_id, section_number, instructor, semester, year, capacity, schedule_days, start_time, end_time, room_location)
+SELECT id, 'A', 'Prof. Kevin Liu', 'Spring', 2025, 28, ARRAY['Monday', 'Wednesday', 'Friday'], '12:00:00', '12:50:00', 'E102'
+FROM courses WHERE code = 'CS402';
+
+-- MATH301 Sections
+INSERT INTO course_sections (course_id, section_number, instructor, semester, year, capacity, schedule_days, start_time, end_time, room_location)
+SELECT id, 'A', 'Dr. Benjamin Davis', 'Spring', 2025, 30, ARRAY['Monday', 'Wednesday', 'Friday'], '12:00:00', '12:50:00', 'M101'
+FROM courses WHERE code = 'MATH301';
+
+-- MATH302 Sections
+INSERT INTO course_sections (course_id, section_number, instructor, semester, year, capacity, schedule_days, start_time, end_time, room_location)
+SELECT id, 'A', 'Prof. Catherine Miller', 'Spring', 2025, 28, ARRAY['Tuesday', 'Thursday'], '11:00:00', '12:30:00', 'M101'
+FROM courses WHERE code = 'MATH302';
+
+-- PHYS201 Sections
+INSERT INTO course_sections (course_id, section_number, instructor, semester, year, capacity, schedule_days, start_time, end_time, room_location)
+SELECT id, 'A', 'Dr. Gregory Foster', 'Spring', 2025, 35, ARRAY['Monday', 'Wednesday', 'Friday'], '11:00:00', '11:50:00', 'S501'
+FROM courses WHERE code = 'PHYS201';
+
+-- PHYS301 Sections
+INSERT INTO course_sections (course_id, section_number, instructor, semester, year, capacity, schedule_days, start_time, end_time, room_location)
+SELECT id, 'A', 'Prof. Deborah Cooper', 'Spring', 2025, 30, ARRAY['Tuesday', 'Thursday'], '13:00:00', '14:30:00', 'S501'
+FROM courses WHERE code = 'PHYS301';
+
+-- CHEM202 Sections
+INSERT INTO course_sections (course_id, section_number, instructor, semester, year, capacity, schedule_days, start_time, end_time, room_location)
+SELECT id, 'A', 'Dr. Paul Rivera', 'Spring', 2025, 28, ARRAY['Monday', 'Wednesday', 'Friday'], '12:00:00', '12:50:00', 'S102'
+FROM courses WHERE code = 'CHEM202';
+
+-- BIO201 Sections
+INSERT INTO course_sections (course_id, section_number, instructor, semester, year, capacity, schedule_days, start_time, end_time, room_location)
+SELECT id, 'A', 'Dr. Rebecca Torres', 'Spring', 2025, 30, ARRAY['Tuesday', 'Thursday'], '11:00:00', '12:30:00', 'S401'
+FROM courses WHERE code = 'BIO201';
+
+-- BIO301 Sections
+INSERT INTO course_sections (course_id, section_number, instructor, semester, year, capacity, schedule_days, start_time, end_time, room_location)
+SELECT id, 'A', 'Prof. Frank Collins', 'Spring', 2025, 25, ARRAY['Monday', 'Wednesday', 'Friday'], '13:00:00', '13:50:00', 'S401'
+FROM courses WHERE code = 'BIO301';
+
+-- BUS301 Sections
+INSERT INTO course_sections (course_id, section_number, instructor, semester, year, capacity, schedule_days, start_time, end_time, room_location)
+SELECT id, 'A', 'Dr. Victoria Reed', 'Spring', 2025, 35, ARRAY['Monday', 'Wednesday', 'Friday'], '12:00:00', '12:50:00', 'B201'
+FROM courses WHERE code = 'BUS301';
+
+-- BUS302 Sections
+INSERT INTO course_sections (course_id, section_number, instructor, semester, year, capacity, schedule_days, start_time, end_time, room_location)
+SELECT id, 'A', 'Prof. George Bailey', 'Spring', 2025, 32, ARRAY['Tuesday', 'Thursday'], '14:00:00', '15:30:00', 'B301'
+FROM courses WHERE code = 'BUS302';
+
+-- ENG301 Sections
+INSERT INTO course_sections (course_id, section_number, instructor, semester, year, capacity, schedule_days, start_time, end_time, room_location)
+SELECT id, 'A', 'Dr. Helen Murphy', 'Spring', 2025, 25, ARRAY['Monday', 'Wednesday', 'Friday'], '15:00:00', '15:50:00', 'E201'
+FROM courses WHERE code = 'ENG301';
+
+-- ENGL201 Sections
+INSERT INTO course_sections (course_id, section_number, instructor, semester, year, capacity, schedule_days, start_time, end_time, room_location)
+SELECT id, 'A', 'Prof. Charles Hughes', 'Spring', 2025, 25, ARRAY['Tuesday', 'Thursday'], '10:00:00', '11:30:00', 'A101'
+FROM courses WHERE code = 'ENGL201';
+
+-- ENGL202 Sections
+INSERT INTO course_sections (course_id, section_number, instructor, semester, year, capacity, schedule_days, start_time, end_time, room_location)
+SELECT id, 'A', 'Dr. Dorothy Price', 'Spring', 2025, 25, ARRAY['Monday', 'Wednesday', 'Friday'], '13:00:00', '13:50:00', 'A102'
+FROM courses WHERE code = 'ENGL202';
+
+-- PSY301 Sections
+INSERT INTO course_sections (course_id, section_number, instructor, semester, year, capacity, schedule_days, start_time, end_time, room_location)
+SELECT id, 'A', 'Dr. Raymond Wood', 'Spring', 2025, 30, ARRAY['Monday', 'Wednesday', 'Friday'], '13:00:00', '13:50:00', 'M102'
+FROM courses WHERE code = 'PSY301';
