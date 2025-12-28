@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { tool } from "ai";
 import { supabase } from "@/lib/supabase";
+import { TOOL_DEFINITIONS } from "@/lib/tool-definitions";
 
 /**
  * AI SDK Tool Definitions
@@ -10,7 +11,7 @@ import { supabase } from "@/lib/supabase";
 // ============ Course Registration Tools ============
 
 export const searchCourses = tool({
-  description: "Search for courses by code or title",
+  description: TOOL_DEFINITIONS.search_courses.description,
   inputSchema: z.object({
     query: z.string().describe("Search query for course code or title"),
   }),
@@ -30,7 +31,7 @@ export const searchCourses = tool({
 });
 
 export const getCourseDetails = tool({
-  description: "Get details of a specific course by ID",
+  description: TOOL_DEFINITIONS.get_course_details.description,
   inputSchema: z.object({
     courseId: z.string().describe("The UUID of the course"),
   }),
@@ -50,7 +51,7 @@ export const getCourseDetails = tool({
 });
 
 export const registerCourse = tool({
-  description: "Register a student for a course section",
+  description: TOOL_DEFINITIONS.register_course.description,
   inputSchema: z.object({
     studentId: z.string().describe("The UUID of the student"),
     sectionId: z.string().describe("The UUID of the course section"),
@@ -91,7 +92,7 @@ export const registerCourse = tool({
 });
 
 export const getStudentRegistrations = tool({
-  description: "Get active course registrations for a student",
+  description: TOOL_DEFINITIONS.get_student_registrations.description,
   inputSchema: z.object({
     studentId: z.string().describe("The UUID of the student"),
   }),
@@ -133,7 +134,7 @@ const facilityTypeSchema = z
   .optional();
 
 export const searchFacilities = tool({
-  description: "Search for facilities by name or type",
+  description: TOOL_DEFINITIONS.search_facilities.description,
   inputSchema: z.object({
     query: z.string().optional().describe("Search query for facility name"),
     type: facilityTypeSchema.describe("Filter by facility type"),
@@ -160,7 +161,7 @@ export const searchFacilities = tool({
 });
 
 export const bookFacility = tool({
-  description: "Book a facility for a specific time slot",
+  description: TOOL_DEFINITIONS.book_facility.description,
   inputSchema: z.object({
     studentId: z.string().describe("The UUID of the student"),
     facilityId: z.string().describe("The UUID of the facility"),
@@ -211,7 +212,7 @@ export const bookFacility = tool({
 });
 
 export const getStudentBookings = tool({
-  description: "Get facility bookings for a student",
+  description: TOOL_DEFINITIONS.get_student_bookings.description,
   inputSchema: z.object({
     studentId: z.string().describe("The UUID of the student"),
   }),

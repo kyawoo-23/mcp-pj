@@ -296,6 +296,7 @@ export function ChatPageClient({
       }
     >
       <ChatHeader
+        conversationId={activeConversationId || undefined}
         title={activeConversation?.title || "New Chat"}
         onMobileMenuToggle={() => setSidebarOpen(true)}
         status={status}
@@ -304,7 +305,11 @@ export function ChatPageClient({
       <div className='flex flex-1 flex-col min-h-0 overflow-hidden'>
         <ChatMessageList messages={transformedMessages} />
 
-        <ChatInput onSend={handleSendMessage} isLoading={isLoading} />
+        <ChatInput 
+          onSend={handleSendMessage} 
+          isLoading={isLoading} 
+          conversationId={activeConversationId}
+        />
       </div>
     </ChatLayout>
   );

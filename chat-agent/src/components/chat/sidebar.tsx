@@ -1,5 +1,5 @@
 "use client";
-
+import { EditTitleDialog } from "@/components/chat/edit-title-dialog";
 import * as React from "react";
 import { useRouter } from "next/navigation";
 import {
@@ -9,7 +9,10 @@ import {
   ChevronLeft,
   ChevronRight,
   LogOut,
+  MoreHorizontal,
+  Pencil,
 } from "lucide-react";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import {
@@ -58,6 +61,7 @@ export function Sidebar({
   const router = useRouter();
   const [internalCollapsed, setInternalCollapsed] = React.useState(defaultCollapsed);
   const [showLogoutDialog, setShowLogoutDialog] = React.useState(false);
+  const [editingConversation, setEditingConversation] = React.useState<Conversation | null>(null);
 
   // When in Sheet, always show expanded
   const collapsed = isInSheet
@@ -80,6 +84,7 @@ export function Sidebar({
       const { createClient } = await import("@/lib/supabase/client");
       const supabase = createClient();
       await supabase.auth.signOut();
+      toast.success("Logged out successfully");
       router.refresh();
       router.push("/auth/login");
     } catch (error) {
@@ -187,29 +192,62 @@ export function Sidebar({
               </div>
             )}
             {conversations.map((conversation) => (
-              <Button
+              <div
                 key={conversation.id}
-                variant='ghost'
-                onClick={() => onSelectConversation(conversation.id)}
-                className={cn(
-                  "h-9 w-full overflow-hidden text-ellipsis whitespace-nowrap px-2 text-sm font-normal",
-                  collapsed && !isInSheet ? "justify-center" : "justify-start",
-                  activeConversationId === conversation.id
-                    ? "bg-sidebar-accent text-sidebar-accent-foreground"
-                    : "text-muted-foreground hover:bg-sidebar-accent/50 hover:text-sidebar-foreground"
-                )}
-                title={collapsed && !isInSheet ? conversation.title : undefined}
+                className="group relative flex items-center"
               >
-                <MessageSquare
+                <Button
+                  variant='ghost'
+                  onClick={() => onSelectConversation(conversation.id)}
                   className={cn(
-                    "h-4 w-4 shrink-0",
-                    (!collapsed || isInSheet) && "mr-2"
+                    "h-9 w-full overflow-hidden text-ellipsis whitespace-nowrap px-2 text-sm font-normal",
+                    collapsed && !isInSheet ? "justify-center" : "justify-start",
+                    activeConversationId === conversation.id
+                      ? "bg-sidebar-accent text-sidebar-accent-foreground"
+                      : "text-muted-foreground hover:bg-sidebar-accent/50 hover:text-sidebar-foreground",
+                    (!collapsed || isInSheet) && "pr-8"
                   )}
-                />
+                  title={collapsed && !isInSheet ? conversation.title : undefined}
+                >
+                  <MessageSquare
+                    className={cn(
+                      "h-4 w-4 shrink-0",
+                      (!collapsed || isInSheet) && "mr-2"
+                    )}
+                  />
+                  {(!collapsed || isInSheet) && (
+                    <span className='truncate'>{conversation.title}</span>
+                  )}
+                </Button>
                 {(!collapsed || isInSheet) && (
-                  <span className='truncate'>{conversation.title}</span>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className={cn(
+                          "absolute right-1 top-1/2 -translate-y-1/2 h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity focus:opacity-100",
+                          activeConversationId === conversation.id && "bg-sidebar-accent"
+                        )}
+                      >
+                        <MoreHorizontal className="h-3 w-3 text-muted-foreground" />
+                        <span className="sr-only">More options</span>
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuItem
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setEditingConversation(conversation);
+                        }}
+                      >
+                        <Pencil className="h-4 w-4 mr-2" />
+                        Rename
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
                 )}
-              </Button>
+              </div>
             ))}
 
             {conversations.length === 0 && (!collapsed || isInSheet) && (
@@ -296,6 +334,17 @@ export function Sidebar({
           </DialogFooter>
         </DialogContent>
       </Dialog>
+      {/* Edit Title Dialog */}
+      {editingConversation && (
+        <EditTitleDialog
+          conversationId={editingConversation.id}
+          initialTitle={editingConversation.title}
+          open={!!editingConversation}
+          onOpenChange={(open) => {
+            if (!open) setEditingConversation(null);
+          }}
+        />
+      )}
     </div>
   );
 }

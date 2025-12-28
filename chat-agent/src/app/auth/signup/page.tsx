@@ -18,6 +18,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
+import { toast } from "sonner";
 
 const signupSchema = z.object({
   email: z.string().email("Invalid email address"),
@@ -69,6 +70,7 @@ export default function SignupPage() {
 
       if (profileError) throw profileError;
 
+      toast.success("Account created successfully");
       router.push("/");
       router.refresh();
     } catch (err: unknown) {
@@ -83,7 +85,7 @@ export default function SignupPage() {
   };
 
   return (
-    <div className='flex min-h-screen items-center justify-center p-4 -mt-16'>
+    <div className='flex min-h-screen items-center justify-center p-4'>
       <Card className='w-full max-w-md'>
         <CardHeader>
           <CardTitle>Sign Up</CardTitle>
