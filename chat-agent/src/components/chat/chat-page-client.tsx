@@ -227,9 +227,10 @@ export function ChatPageClient({
   };
 
   const handleSelectConversation = (id: string) => {
+    setSidebarOpen(false);
+    if (activeConversationId === id) return;
     // Navigate to the conversation URL
     router.push(`/c/${id}`);
-    setSidebarOpen(false);
   };
 
   // Transform AI SDK messages to our ChatMessageData format
@@ -296,7 +297,6 @@ export function ChatPageClient({
       }
     >
       <ChatHeader
-        conversationId={activeConversationId || undefined}
         title={activeConversation?.title || "New Chat"}
         onMobileMenuToggle={() => setSidebarOpen(true)}
         status={status}
