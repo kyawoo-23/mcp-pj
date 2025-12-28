@@ -1,10 +1,10 @@
 import * as React from "react";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Message } from "@/lib/types";
 import { ChatMessage } from "./chat-message";
+import type { ChatMessageData } from "@/lib/types";
 
 interface ChatMessageListProps {
-  messages: Message[];
+  messages: ChatMessageData[];
 }
 
 export function ChatMessageList({ messages }: ChatMessageListProps) {

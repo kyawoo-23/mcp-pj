@@ -7,21 +7,38 @@ import { ChatMessageList } from "@/components/chat/chat-message-list";
 import { ChatInput } from "@/components/chat/chat-input";
 import { ChatHeader } from "@/components/chat/chat-header";
 import { MOCK_CONVERSATIONS } from "@/data/mock-data";
-import { Message } from "@/lib/types";
+import { useChat } from "@ai-sdk/react";
+import type {
+  MessageRole,
+  ChatMessageData,
+  MessagePart,
+  TextPart,
+  ToolInvocationPart,
+  AIMessagePart,
+  AITextPart,
+  AIToolPart,
+} from "@/lib/types";
 
 export default function ChatPage() {
   const [activeConversationId, setActiveConversationId] =
     React.useState<string>(MOCK_CONVERSATIONS[0].id);
   const [sidebarOpen, setSidebarOpen] = React.useState(false);
-  const [isLoading, setIsLoading] = React.useState(false);
 
-  // Initialize with mock messages for the active conversation
   const activeConversation = MOCK_CONVERSATIONS.find(
     (c) => c.id === activeConversationId
   );
-  const [messages, setMessages] = React.useState<Message[]>(
-    activeConversation ? activeConversation.messages : []
-  );
+
+  const { messages, sendMessage, status, setMessages } = useChat({
+    messages: activeConversation
+      ? activeConversation.messages.map((m) => ({
+          id: m.id,
+          role: m.role as MessageRole,
+          parts: [{ type: "text" as const, text: m.content }],
+        }))
+      : [],
+  });
+
+  const isLoading = status === "submitted" || status === "streaming";
 
   // Update messages when conversation changes
   React.useEffect(() => {
@@ -29,49 +46,68 @@ export default function ChatPage() {
       (c) => c.id === activeConversationId
     );
     if (conversation) {
-      setMessages(conversation.messages);
+      setMessages(
+        conversation.messages.map((m) => ({
+          id: m.id,
+          role: m.role as MessageRole,
+          parts: [{ type: "text" as const, text: m.content }],
+        }))
+      );
     } else {
       setMessages([]);
     }
-  }, [activeConversationId]);
+  }, [activeConversationId, setMessages]);
 
   const handleSendMessage = async (content: string) => {
-    setIsLoading(true);
-
-    // Add user message
-    const userMessage: Message = {
-      id: Date.now().toString(),
+    await sendMessage({
       role: "user",
-      content,
-      timestamp: new Date(),
-    };
-    setMessages((prev) => [...prev, userMessage]);
-
-    // Simulate API delay
-    setTimeout(() => {
-      const assistantMessage: Message = {
-        id: (Date.now() + 1).toString(),
-        role: "assistant",
-        content:
-          "This is a simulated response. In a real app, this would come from the backend API.",
-        timestamp: new Date(),
-      };
-      setMessages((prev) => [...prev, assistantMessage]);
-      setIsLoading(false);
-    }, 1000);
+      parts: [{ type: "text", text: content }],
+    });
   };
 
   const handleNewChat = () => {
-    // In a real app, this would create a new conversation ID
     setActiveConversationId("new");
     setMessages([]);
-    setSidebarOpen(false); // Close mobile sidebar on selection
+    setSidebarOpen(false);
   };
 
   const handleSelectConversation = (id: string) => {
     setActiveConversationId(id);
-    setSidebarOpen(false); // Close mobile sidebar on selection
+    setSidebarOpen(false);
   };
+
+  // Transform AI SDK messages to our ChatMessageData format
+  const transformedMessages: ChatMessageData[] = messages.map((m) => {
+    const parts: MessagePart[] = (m.parts as AIMessagePart[])
+      .map((p): MessagePart | null => {
+        if (p.type === "text") {
+          return { type: "text", text: (p as AITextPart).text } as TextPart;
+        }
+        // Handle tool parts - they have type like "tool-search_courses"
+        if (p.type.startsWith("tool-")) {
+          const toolName = p.type.replace("tool-", "");
+          const toolPart = p as AIToolPart;
+          return {
+            type: "tool-invocation",
+            toolCallId: toolPart.toolCallId,
+            toolName: toolName,
+            input: toolPart.input || {},
+            state: toolPart.state,
+            output: toolPart.output,
+            errorText: toolPart.errorText,
+          } as ToolInvocationPart;
+        }
+        return null;
+      })
+      .filter((p): p is MessagePart => p !== null);
+
+    return {
+      id: m.id,
+      role: m.role as MessageRole,
+      parts,
+      timestamp: new Date(),
+    };
+  });
 
   return (
     <ChatLayout
@@ -89,11 +125,11 @@ export default function ChatPage() {
       <ChatHeader
         title={activeConversation?.title || "New Chat"}
         onMobileMenuToggle={() => setSidebarOpen(true)}
-        status={isLoading ? "streaming" : "connected"}
+        status={status}
       />
 
       <div className='flex flex-1 flex-col min-h-0 overflow-hidden'>
-        <ChatMessageList messages={messages} />
+        <ChatMessageList messages={transformedMessages} />
 
         <ChatInput onSend={handleSendMessage} isLoading={isLoading} />
       </div>
