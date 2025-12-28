@@ -2,7 +2,7 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { getConversations } from "@/lib/db/conversations";
 
-export default async function ChatPage() {
+export default async function ChatIndexPage() {
   const supabase = await createClient();
   const {
     data: { user },

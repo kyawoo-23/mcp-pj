@@ -39,6 +39,8 @@ interface SidebarProps {
   collapsed?: boolean;
   onCollapsedChange?: (collapsed: boolean) => void;
   isInSheet?: boolean;
+  isNewChatDisabled?: boolean;
+  defaultCollapsed?: boolean;
 }
 
 export function Sidebar({
@@ -50,22 +52,68 @@ export function Sidebar({
   collapsed: controlledCollapsed,
   onCollapsedChange,
   isInSheet = false,
+  isNewChatDisabled,
+  defaultCollapsed = false,
 }: SidebarProps) {
   const router = useRouter();
-  const [internalCollapsed, setInternalCollapsed] = React.useState(false);
+  const [internalCollapsed, setInternalCollapsed] = React.useState(defaultCollapsed);
   const [showLogoutDialog, setShowLogoutDialog] = React.useState(false);
+
   // When in Sheet, always show expanded
   const collapsed = isInSheet
     ? false
     : controlledCollapsed ?? internalCollapsed;
   const setCollapsed = onCollapsedChange ?? setInternalCollapsed;
 
-  const handleLogout = () => {
-    // Handle logout logic here
-    console.log("Logout confirmed");
-    setShowLogoutDialog(false);
-    // Add your logout logic (e.g., clear session, redirect, etc.)
+  // Persist state changes
+  const handleCollapseChange = (newState: boolean) => {
+    setCollapsed(newState);
+    if (!isInSheet && !controlledCollapsed && !onCollapsedChange) {
+      document.cookie = `sidebar:state=${newState}; path=/; max-age=${
+        60 * 60 * 24 * 7
+      }`; // 1 week
+    }
   };
+
+  const handleLogout = async () => {
+    try {
+      const { createClient } = await import("@/lib/supabase/client");
+      const supabase = createClient();
+      await supabase.auth.signOut();
+      router.refresh();
+      router.push("/auth/login");
+    } catch (error) {
+      console.error("Error logging out:", error);
+    } finally {
+      setShowLogoutDialog(false);
+    }
+  };
+
+  const [profileName, setProfileName] = React.useState<string>("User");
+
+  React.useEffect(() => {
+    const fetchProfile = async () => {
+      const { createClient } = await import("@/lib/supabase/client");
+      const supabase = createClient();
+      
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("full_name, email")
+        .eq("id", user.id)
+        .single();
+        
+      if (profile?.full_name) {
+        setProfileName(profile.full_name);
+      } else if (profile?.email) {
+        setProfileName(profile.email);
+      }
+    };
+    
+    fetchProfile();
+  }, []);
 
   return (
     <div
@@ -83,7 +131,7 @@ export function Sidebar({
       {!isInSheet && (
         <div className='flex items-center justify-end p-2'>
           <Button
-            onClick={() => setCollapsed(!collapsed)}
+            onClick={() => handleCollapseChange(!collapsed)}
             variant='ghost'
             size='icon'
             className={cn(
@@ -112,6 +160,7 @@ export function Sidebar({
       >
         <Button
           onClick={onNewChat}
+          disabled={isNewChatDisabled}
           variant='outline'
           className={cn(
             "w-full border-sidebar-border bg-sidebar-accent/50 text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground text-sm",
@@ -191,7 +240,7 @@ export function Sidebar({
                 <div className='h-6 w-6 rounded-full bg-sidebar-primary/20 shrink-0' />
                 {(!collapsed || isInSheet) && (
                   <div className='flex flex-col min-w-0'>
-                    <span className='text-xs font-medium truncate'>User</span>
+                    <span className='text-xs font-medium truncate'>{profileName}</span>
                   </div>
                 )}
               </div>

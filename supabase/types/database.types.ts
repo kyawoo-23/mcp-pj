@@ -34,6 +34,38 @@ export type Database = {
   }
   public: {
     Tables: {
+      conversations: {
+        Row: {
+          created_at: string
+          id: string
+          title: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          title?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          title?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "conversations_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       course_sections: {
         Row: {
           capacity: number
@@ -222,6 +254,41 @@ export type Database = {
           },
         ]
       }
+      messages: {
+        Row: {
+          content: string
+          conversation_id: string
+          created_at: string
+          id: string
+          parts: Json
+          role: Database["public"]["Enums"]["message_role"]
+        }
+        Insert: {
+          content: string
+          conversation_id: string
+          created_at?: string
+          id?: string
+          parts?: Json
+          role: Database["public"]["Enums"]["message_role"]
+        }
+        Update: {
+          content?: string
+          conversation_id?: string
+          created_at?: string
+          id?: string
+          parts?: Json
+          role?: Database["public"]["Enums"]["message_role"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "messages_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "conversations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           created_at: string
@@ -311,7 +378,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      is_admin: { Args: { user_id: string }; Returns: boolean }
     }
     Enums: {
       booking_status: "pending" | "confirmed" | "cancelled" | "completed"
@@ -323,6 +390,7 @@ export type Database = {
         | "computer_lab"
         | "library_space"
         | "other"
+      message_role: "user" | "assistant" | "system"
       registration_status: "active" | "dropped" | "completed" | "waitlisted"
       user_role: "student" | "admin"
     }
@@ -465,6 +533,7 @@ export const Constants = {
         "library_space",
         "other",
       ],
+      message_role: ["user", "assistant", "system"],
       registration_status: ["active", "dropped", "completed", "waitlisted"],
       user_role: ["student", "admin"],
     },

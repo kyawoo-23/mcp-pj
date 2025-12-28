@@ -1,4 +1,23 @@
-export type MessageRole = 'user' | 'assistant' | 'system';
+import type { Database, Json } from "../../../supabase/types/database.types";
+
+// ============ Database Types ============
+// Types inferred from Supabase database schema
+
+export type ConversationRow = Database["public"]["Tables"]["conversations"]["Row"];
+export type ConversationInsert = Database["public"]["Tables"]["conversations"]["Insert"];
+export type ConversationUpdate = Database["public"]["Tables"]["conversations"]["Update"];
+
+export type MessageRow = Database["public"]["Tables"]["messages"]["Row"];
+export type MessageInsert = Database["public"]["Tables"]["messages"]["Insert"];
+export type MessageUpdate = Database["public"]["Tables"]["messages"]["Update"];
+
+export type MessageRole = Database["public"]["Enums"]["message_role"];
+
+// Re-export Json type for convenience
+export type { Json };
+
+// ============ Application Types ============
+// UI-specific types that extend database types
 
 export interface Message {
   id: string;
@@ -15,15 +34,12 @@ export interface Conversation {
   updatedAt: Date;
 }
 
+export interface ConversationWithCount extends ConversationRow {
+  messages: [{ count: number }];
+}
+
 // Matches AI SDK useChat status: 'submitted' | 'streaming' | 'ready' | 'error'
 export type ChatStatus = 'submitted' | 'streaming' | 'ready' | 'error';
-
-export interface User {
-  id: string;
-  name: string;
-  email: string;
-  avatar?: string;
-}
 
 // ============ Chat Message Types ============
 

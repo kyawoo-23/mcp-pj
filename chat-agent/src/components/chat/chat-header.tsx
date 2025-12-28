@@ -1,4 +1,4 @@
-import { Menu, MoreHorizontal } from "lucide-react";
+import { Menu } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ChatStatus } from "@/lib/types";
 import { ModeToggle } from "@/components/mode-toggle";

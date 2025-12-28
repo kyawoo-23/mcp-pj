@@ -19,7 +19,7 @@ export const searchCourses = tool({
       .from("courses")
       .select("*")
       .or(`code.ilike.%${params.query}%,title.ilike.%${params.query}%`)
-      .limit(10);
+      .limit(50);
 
     if (error) {
       return { error: `Error searching courses: ${error.message}` };
@@ -149,7 +149,7 @@ export const searchFacilities = tool({
       dbQuery = dbQuery.eq("facility_type", params.type);
     }
 
-    const { data, error } = await dbQuery.limit(10);
+    const { data, error } = await dbQuery.limit(50);
 
     if (error) {
       return { error: `Error searching facilities: ${error.message}` };

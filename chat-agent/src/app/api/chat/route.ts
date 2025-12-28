@@ -1,30 +1,123 @@
 import { google } from "@ai-sdk/google";
 import { streamText, UIMessage, convertToModelMessages, stepCountIs } from "ai";
-import { supabase } from "@/lib/supabase";
+import { createClient } from "@/lib/supabase/server";
 import { allTools } from "@/lib/tools";
+import {
+  createConversation,
+  updateConversationTitle,
+} from "@/lib/db/conversations";
+import { createMessage } from "@/lib/db/messages";
+import { MessagePart } from "@/lib/types";
+import { revalidatePath } from "next/cache";
 
 // Allow streaming responses up to 30 seconds
 export const maxDuration = 30;
 
 export async function POST(req: Request) {
-  const { messages } = (await req.json()) as { messages: UIMessage[] };
+  const { messages, conversationId } = (await req.json()) as {
+    messages: UIMessage[];
+    conversationId?: string;
+  };
+
+  // Get authenticated user
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    return new Response("Unauthorized", { status: 401 });
+  }
+
+  // Ensure user profile exists before creating conversation
+  let { data: profile } = await supabase
+    .from("profiles")
+    .select("*")
+    .eq("id", user.id)
+    .single();
+
+  // If profile doesn't exist, create a basic one
+  // Note: student_id is required for students per database constraint
+  if (!profile) {
+    const studentId = user.user_metadata?.student_id || `TEMP_${user.id.slice(0, 8)}`;
+    const { data: newProfile, error: profileError } = await supabase
+      .from("profiles")
+      .insert({
+        id: user.id,
+        email: user.email || null,
+        full_name: user.user_metadata?.full_name || user.email?.split("@")[0] || "User",
+        role: "student",
+        student_id: studentId,
+      })
+      .select()
+      .single();
+
+    if (profileError || !newProfile) {
+      console.error("Failed to create profile:", profileError);
+      return new Response(
+        JSON.stringify({ error: "Failed to create user profile. Please complete your profile." }),
+        { status: 500, headers: { "Content-Type": "application/json" } }
+      );
+    }
+    profile = newProfile;
+  }
+
+  // Get or create conversation
+  let currentConversationId: string;
+  if (!conversationId) {
+    const conversation = await createConversation(user.id);
+    currentConversationId = conversation.id;
+    revalidatePath("/");
+  } else {
+    currentConversationId = conversationId;
+  }
+
+  // Save the last user message to database
+  const lastMessage = messages[messages.length - 1];
+  if (lastMessage && lastMessage.role === "user") {
+    const textParts = (lastMessage.parts || []).filter(
+      (p): p is { type: "text"; text: string } => p.type === "text"
+    );
+    const content = textParts.map((p) => p.text).join("\n");
+    const parts: MessagePart[] = (lastMessage.parts || []).map((p) => {
+      if (p.type === "text") {
+        return { type: "text", text: p.text };
+      }
+      // Preserve other part types as-is
+      return p as MessagePart;
+    });
+
+    try {
+      await createMessage({
+        conversationId: currentConversationId,
+        role: "user",
+        content,
+        parts,
+      });
+    } catch (error) {
+      console.error("Failed to save user message:", error);
+    }
+  }
 
   // Convert UIMessage format (with parts) to CoreMessage format (with content)
   const coreMessages = await convertToModelMessages(messages);
-
-  // 1. Fetch user profile (In a real app, you'd get the user ID from auth)
-  // For this initial track, we'll fetch a sample profile to demonstrate the context injection.
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("*")
-    .limit(1)
-    .single();
 
   const systemPrompt = `
     You are the Uni-Chat Agent, a professional and helpful virtual assistant for university students.
     Your tone should be academic yet warm.
     
-    ${profile ? `You are talking to ${profile.full_name} from the ${profile.department} department. Their student ID is: ${profile.id}` : ""}
+    ${
+      profile
+        ? `You are talking to ${profile.full_name}${
+            profile.department ? ` from the ${profile.department} department` : ""
+          }. Their Student ID is ${profile.student_id || "unknown"}.`
+        : ""
+    }
+
+    IMPORTANT SYSTEM CONTEXT:
+    The student's internal UUID is "${profile?.id || "unknown"}".
+    - You MUST use this UUID for all tool calls (bookings, registrations, fetching data).
+    - You MUST NOT mention this UUID to the user. Only refer to them by their name or Student ID.
     
     You have access to tools that can help students:
     - Search for courses and get course details
@@ -35,7 +128,6 @@ export async function POST(req: Request) {
     - View their facility bookings
     
     When a student asks about courses, facilities, or wants to make a booking/registration, USE THE TOOLS to help them.
-    Always use the student's ID (${profile?.id || "unknown"}) when making bookings or registrations on their behalf.
     
     Use Markdown for formatting your responses. Use bolding and lists to make information clear.
     When displaying tool results, format them nicely in a readable way - don't just dump raw JSON.
@@ -48,7 +140,89 @@ export async function POST(req: Request) {
     messages: coreMessages,
     tools: allTools,
     stopWhen: stepCountIs(5), // Allow up to 5 tool call steps
+    onFinish: async ({ text, toolCalls, toolResults }) => {
+      // Save assistant response to database
+      try {
+        const parts: MessagePart[] = [{ type: "text", text }];
+
+        // Add tool invocations if any
+        if (toolCalls && toolCalls.length > 0) {
+          for (let i = 0; i < toolCalls.length; i++) {
+            const toolCall = toolCalls[i];
+            const toolResult = toolResults?.[i];
+
+            // Extract input from toolCall - it may be in different formats
+            const input =
+              "args" in toolCall
+                ? (toolCall.args as Record<string, unknown>)
+                : "input" in toolCall
+                ? (toolCall.input as Record<string, unknown>)
+                : {};
+
+            // Extract result/error from toolResult
+            const result =
+              toolResult && "result" in toolResult
+                ? toolResult.result
+                : toolResult && "output" in toolResult
+                ? toolResult.output
+                : undefined;
+            const error =
+              toolResult && "error" in toolResult
+                ? String(toolResult.error)
+                : undefined;
+
+            parts.push({
+              type: "tool-invocation",
+              toolCallId: toolCall.toolCallId,
+              toolName: toolCall.toolName,
+              input,
+              state: error
+                ? "output-error"
+                : result !== undefined
+                ? "output-available"
+                : "input-available",
+              output: result,
+              errorText: error,
+            });
+          }
+        }
+
+        await createMessage({
+          conversationId: currentConversationId,
+          role: "assistant",
+          content: text,
+          parts,
+        });
+
+        // Auto-generate conversation title from first user message if title is null
+        if (messages.length === 1) {
+          const firstUserMessage = messages.find((m) => m.role === "user");
+          if (firstUserMessage) {
+            const textParts = (firstUserMessage.parts || []).filter(
+              (p): p is { type: "text"; text: string } => p.type === "text"
+            );
+            const titleText = textParts
+              .map((p) => p.text)
+              .join(" ")
+              .slice(0, 50);
+            if (titleText) {
+              await updateConversationTitle(
+                currentConversationId,
+                user.id,
+                titleText
+              );
+              revalidatePath("/");
+            }
+          }
+        }
+      } catch (error) {
+        console.error("Failed to save assistant message:", error);
+      }
+    },
   });
 
-  return result.toUIMessageStreamResponse();
+  // Return response with conversationId in headers
+  const response = result.toUIMessageStreamResponse();
+  response.headers.set("X-Conversation-Id", currentConversationId);
+  return response;
 }
