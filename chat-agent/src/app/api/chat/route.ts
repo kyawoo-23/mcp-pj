@@ -108,9 +108,7 @@ export async function POST(req: Request) {
     
     ${
       profile
-        ? `You are talking to ${profile.full_name}${
-            profile.department ? ` from the ${profile.department} department` : ""
-          }. Their Student ID is ${profile.student_id || "unknown"}.`
+        ? `You are talking to ${profile.full_name}. Their Student ID is ${profile.student_id || "unknown"}.`
         : ""
     }
 
