@@ -1,254 +1,329 @@
 import { z } from "zod";
 import { tool } from "ai";
-import { supabase } from "@/lib/supabase";
 import { TOOL_DEFINITIONS } from "@/lib/tool-definitions";
+import { SupabaseClient } from "@supabase/supabase-js";
+import { Database } from "../../../supabase/types/database.types";
 
 /**
- * AI SDK Tool Definitions
+ * AI SDK Tool Definitions Factory
  * These tools integrate with the university services (course registration & facility booking)
  */
+export const createTools = (supabase: SupabaseClient<Database>) => {
+  // ============ Course Registration Tools ============
 
-// ============ Course Registration Tools ============
+  const searchCourses = tool({
+    description: TOOL_DEFINITIONS.search_courses.description,
+    inputSchema: z.object({
+      query: z
+        .string()
+        .optional()
+        .describe("Search query for course code or title. If omitted, returns all available courses."),
+    }),
+    execute: async (params) => {
+      let baseQuery = supabase.from("courses").select("*");
 
-export const searchCourses = tool({
-  description: TOOL_DEFINITIONS.search_courses.description,
-  inputSchema: z.object({
-    query: z.string().describe("Search query for course code or title"),
-  }),
-  execute: async (params) => {
-    const { data, error } = await supabase
-      .from("courses")
-      .select("*")
-      .or(`code.ilike.%${params.query}%,title.ilike.%${params.query}%`)
-      .limit(50);
+      if (params.query) {
+        const query = params.query;
+        baseQuery = baseQuery.or(`code.ilike.%${query}%,title.ilike.%${query}%`);
+      }
 
-    if (error) {
-      return { error: `Error searching courses: ${error.message}` };
-    }
+      const { data, error } = await baseQuery.limit(50);
 
-    return { courses: data };
-  },
-});
+      if (error) {
+        return { error: `Error searching courses: ${error.message}` };
+      }
 
-export const getCourseDetails = tool({
-  description: TOOL_DEFINITIONS.get_course_details.description,
-  inputSchema: z.object({
-    courseId: z.string().describe("The UUID of the course"),
-  }),
-  execute: async (params) => {
-    const { data, error } = await supabase
-      .from("courses")
-      .select("*")
-      .eq("id", params.courseId)
-      .single();
+      return { courses: data };
+    },
+  });
 
-    if (error) {
-      return { error: `Error getting course details: ${error.message}` };
-    }
+  const getCourseDetails = tool({
+    description: TOOL_DEFINITIONS.get_course_details.description,
+    inputSchema: z.object({
+      courseId: z.string().describe("The UUID of the course"),
+    }),
+    execute: async (params) => {
+      const { data, error } = await supabase
+        .from("courses")
+        .select("*")
+        .eq("id", params.courseId)
+        .single();
 
-    return { course: data };
-  },
-});
+      if (error) {
+        return { error: `Error getting course details: ${error.message}` };
+      }
 
-export const registerCourse = tool({
-  description: TOOL_DEFINITIONS.register_course.description,
-  inputSchema: z.object({
-    studentId: z.string().describe("The UUID of the student"),
-    sectionId: z.string().describe("The UUID of the course section"),
-  }),
-  execute: async (params) => {
-    // First check if already registered
-    const { data: existing } = await supabase
-      .from("student_registrations")
-      .select("*")
-      .eq("student_id", params.studentId)
-      .eq("section_id", params.sectionId)
-      .eq("status", "active")
-      .single();
+      return { course: data };
+    },
+  });
 
-    if (existing) {
-      return { error: "Student is already registered for this section." };
-    }
+  const getCourseSections = tool({
+    description: TOOL_DEFINITIONS.get_course_sections.description,
+    inputSchema: z.object({
+      courseId: z.string().describe("The UUID of the course"),
+    }),
+    execute: async (params) => {
+      const { data, error } = await supabase
+        .from("course_sections")
+        .select("*")
+        .eq("course_id", params.courseId)
+        .order("section_number", { ascending: true });
 
-    const { data, error } = await supabase
-      .from("student_registrations")
-      .insert({
-        student_id: params.studentId,
-        section_id: params.sectionId,
-        status: "active",
-      })
-      .select()
-      .single();
+      if (error) {
+        return { error: `Error getting course sections: ${error.message}` };
+      }
 
-    if (error) {
-      return { error: `Error registering course: ${error.message}` };
-    }
+      return { sections: data };
+    },
+  });
 
-    return {
-      registration: data,
-      message: "Successfully registered for course",
-    };
-  },
-});
+  const registerCourse = tool({
+    description: TOOL_DEFINITIONS.register_course.description,
+    inputSchema: z.object({
+      studentId: z.string().describe("The UUID of the student"),
+      sectionId: z.string().describe("The UUID of the course section"),
+    }),
+    execute: async (params) => {
+      // First check if already registered
+      const { data: existing } = await supabase
+        .from("student_registrations")
+        .select("*")
+        .eq("student_id", params.studentId)
+        .eq("section_id", params.sectionId)
+        .eq("status", "active")
+        .single();
 
-export const getStudentRegistrations = tool({
-  description: TOOL_DEFINITIONS.get_student_registrations.description,
-  inputSchema: z.object({
-    studentId: z.string().describe("The UUID of the student"),
-  }),
-  execute: async (params) => {
-    const { data, error } = await supabase
-      .from("student_registrations")
-      .select(
-        `
-        *,
-        course_sections (
+      if (existing) {
+        return { error: "Student is already registered for this section." };
+      }
+
+      const { data, error } = await supabase
+        .from("student_registrations")
+        .insert({
+          student_id: params.studentId,
+          section_id: params.sectionId,
+          status: "active",
+        })
+        .select()
+        .single();
+
+      if (error) {
+        return { error: `Error registering course: ${error.message}` };
+      }
+
+      return {
+        registration: data,
+        message: "Successfully registered for course",
+      };
+    },
+  });
+
+  const getStudentRegistrations = tool({
+    description: TOOL_DEFINITIONS.get_student_registrations.description,
+    inputSchema: z.object({
+      studentId: z.string().describe("The UUID of the student"),
+    }),
+    execute: async (params) => {
+      const { data, error } = await supabase
+        .from("student_registrations")
+        .select(
+          `
           *,
-          courses (*)
-        )
-      `
-      )
-      .eq("student_id", params.studentId)
-      .eq("status", "active");
-
-    if (error) {
-      return { error: `Error fetching registrations: ${error.message}` };
-    }
-
-    return { registrations: data };
-  },
-});
-
-// ============ Facility Booking Tools ============
-
-const facilityTypeSchema = z
-  .enum([
-    "study_room",
-    "lab",
-    "meeting_room",
-    "lecture_hall",
-    "computer_lab",
-    "library_space",
-    "other",
-  ])
-  .optional();
-
-export const searchFacilities = tool({
-  description: TOOL_DEFINITIONS.search_facilities.description,
-  inputSchema: z.object({
-    query: z.string().optional().describe("Search query for facility name"),
-    type: facilityTypeSchema.describe("Filter by facility type"),
-  }),
-  execute: async (params) => {
-    let dbQuery = supabase.from("facilities").select("*").eq("is_active", true);
-
-    if (params.query) {
-      dbQuery = dbQuery.ilike("name", `%${params.query}%`);
-    }
-
-    if (params.type) {
-      dbQuery = dbQuery.eq("facility_type", params.type);
-    }
-
-    const { data, error } = await dbQuery.limit(50);
-
-    if (error) {
-      return { error: `Error searching facilities: ${error.message}` };
-    }
-
-    return { facilities: data };
-  },
-});
-
-export const bookFacility = tool({
-  description: TOOL_DEFINITIONS.book_facility.description,
-  inputSchema: z.object({
-    studentId: z.string().describe("The UUID of the student"),
-    facilityId: z.string().describe("The UUID of the facility"),
-    bookingDate: z.string().describe("Date of booking (YYYY-MM-DD)"),
-    startTime: z.string().describe("Start time (HH:MM:SS)"),
-    endTime: z.string().describe("End time (HH:MM:SS)"),
-    purpose: z.string().optional().describe("Purpose of booking"),
-  }),
-  execute: async (params) => {
-    // Check for overlapping bookings
-    const { data: conflicts, error: conflictError } = await supabase
-      .from("facility_bookings")
-      .select("*")
-      .eq("facility_id", params.facilityId)
-      .eq("booking_date", params.bookingDate)
-      .neq("status", "cancelled")
-      .lt("start_time", params.endTime)
-      .gt("end_time", params.startTime);
-
-    if (conflictError) {
-      return { error: `Error checking conflicts: ${conflictError.message}` };
-    }
-
-    if (conflicts && conflicts.length > 0) {
-      return { error: "Facility is already booked for this time slot." };
-    }
-
-    const { data, error } = await supabase
-      .from("facility_bookings")
-      .insert({
-        student_id: params.studentId,
-        facility_id: params.facilityId,
-        booking_date: params.bookingDate,
-        start_time: params.startTime,
-        end_time: params.endTime,
-        purpose: params.purpose || null,
-        status: "pending",
-      })
-      .select()
-      .single();
-
-    if (error) {
-      return { error: `Error booking facility: ${error.message}` };
-    }
-
-    return { booking: data, message: "Successfully booked facility" };
-  },
-});
-
-export const getStudentBookings = tool({
-  description: TOOL_DEFINITIONS.get_student_bookings.description,
-  inputSchema: z.object({
-    studentId: z.string().describe("The UUID of the student"),
-  }),
-  execute: async (params) => {
-    const { data, error } = await supabase
-      .from("facility_bookings")
-      .select(
+          course_sections (
+            *,
+            courses (*)
+          )
         `
-        *,
-        facilities (
-          name,
-          building,
-          room_number
         )
-      `
-      )
-      .eq("student_id", params.studentId)
-      .order("booking_date", { ascending: false })
-      .order("start_time", { ascending: false });
+        .eq("student_id", params.studentId)
+        .eq("status", "active");
 
-    if (error) {
-      return { error: `Error fetching bookings: ${error.message}` };
-    }
+      console.log("REG", data);
 
-    return { bookings: data };
-  },
-});
+      if (error) {
+        return { error: `Error fetching registrations: ${error.message}` };
+      }
 
-// ============ Export All Tools ============
+      return { registrations: data };
+    },
+  });
 
-export const allTools = {
-  search_courses: searchCourses,
-  get_course_details: getCourseDetails,
-  register_course: registerCourse,
-  get_student_registrations: getStudentRegistrations,
-  search_facilities: searchFacilities,
-  book_facility: bookFacility,
-  get_student_bookings: getStudentBookings,
+  const dropCourse = tool({
+    description: TOOL_DEFINITIONS.drop_course.description,
+    inputSchema: z.object({
+      studentId: z.string().describe("The UUID of the student"),
+      sectionId: z.string().describe("The UUID of the course section"),
+    }),
+    execute: async (params) => {
+      // Check if registration exists and is active
+      const { data: existing, error: checkError } = await supabase
+        .from("student_registrations")
+        .select("*")
+        .eq("student_id", params.studentId)
+        .eq("section_id", params.sectionId)
+        // We only want to drop active registrations
+        .eq("status", "active")
+        .single();
+
+      if (checkError || !existing) {
+        return { error: "Active registration not found for this course section." };
+      }
+
+      const { data, error } = await supabase
+        .from("student_registrations")
+        .update({
+          status: "dropped",
+          dropped_at: new Date().toISOString(),
+        })
+        .eq("id", existing.id)
+        .select()
+        .single();
+
+      if (error) {
+        return { error: `Error dropping course: ${error.message}` };
+      }
+
+      return {
+        registration: data,
+        message: "Successfully dropped course",
+      };
+    },
+  });
+
+  // ============ Facility Booking Tools ============
+
+  const facilityTypeSchema = z
+    .enum([
+      "study_room",
+      "lab",
+      "meeting_room",
+      "lecture_hall",
+      "computer_lab",
+      "library_space",
+      "other",
+    ])
+    .optional();
+
+  const searchFacilities = tool({
+    description: TOOL_DEFINITIONS.search_facilities.description,
+    inputSchema: z.object({
+      query: z.string().optional().describe("Search query for facility name. If omitted, returns all available facilities."),
+      type: facilityTypeSchema.describe("Filter by facility type"),
+    }),
+    execute: async (params) => {
+      let dbQuery = supabase
+        .from("facilities")
+        .select("*")
+        .eq("is_active", true);
+
+      if (params.query) {
+        dbQuery = dbQuery.ilike("name", `%${params.query}%`);
+      }
+
+      if (params.type) {
+        dbQuery = dbQuery.eq("facility_type", params.type);
+      }
+
+      const { data, error } = await dbQuery.limit(50);
+
+      if (error) {
+        return { error: `Error searching facilities: ${error.message}` };
+      }
+
+      return { facilities: data };
+    },
+  });
+
+  const bookFacility = tool({
+    description: TOOL_DEFINITIONS.book_facility.description,
+    inputSchema: z.object({
+      studentId: z.string().describe("The UUID of the student"),
+      facilityId: z.string().describe("The UUID of the facility"),
+      bookingDate: z.string().describe("Date of booking (YYYY-MM-DD)"),
+      startTime: z.string().describe("Start time (HH:MM:SS)"),
+      endTime: z.string().describe("End time (HH:MM:SS)"),
+      purpose: z.string().optional().describe("Purpose of booking"),
+    }),
+    execute: async (params) => {
+      // Check for overlapping bookings
+      const { data: conflicts, error: conflictError } = await supabase
+        .from("facility_bookings")
+        .select("*")
+        .eq("facility_id", params.facilityId)
+        .eq("booking_date", params.bookingDate)
+        .neq("status", "cancelled")
+        .lt("start_time", params.endTime)
+        .gt("end_time", params.startTime);
+
+      if (conflictError) {
+        return { error: `Error checking conflicts: ${conflictError.message}` };
+      }
+
+      if (conflicts && conflicts.length > 0) {
+        return { error: "Facility is already booked for this time slot." };
+      }
+
+      const { data, error } = await supabase
+        .from("facility_bookings")
+        .insert({
+          student_id: params.studentId,
+          facility_id: params.facilityId,
+          booking_date: params.bookingDate,
+          start_time: params.startTime,
+          end_time: params.endTime,
+          purpose: params.purpose || null,
+          status: "pending",
+        })
+        .select()
+        .single();
+
+      if (error) {
+        return { error: `Error booking facility: ${error.message}` };
+      }
+
+      return { booking: data, message: "Successfully booked facility" };
+    },
+  });
+
+  const getStudentBookings = tool({
+    description: TOOL_DEFINITIONS.get_student_bookings.description,
+    inputSchema: z.object({
+      studentId: z.string().describe("The UUID of the student"),
+    }),
+    execute: async (params) => {
+      const { data, error } = await supabase
+        .from("facility_bookings")
+        .select(
+          `
+          *,
+          facilities (
+            name,
+            building,
+            room_number
+          )
+        `
+        )
+        .eq("student_id", params.studentId)
+        .order("booking_date", { ascending: false })
+        .order("start_time", { ascending: false });
+
+      if (error) {
+        return { error: `Error fetching bookings: ${error.message}` };
+      }
+
+      return { bookings: data };
+    },
+  });
+
+  return {
+    search_courses: searchCourses,
+    get_course_details: getCourseDetails,
+    get_course_sections: getCourseSections,
+    register_course: registerCourse,
+    get_student_registrations: getStudentRegistrations,
+    drop_course: dropCourse,
+    search_facilities: searchFacilities,
+    book_facility: bookFacility,
+    get_student_bookings: getStudentBookings,
+  };
 };

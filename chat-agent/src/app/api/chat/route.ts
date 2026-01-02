@@ -1,7 +1,7 @@
 import { google } from "@ai-sdk/google";
 import { streamText, UIMessage, convertToModelMessages, stepCountIs } from "ai";
 import { createClient } from "@/lib/supabase/server";
-import { allTools } from "@/lib/tools";
+import { createTools } from "@/lib/tools";
 import {
   createConversation,
   updateConversationTitle,
@@ -29,6 +29,9 @@ export async function POST(req: Request) {
     return new Response("Unauthorized", { status: 401 });
   }
 
+  // Initialize tools with authenticated client
+  const allTools = createTools(supabase);
+
   // Ensure user profile exists before creating conversation
   let { data: profile } = await supabase
     .from("profiles")
@@ -39,13 +42,15 @@ export async function POST(req: Request) {
   // If profile doesn't exist, create a basic one
   // Note: student_id is required for students per database constraint
   if (!profile) {
-    const studentId = user.user_metadata?.student_id || `TEMP_${user.id.slice(0, 8)}`;
+    const studentId =
+      user.user_metadata?.student_id || `TEMP_${user.id.slice(0, 8)}`;
     const { data: newProfile, error: profileError } = await supabase
       .from("profiles")
       .insert({
         id: user.id,
         email: user.email || null,
-        full_name: user.user_metadata?.full_name || user.email?.split("@")[0] || "User",
+        full_name:
+          user.user_metadata?.full_name || user.email?.split("@")[0] || "User",
         role: "student",
         student_id: studentId,
       })
@@ -55,7 +60,9 @@ export async function POST(req: Request) {
     if (profileError || !newProfile) {
       console.error("Failed to create profile:", profileError);
       return new Response(
-        JSON.stringify({ error: "Failed to create user profile. Please complete your profile." }),
+        JSON.stringify({
+          error: "Failed to create user profile. Please complete your profile.",
+        }),
         { status: 500, headers: { "Content-Type": "application/json" } }
       );
     }
@@ -103,12 +110,15 @@ export async function POST(req: Request) {
   const coreMessages = await convertToModelMessages(messages);
 
   const systemPrompt = `
+    Today is ${new Date().toLocaleDateString()}.
     You are the Uni-Chat Agent, a professional and helpful virtual assistant for university students.
     Your tone should be academic yet warm.
     
     ${
       profile
-        ? `You are talking to ${profile.full_name}. Their Student ID is ${profile.student_id || "unknown"}.`
+        ? `You are talking to ${profile.full_name}. Their Student ID is ${
+            profile.student_id || "unknown"
+          }.`
         : ""
     }
 
@@ -130,6 +140,11 @@ export async function POST(req: Request) {
     Use Markdown for formatting your responses. Use bolding and lists to make information clear.
     When displaying tool results, format them nicely in a readable way - don't just dump raw JSON.
     If you encounter an error or a request you can't fulfill, be empathetic and suggest alternatives.
+
+    COURSE REGISTRATION INSTRUCTION:
+    If a student provides a course code (e.g., "BIO101", "CS101") or name but the tool requires a UUID (courseId or sectionId), you MUST first use the \`search_courses\` tool to find the course and get its UUID. Do not assume the code is the ID.
+    After finding the course, you usually need to check available sections using \`get_course_sections\` before you can register them.
+    If \`get_course_sections\` returns more than one section, you MUST NOT automatically register for one. You MUST list the available sections (number, instructor, time) and ASK the student which one they want to register for. Only proceed with registration after they explicitly confirm the section.
   `;
 
   const result = streamText({

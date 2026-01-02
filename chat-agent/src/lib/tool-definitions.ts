@@ -11,12 +11,17 @@ export interface ToolDefinition {
 export const TOOL_DEFINITIONS: Record<string, ToolDefinition> = {
   search_courses: {
     name: "search_courses",
-    description: "Search for courses by code or title",
+    description: "Search for courses by code or title, or list all available courses if no query provided",
     icon: Search,
   },
   get_course_details: {
     name: "get_course_details",
     description: "Get details of a specific course by ID",
+    icon: BookOpen,
+  },
+  get_course_sections: {
+    name: "get_course_sections",
+    description: "Get all available sections for a specific course",
     icon: BookOpen,
   },
   register_course: {
@@ -29,9 +34,14 @@ export const TOOL_DEFINITIONS: Record<string, ToolDefinition> = {
     description: "Get active course registrations for a student",
     icon: BookOpen,
   },
+  drop_course: {
+    name: "drop_course",
+    description: "Drop a course section for a student",
+    icon: UserCircle,
+  },
   search_facilities: {
     name: "search_facilities",
-    description: "Search for facilities by name or type",
+    description: "Search for facilities by name or type, or list all available facilities if no query provided",
     icon: Search,
   },
   book_facility: {
