@@ -138,8 +138,6 @@ export const createTools = (supabase: SupabaseClient<Database>) => {
         .eq("student_id", params.studentId)
         .eq("status", "active");
 
-      console.log("REG", data);
-
       if (error) {
         return { error: `Error fetching registrations: ${error.message}` };
       }
@@ -234,17 +232,63 @@ export const createTools = (supabase: SupabaseClient<Database>) => {
     },
   });
 
+  // ============ Internal Helpers ============
+
+  const normalizeTime = (timeStr: string): string | null => {
+    try {
+      // Create a dummy date with the provided time
+      // using a fixed date allows us to just parse the time component
+      const date = new Date(`2000-01-01 ${timeStr}`);
+      
+      if (isNaN(date.getTime())) {
+        return null;
+      }
+      
+      // Extract HH:MM:SS in 24-hour format
+      // utilizing toLocaleTimeString with en-GB usually gives 24h format "HH:MM:SS"
+      // but to be safe and consistent regardless of server locale:
+      const hours = date.getHours().toString().padStart(2, '0');
+      const minutes = date.getMinutes().toString().padStart(2, '0');
+      const seconds = date.getSeconds().toString().padStart(2, '0');
+      
+      return `${hours}:${minutes}:${seconds}`;
+    } catch (e) {
+      return null;
+    }
+  };
+
   const bookFacility = tool({
     description: TOOL_DEFINITIONS.book_facility.description,
     inputSchema: z.object({
       studentId: z.string().describe("The UUID of the student"),
       facilityId: z.string().describe("The UUID of the facility"),
       bookingDate: z.string().describe("Date of booking (YYYY-MM-DD)"),
-      startTime: z.string().describe("Start time (HH:MM:SS)"),
-      endTime: z.string().describe("End time (HH:MM:SS)"),
+      startTime: z.string().describe("Start time (e.g., '14:00', '2:00 PM', '14:00:00')"),
+      endTime: z.string().describe("End time (e.g., '15:00', '3:00 PM', '15:00:00')"),
       purpose: z.string().optional().describe("Purpose of booking"),
     }),
     execute: async (params) => {
+      // Normalize times
+      const normalizedStartTime = normalizeTime(params.startTime);
+      const normalizedEndTime = normalizeTime(params.endTime);
+
+      if (!normalizedStartTime) {
+        return { error: `Invalid start time format: "${params.startTime}". Please use a format like "HH:MM", "HH:MM AM/PM".` };
+      }
+      if (!normalizedEndTime) {
+        return { error: `Invalid end time format: "${params.endTime}". Please use a format like "HH:MM", "HH:MM AM/PM".` };
+      }
+
+      // Construct full timestamp strings
+      const startDateTime = `${params.bookingDate}T${normalizedStartTime}`;
+      const endDateTime = `${params.bookingDate}T${normalizedEndTime}`;
+
+      // Validate that end time is after start time
+      // Since we are on the same day, we can just compare the strings or date objects
+      if (startDateTime >= endDateTime) {
+         return { error: "End time must be strictly after start time." };
+      }
+
       // Check for overlapping bookings
       const { data: conflicts, error: conflictError } = await supabase
         .from("facility_bookings")
@@ -252,8 +296,8 @@ export const createTools = (supabase: SupabaseClient<Database>) => {
         .eq("facility_id", params.facilityId)
         .eq("booking_date", params.bookingDate)
         .neq("status", "cancelled")
-        .lt("start_time", params.endTime)
-        .gt("end_time", params.startTime);
+        .lt("start_time", endDateTime) // Use full timestamp
+        .gt("end_time", startDateTime); // Use full timestamp
 
       if (conflictError) {
         return { error: `Error checking conflicts: ${conflictError.message}` };
@@ -269,8 +313,8 @@ export const createTools = (supabase: SupabaseClient<Database>) => {
           student_id: params.studentId,
           facility_id: params.facilityId,
           booking_date: params.bookingDate,
-          start_time: params.startTime,
-          end_time: params.endTime,
+          start_time: startDateTime, // Use full timestamp
+          end_time: endDateTime, // Use full timestamp
           purpose: params.purpose || null,
           status: "pending",
         })
