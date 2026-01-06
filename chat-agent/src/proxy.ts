@@ -35,22 +35,22 @@ export async function proxy(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser();
 
-  // Protect booking routes
- if (
-    (request.nextUrl.pathname.startsWith("/registrations") ||
-      request.nextUrl.pathname.startsWith("/settings")) &&
+  // Protect routes
+  if (
+    (request.nextUrl.pathname.startsWith("/c") ||
+    request.nextUrl.pathname.startsWith("/settings")) &&
     !user
   ) {
     return NextResponse.redirect(new URL("/auth/login", request.url));
   }
 
-  // Redirect authenticated users away from auth pages
+  // Redirect logged-in users away from auth pages
   if (
     (request.nextUrl.pathname.startsWith("/auth/login") ||
-      request.nextUrl.pathname.startsWith("/auth/signup")) &&
+    request.nextUrl.pathname.startsWith("/auth/signup")) &&
     user
   ) {
-    return NextResponse.redirect(new URL("/courses", request.url));
+    return NextResponse.redirect(new URL("/c", request.url));
   }
 
   return response;

@@ -265,7 +265,7 @@ export const createTools = (supabase: SupabaseClient<Database>) => {
       bookingDate: z.string().describe("Date of booking (YYYY-MM-DD)"),
       startTime: z.string().describe("Start time (e.g., '14:00', '2:00 PM', '14:00:00')"),
       endTime: z.string().describe("End time (e.g., '15:00', '3:00 PM', '15:00:00')"),
-      purpose: z.string().optional().describe("Purpose of booking"),
+      purpose: z.string().optional().describe("Purpose of booking (optional)"),
     }),
     execute: async (params) => {
       // Normalize times

@@ -9,6 +9,7 @@ import {
 import { createMessage } from "@/lib/db/messages";
 import { MessagePart } from "@/lib/types";
 import { revalidatePath } from "next/cache";
+import { AVAILABLE_TOOLS } from "@/lib/tool-definitions";
 
 // Allow streaming responses up to 30 seconds
 export const maxDuration = 30;
@@ -128,12 +129,7 @@ export async function POST(req: Request) {
     - You MUST NOT mention this UUID to the user. Only refer to them by their name or Student ID.
     
     You have access to tools that can help students:
-    - Search for courses and get course details
-    - Register for courses
-    - View their course registrations
-    - Search for facilities (study rooms, labs, etc.)
-    - Book facilities for specific time slots
-    - View their facility bookings
+    ${AVAILABLE_TOOLS.map((tool) => `    - ${tool.name}: ${tool.description}`).join("\n")}
     
     When a student asks about courses, facilities, or wants to make a booking/registration, USE THE TOOLS to help them.
     
@@ -143,7 +139,13 @@ export async function POST(req: Request) {
     - Example of BAD response: "Please provide: 1. Date 2. Time 3. Purpose"
     - Example of GOOD response: "I can help with that! verified. What time would you like to book the room for? Also, just let me know the date and a quick reason for the booking."
     - Use Markdown for formatting only when necessary for readability (like broad lists of courses), but keep the conversation flowing.
+    - But you can highlight important words in bold, or use italics for emphasis.
+    - When you are not sure about something, ask the user for clarification.
     - If you encounter an error or a request you can't fulfill, be empathetic and suggest alternatives.
+
+    GENERAL INSTRUCTIONS:
+    - Before performing any action that modifies data, the system must explicitly ask for user confirmation.
+    - The confirmation prompt should clearly state what action will occur and which entity is affected (e.g., “Are you sure you want to register for [Course Name]?” or “Are you sure you want to book [Facility Name]?”).
 
     COURSE REGISTRATION INSTRUCTION:
     If a student provides a course code (e.g., "BIO101", "CS101") or name but the tool requires a UUID (courseId or sectionId), you MUST first use the \`search_courses\` tool to find the course and get its UUID. Do not assume the code is the ID.

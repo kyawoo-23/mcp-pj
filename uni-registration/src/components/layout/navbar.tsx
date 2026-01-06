@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/components/auth/auth-provider";
@@ -19,13 +20,30 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { LogOut, BookOpen, Calendar, Menu } from "lucide-react";
+import { LogOut, BookOpen, Calendar, Menu, Settings } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 
 export function Navbar() {
   const { user, loading } = useAuth();
   const router = useRouter();
   const supabase = createClient();
+  const [fullName, setFullName] = useState<string | null>(null);
+
+  useEffect(() => {
+    async function getProfile() {
+      if (!user) return;
+      const { data } = await supabase
+        .from("profiles")
+        .select("full_name")
+        .eq("id", user.id)
+        .single();
+
+      if (data?.full_name) {
+        setFullName(data.full_name);
+      }
+    }
+    getProfile();
+  }, [user, supabase]);
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
@@ -68,7 +86,7 @@ export function Navbar() {
                   >
                     <Avatar className='h-8 w-8'>
                       <AvatarFallback>
-                        {user.email?.charAt(0).toUpperCase() || "U"}
+                        {fullName?.charAt(0).toUpperCase() || "U"}
                       </AvatarFallback>
                     </Avatar>
                   </Button>
@@ -76,9 +94,16 @@ export function Navbar() {
                 <DropdownMenuContent align='end'>
                   <div className='flex flex-col space-y-1 p-2'>
                     <p className='text-sm font-medium leading-none'>
-                      {user.email}
+                      {fullName || user.email}
                     </p>
                   </div>
+                  <DropdownMenuSeparator />
+                  <Link href='/settings'>
+                    <DropdownMenuItem>
+                      <Settings className='mr-2 h-4 w-4' />
+                      <span>Settings</span>
+                    </DropdownMenuItem>
+                  </Link>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem onClick={handleLogout}>
                     <LogOut className='mr-2 h-4 w-4' />
@@ -113,9 +138,16 @@ export function Navbar() {
               <DropdownMenuContent align='end'>
                 <div className='flex flex-col space-y-1 p-2'>
                   <p className='text-sm font-medium leading-none'>
-                    {user.email}
+                    {fullName || user.email}
                   </p>
                 </div>
+                <DropdownMenuSeparator />
+                <Link href='/settings'>
+                  <DropdownMenuItem>
+                    <Settings className='mr-2 h-4 w-4' />
+                    <span>Settings</span>
+                  </DropdownMenuItem>
+                </Link>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={handleLogout}>
                   <LogOut className='mr-2 h-4 w-4' />
@@ -163,4 +195,3 @@ export function Navbar() {
     </nav>
   );
 }
-

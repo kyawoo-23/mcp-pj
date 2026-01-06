@@ -61,7 +61,8 @@ export function ChatPageClient({
       // refresh to get the auto-generated title
       // We check the ref because onFinish doesn't receive updated messages in this version
       if (messagesRef.current && messagesRef.current.length === 2) {
-        // No-op or handle specific logic if needed
+        // Refresh to validte the new title
+        router.refresh();
       }
     },
   });
@@ -200,7 +201,7 @@ export function ChatPageClient({
 
     if (messages.length === 0 || hasEmpty) {
       setSidebarOpen(false);
-      
+
       // If we are not in an empty chat but one exists, find it and switch
       if (messages.length > 0 && hasEmpty) {
         const emptyConv = conversations.find(
@@ -211,7 +212,7 @@ export function ChatPageClient({
         }
       }
       return;
-        }
+    }
 
     const { data, error } = await createConversationAction();
     if (error) {
@@ -305,9 +306,9 @@ export function ChatPageClient({
       <div className='flex flex-1 flex-col min-h-0 overflow-hidden'>
         <ChatMessageList messages={transformedMessages} />
 
-        <ChatInput 
-          onSend={handleSendMessage} 
-          isLoading={isLoading} 
+        <ChatInput
+          onSend={handleSendMessage}
+          isLoading={isLoading}
           conversationId={activeConversationId}
         />
       </div>

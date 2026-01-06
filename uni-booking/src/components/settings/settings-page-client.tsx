@@ -95,11 +95,10 @@ export function SettingsPageClient() {
   return (
     <div className='flex flex-col h-full'>
       {/* Header */}
-      <div className='flex items-center gap-4 border-b px-4 py-4 md:px-6'>
-        <Button variant='ghost' size='icon' onClick={() => router.push("/")}>
+      <div className='px-4 py-4 container mx-auto'>
+        <Button variant='link' size='icon' onClick={() => router.back()}>
           <ArrowLeft className='h-5 w-5' />
         </Button>
-        <h1 className='text-xl font-semibold'>Settings</h1>
       </div>
 
       {/* Content */}

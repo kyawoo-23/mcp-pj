@@ -36,7 +36,11 @@ export async function proxy(request: NextRequest) {
   } = await supabase.auth.getUser();
 
   // Protect booking routes
-  if (request.nextUrl.pathname.startsWith("/bookings") && !user) {
+  if (
+    (request.nextUrl.pathname.startsWith("/bookings") ||
+      request.nextUrl.pathname.startsWith("/settings")) &&
+    !user
+  ) {
     return NextResponse.redirect(new URL("/auth/login", request.url));
   }
 

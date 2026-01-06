@@ -23,7 +23,7 @@ const signupSchema = z.object({
   email: z.string().email("Invalid email address"),
   password: z.string().min(6, "Password must be at least 6 characters"),
   full_name: z.string().min(2, "Full name is required"),
-  student_id: z.string().optional(),
+  student_id: z.string().min(2, "Student ID is required"),
 });
 
 type SignupFormData = z.infer<typeof signupSchema>;
@@ -130,7 +130,7 @@ export default function SignupPage() {
             </div>
 
             <div className='space-y-2'>
-              <Label htmlFor='student_id'>Student ID (Optional)</Label>
+              <Label htmlFor='student_id'>Student ID</Label>
               <Input
                 id='student_id'
                 type='text'
