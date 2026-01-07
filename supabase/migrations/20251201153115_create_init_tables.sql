@@ -71,8 +71,6 @@ CREATE TABLE course_sections (
   instructor text, -- e.g., Instructor name 
   semester text NOT NULL, -- e.g., "Fall 2024", "Spring 2025"
   year integer NOT NULL,
-  capacity integer NOT NULL DEFAULT 30,
-  enrolled_count integer NOT NULL DEFAULT 0,
   schedule_days text[], -- e.g., ['Monday', 'Wednesday', 'Friday']
   start_time time,
   end_time time,
@@ -105,7 +103,6 @@ CREATE TABLE facilities (
   facility_type facility_type NOT NULL,
   building text,
   room_number text,
-  capacity integer,
   description text,
   amenities text[], -- e.g., ['projector', 'whiteboard', 'wifi']
   is_active boolean NOT NULL DEFAULT true,
@@ -485,67 +482,4 @@ ALTER TABLE facility_bookings
   )
   WHERE (status = 'confirmed');
 
--- Function to update enrolled_count when registrations change
-CREATE OR REPLACE FUNCTION update_section_enrolled_count()
-RETURNS TRIGGER AS $$
-BEGIN
-  IF TG_OP = 'INSERT' AND NEW.status = 'active' THEN
-    UPDATE course_sections
-    SET enrolled_count = enrolled_count + 1
-    WHERE id = NEW.section_id;
-  ELSIF TG_OP = 'UPDATE' THEN
-    IF OLD.status = 'active' AND NEW.status != 'active' THEN
-      UPDATE course_sections
-      SET enrolled_count = enrolled_count - 1
-      WHERE id = NEW.section_id;
-    ELSIF OLD.status != 'active' AND NEW.status = 'active' THEN
-      UPDATE course_sections
-      SET enrolled_count = enrolled_count + 1
-      WHERE id = NEW.section_id;
-    END IF;
-  ELSIF TG_OP = 'DELETE' AND OLD.status = 'active' THEN
-    UPDATE course_sections
-    SET enrolled_count = enrolled_count - 1
-    WHERE id = OLD.section_id;
-  END IF;
-  RETURN COALESCE(NEW, OLD);
-END;
-$$ LANGUAGE plpgsql;
 
--- Function to check capacity before allowing registration
-CREATE OR REPLACE FUNCTION check_section_capacity()
-RETURNS TRIGGER AS $$
-DECLARE
-  section_capacity integer;
-  current_enrolled integer;
-BEGIN
-  IF NEW.status = 'active' THEN
-    SELECT capacity, enrolled_count
-    INTO section_capacity, current_enrolled
-    FROM course_sections
-    WHERE id = NEW.section_id;
-    
-    IF current_enrolled >= section_capacity THEN
-      RAISE EXCEPTION 'Section is at full capacity (enrolled: %, capacity: %)', 
-        current_enrolled, section_capacity;
-    END IF;
-  END IF;
-  RETURN NEW;
-END;
-$$ LANGUAGE plpgsql;
-
--- Trigger to check capacity before insert/update
-CREATE TRIGGER check_capacity_before_registration
-  BEFORE INSERT OR UPDATE ON student_registrations
-  FOR EACH ROW
-  EXECUTE FUNCTION check_section_capacity();
-
--- Trigger to maintain enrolled_count
-CREATE TRIGGER update_enrolled_count_trigger
-  AFTER INSERT OR UPDATE OR DELETE ON student_registrations
-  FOR EACH ROW
-  EXECUTE FUNCTION update_section_enrolled_count();
-
--- Note: Capacity checking is done via a BEFORE trigger. For concurrent
--- registration scenarios, consider using row-level locking or application-level
--- checks with proper transaction handling.

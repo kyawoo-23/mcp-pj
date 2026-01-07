@@ -23,3 +23,9 @@ uni-booking:
 
 uni-registration:
 	cd uni-registration && pnpm run dev
+
+db-reset:
+	supabase db reset
+
+db-gen:
+	supabase gen types typescript --local > supabase/types/database.types.ts

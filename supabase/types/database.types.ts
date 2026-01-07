@@ -68,11 +68,9 @@ export type Database = {
       }
       course_sections: {
         Row: {
-          capacity: number
           course_id: string
           created_at: string
           end_time: string | null
-          enrolled_count: number
           id: string
           instructor: string | null
           room_location: string | null
@@ -84,11 +82,9 @@ export type Database = {
           year: number
         }
         Insert: {
-          capacity?: number
           course_id: string
           created_at?: string
           end_time?: string | null
-          enrolled_count?: number
           id?: string
           instructor?: string | null
           room_location?: string | null
@@ -100,11 +96,9 @@ export type Database = {
           year: number
         }
         Update: {
-          capacity?: number
           course_id?: string
           created_at?: string
           end_time?: string | null
-          enrolled_count?: number
           id?: string
           instructor?: string | null
           room_location?: string | null
@@ -162,7 +156,6 @@ export type Database = {
         Row: {
           amenities: string[] | null
           building: string | null
-          capacity: number | null
           created_at: string
           description: string | null
           facility_type: Database["public"]["Enums"]["facility_type"]
@@ -175,7 +168,6 @@ export type Database = {
         Insert: {
           amenities?: string[] | null
           building?: string | null
-          capacity?: number | null
           created_at?: string
           description?: string | null
           facility_type: Database["public"]["Enums"]["facility_type"]
@@ -188,7 +180,6 @@ export type Database = {
         Update: {
           amenities?: string[] | null
           building?: string | null
-          capacity?: number | null
           created_at?: string
           description?: string | null
           facility_type?: Database["public"]["Enums"]["facility_type"]
@@ -372,6 +363,14 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      changepassword: {
+        Args: {
+          current_id: string
+          current_plain_password: string
+          new_plain_password: string
+        }
+        Returns: string
+      }
       is_admin: { Args: { user_id: string }; Returns: boolean }
     }
     Enums: {

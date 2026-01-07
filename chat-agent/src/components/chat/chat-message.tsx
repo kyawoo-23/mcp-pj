@@ -133,7 +133,6 @@ function ToolResultDisplay({
       name: string;
       building: string;
       room_number: string;
-      capacity: number;
     }>;
     if (facilities.length === 0) {
       return <span className='text-muted-foreground'>No facilities found</span>;
@@ -147,7 +146,7 @@ function ToolResultDisplay({
           {facilities.slice(0, 5).map((facility, i) => (
             <li key={i}>
               <strong>{facility.name}</strong> - {facility.building}, Room{" "}
-              {facility.room_number} (capacity: {facility.capacity})
+              {facility.room_number}
             </li>
           ))}
           {facilities.length > 5 && (

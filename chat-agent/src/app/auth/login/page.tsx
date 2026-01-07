@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { Eye, EyeOff } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -31,6 +32,7 @@ export default function LoginPage() {
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   const supabase = createClient();
 
   const {
@@ -101,12 +103,30 @@ export default function LoginPage() {
 
             <div className='space-y-2'>
               <Label htmlFor='password'>Password</Label>
-              <Input
-                id='password'
-                type='password'
-                placeholder='••••••••'
-                {...register("password")}
-              />
+              <div className='relative'>
+                <Input
+                  id='password'
+                  type={showPassword ? "text" : "password"}
+                  placeholder='••••••••'
+                  {...register("password")}
+                />
+                <Button
+                  type='button'
+                  variant='ghost'
+                  size='sm'
+                  className='absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent'
+                  onClick={() => setShowPassword(!showPassword)}
+                >
+                  {showPassword ? (
+                    <EyeOff className='h-4 w-4 text-muted-foreground' />
+                  ) : (
+                    <Eye className='h-4 w-4 text-muted-foreground' />
+                  )}
+                  <span className='sr-only'>
+                    {showPassword ? "Hide password" : "Show password"}
+                  </span>
+                </Button>
+              </div>
               {errors.password && (
                 <p className='text-sm text-destructive'>
                   {errors.password.message}
@@ -135,4 +155,3 @@ export default function LoginPage() {
     </div>
   );
 }
-

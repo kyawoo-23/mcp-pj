@@ -20,9 +20,6 @@ export function SectionCard({
   isRegistered = false,
   isLoading = false,
 }: SectionCardProps) {
-  const availableSpots = section.capacity - section.enrolled_count;
-  const isFull = availableSpots <= 0;
-
   const formatTime = (time: string | null) => {
     if (!time) return "TBA";
     try {
@@ -39,14 +36,6 @@ export function SectionCard({
           <CardTitle className='text-base sm:text-lg leading-tight'>
             Section {section.section_number}
           </CardTitle>
-          <Badge
-            variant={isFull ? "destructive" : "default"}
-            className='w-fit text-xs sm:text-sm'
-          >
-            {isFull
-              ? "Full"
-              : `${availableSpots} spot${availableSpots !== 1 ? "s" : ""} left`}
-          </Badge>
         </div>
       </CardHeader>
       <CardContent className='px-4 sm:px-6 space-y-3 sm:space-y-4'>
@@ -79,12 +68,6 @@ export function SectionCard({
               <span className='wrap-break-word'>{section.room_location}</span>
             </div>
           )}
-          <div className='flex items-center gap-2'>
-            <Users className='h-3.5 w-3.5 sm:h-4 sm:w-4 text-muted-foreground shrink-0' />
-            <span>
-              {section.enrolled_count} / {section.capacity} enrolled
-            </span>
-          </div>
         </div>
         <div className='flex items-center gap-2 text-[10px] sm:text-xs text-muted-foreground pt-1'>
           <span>
@@ -94,7 +77,7 @@ export function SectionCard({
         {onRegister && (
           <Button
             onClick={() => onRegister(section.id)}
-            disabled={isRegistered || isFull || isLoading}
+            disabled={isRegistered || isLoading}
             className='w-full text-sm sm:text-base h-9 sm:h-10'
             variant={isRegistered ? "secondary" : "default"}
           >
@@ -102,8 +85,6 @@ export function SectionCard({
               ? "Registering..."
               : isRegistered
               ? "Registered"
-              : isFull
-              ? "Full"
               : "Register"}
           </Button>
         )}
