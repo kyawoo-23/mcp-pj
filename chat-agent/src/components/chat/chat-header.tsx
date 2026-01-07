@@ -14,7 +14,6 @@ export function ChatHeader({
   status = "ready",
   onMobileMenuToggle,
 }: ChatHeaderProps) {
-
   return (
     <header className='sticky top-0 z-10 flex h-14 items-center justify-between border-b bg-background/95 px-3 sm:px-4 backdrop-blur supports-backdrop-filter:bg-background/60'>
       <div className='flex items-center gap-1.5 sm:gap-2 min-w-0 flex-1'>
@@ -30,10 +29,10 @@ export function ChatHeader({
 
         <div className='flex items-center gap-1.5 sm:gap-2 min-w-0 overflow-hidden group'>
           <span className='text-xs sm:text-sm font-medium hidden sm:inline'>
-            Research Chat
+            Chat Agent
           </span>
           <span className='hidden sm:inline'>/</span>
-            <span className='text-xs sm:text-sm font-semibold text-muted-foreground truncate'>
+          <span className='text-xs sm:text-sm font-semibold text-muted-foreground truncate'>
             {title}
           </span>
         </div>

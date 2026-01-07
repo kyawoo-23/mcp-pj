@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { ChatLayout } from "@/components/chat/chat-layout";
 import { Sidebar } from "@/components/chat/sidebar";
 import { ChatMessageList } from "@/components/chat/chat-message-list";
-import { ChatInput } from "@/components/chat/chat-input";
+import { ChatInput, ChatInputHandle } from "@/components/chat/chat-input";
 import { ChatHeader } from "@/components/chat/chat-header";
 import { useChat } from "@ai-sdk/react";
 import type {
@@ -45,6 +45,7 @@ export function ChatPageClient({
     string | null
   >(initialActiveConversationId || null);
   const [sidebarOpen, setSidebarOpen] = React.useState(false);
+  const chatInputRef = React.useRef<ChatInputHandle>(null);
 
   const activeConversation = conversations.find(
     (c) => c.id === activeConversationId
@@ -304,9 +305,16 @@ export function ChatPageClient({
       />
 
       <div className='flex flex-1 flex-col min-h-0 overflow-hidden'>
-        <ChatMessageList messages={transformedMessages} />
+        <ChatMessageList
+          messages={transformedMessages}
+          onPromptSelect={(prompt) => {
+            chatInputRef.current?.setInput(prompt);
+            chatInputRef.current?.focus();
+          }}
+        />
 
         <ChatInput
+          ref={chatInputRef}
           onSend={handleSendMessage}
           isLoading={isLoading}
           conversationId={activeConversationId}

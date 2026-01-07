@@ -32,16 +32,18 @@ const passwordSchema = z
 
 type PasswordFormData = z.infer<typeof passwordSchema>;
 
+const profileSchema = z.object({
+  full_name: z.string().min(1, "Full name is required"),
+  student_id: z.string().min(1, "Student ID is required"),
+  email: z.string(),
+});
+
+type ProfileFormData = z.infer<typeof profileSchema>;
+
 export function SettingsPageClient() {
   const router = useRouter();
   const [isLoading, setIsLoading] = React.useState(true);
-
-  const [formData, setFormData] = React.useState({
-    id: "",
-    full_name: "",
-    email: "",
-    student_id: "",
-  });
+  const [userId, setUserId] = React.useState("");
 
   const [isSaving, setIsSaving] = React.useState(false);
   const [isPasswordSaving, setIsPasswordSaving] = React.useState(false);
@@ -49,12 +51,23 @@ export function SettingsPageClient() {
   const [showNewPassword, setShowNewPassword] = React.useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = React.useState(false);
 
+  // Profile Form
   const {
-    register,
-    handleSubmit,
-    reset,
-    setError,
-    formState: { errors },
+    register: registerProfile,
+    handleSubmit: handleProfileSubmit,
+    reset: resetProfile,
+    formState: { errors: profileErrors },
+  } = useForm<ProfileFormData>({
+    resolver: zodResolver(profileSchema),
+  });
+
+  // Password Form
+  const {
+    register: registerPassword,
+    handleSubmit: handlePasswordSubmitForm,
+    reset: resetPassword,
+    setError: setPasswordError,
+    formState: { errors: passwordErrors },
   } = useForm<PasswordFormData>({
     resolver: zodResolver(passwordSchema),
   });
@@ -67,6 +80,7 @@ export function SettingsPageClient() {
       } = await supabase.auth.getUser();
 
       if (user) {
+        setUserId(user.id);
         const { data: profile } = await supabase
           .from("profiles")
           .select("*")
@@ -74,8 +88,7 @@ export function SettingsPageClient() {
           .single();
 
         if (profile) {
-          setFormData({
-            id: user.id,
+          resetProfile({
             full_name: profile.full_name || "",
             email: profile.email || user.email || "",
             student_id: profile.student_id || "",
@@ -86,21 +99,20 @@ export function SettingsPageClient() {
     };
 
     fetchProfile();
-  }, []);
+  }, [resetProfile]);
 
-  const handleProfileSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
+  const onProfileSubmit = async (data: ProfileFormData) => {
     setIsSaving(true);
     try {
       const supabase = createClient();
       const { error } = await supabase
         .from("profiles")
         .update({
-          full_name: formData.full_name,
-          student_id: formData.student_id,
+          full_name: data.full_name,
+          student_id: data.student_id,
           updated_at: new Date().toISOString(),
         })
-        .eq("id", formData.id);
+        .eq("id", userId);
 
       if (error) throw error;
 
@@ -114,7 +126,7 @@ export function SettingsPageClient() {
     }
   };
 
-  const handlePasswordSubmit = async (data: PasswordFormData) => {
+  const onPasswordSubmit = async (data: PasswordFormData) => {
     setIsPasswordSaving(true);
     try {
       const supabase = createClient();
@@ -133,7 +145,7 @@ export function SettingsPageClient() {
       if (error) throw error;
 
       if ((rpcData as unknown as string) === "incorrect") {
-        setError("currentPassword", {
+        setPasswordError("currentPassword", {
           type: "manual",
           message: "Incorrect current password",
         });
@@ -141,7 +153,7 @@ export function SettingsPageClient() {
       }
 
       if ((rpcData as unknown as string) === "success") {
-        reset();
+        resetPassword();
         toast.success("Password updated successfully");
       }
     } catch (error) {
@@ -182,18 +194,25 @@ export function SettingsPageClient() {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <form onSubmit={handleProfileSubmit} className='space-y-6'>
+              <form
+                onSubmit={handleProfileSubmit(onProfileSubmit)}
+                className='space-y-6'
+              >
                 {/* Name */}
                 <div className='space-y-2'>
-                  <Label htmlFor='name'>Full Name</Label>
+                  <Label htmlFor='full_name'>
+                    Full Name <span className='text-destructive'>*</span>
+                  </Label>
                   <Input
-                    id='name'
-                    value={formData.full_name}
-                    onChange={(e) =>
-                      setFormData({ ...formData, full_name: e.target.value })
-                    }
+                    id='full_name'
                     placeholder='Enter your full name'
+                    {...registerProfile("full_name")}
                   />
+                  {profileErrors.full_name && (
+                    <p className='text-sm text-destructive'>
+                      {profileErrors.full_name.message}
+                    </p>
+                  )}
                 </div>
 
                 {/* Email */}
@@ -202,24 +221,28 @@ export function SettingsPageClient() {
                   <Input
                     id='email'
                     type='email'
-                    value={formData.email}
                     disabled
                     className='bg-muted'
+                    {...registerProfile("email")}
                   />
                 </div>
 
                 {/* Student ID */}
                 <div className='space-y-2'>
-                  <Label htmlFor='student_id'>Student ID</Label>
+                  <Label htmlFor='student_id'>
+                    Student ID <span className='text-destructive'>*</span>
+                  </Label>
                   <Input
                     id='student_id'
                     type='text'
-                    value={formData.student_id}
-                    onChange={(e) =>
-                      setFormData({ ...formData, student_id: e.target.value })
-                    }
                     placeholder='Enter Student ID'
+                    {...registerProfile("student_id")}
                   />
+                  {profileErrors.student_id && (
+                    <p className='text-sm text-destructive'>
+                      {profileErrors.student_id.message}
+                    </p>
+                  )}
                 </div>
 
                 <div className='flex justify-end'>
@@ -248,7 +271,7 @@ export function SettingsPageClient() {
             </CardHeader>
             <CardContent>
               <form
-                onSubmit={handleSubmit(handlePasswordSubmit)}
+                onSubmit={handlePasswordSubmitForm(onPasswordSubmit)}
                 className='space-y-6'
               >
                 <div className='space-y-2'>
@@ -258,7 +281,7 @@ export function SettingsPageClient() {
                       id='currentPassword'
                       type={showCurrentPassword ? "text" : "password"}
                       placeholder='Enter current password'
-                      {...register("currentPassword")}
+                      {...registerPassword("currentPassword")}
                     />
                     <Button
                       type='button'
@@ -281,9 +304,9 @@ export function SettingsPageClient() {
                       </span>
                     </Button>
                   </div>
-                  {errors.currentPassword && (
+                  {passwordErrors.currentPassword && (
                     <p className='text-sm text-destructive'>
-                      {errors.currentPassword.message}
+                      {passwordErrors.currentPassword.message}
                     </p>
                   )}
                 </div>
@@ -295,7 +318,7 @@ export function SettingsPageClient() {
                       id='newPassword'
                       type={showNewPassword ? "text" : "password"}
                       placeholder='Enter new password'
-                      {...register("newPassword")}
+                      {...registerPassword("newPassword")}
                     />
                     <Button
                       type='button'
@@ -314,9 +337,9 @@ export function SettingsPageClient() {
                       </span>
                     </Button>
                   </div>
-                  {errors.newPassword && (
+                  {passwordErrors.newPassword && (
                     <p className='text-sm text-destructive'>
-                      {errors.newPassword.message}
+                      {passwordErrors.newPassword.message}
                     </p>
                   )}
                 </div>
@@ -330,7 +353,7 @@ export function SettingsPageClient() {
                       id='confirmNewPassword'
                       type={showConfirmPassword ? "text" : "password"}
                       placeholder='Confirm new password'
-                      {...register("confirmPassword")}
+                      {...registerPassword("confirmPassword")}
                     />
                     <Button
                       type='button'
@@ -353,9 +376,9 @@ export function SettingsPageClient() {
                       </span>
                     </Button>
                   </div>
-                  {errors.confirmPassword && (
+                  {passwordErrors.confirmPassword && (
                     <p className='text-sm text-destructive'>
-                      {errors.confirmPassword.message}
+                      {passwordErrors.confirmPassword.message}
                     </p>
                   )}
                 </div>

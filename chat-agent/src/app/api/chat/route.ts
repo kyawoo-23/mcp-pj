@@ -139,7 +139,7 @@ export async function POST(req: Request) {
     - Example of BAD response: "Please provide: 1. Date 2. Time 3. Purpose"
     - Example of GOOD response: "I can help with that! verified. What time would you like to book the room for? Also, just let me know the date and a quick reason for the booking."
     - Use Markdown for formatting only when necessary for readability (like broad lists of courses), but keep the conversation flowing.
-    - But you can highlight important words in bold, or use italics for emphasis.
+    - But you can highlight important words in bold, or use italics for emphasis when asking for information.
     - When you are not sure about something, ask the user for clarification.
     - If you encounter an error or a request you can't fulfill, be empathetic and suggest alternatives.
 
