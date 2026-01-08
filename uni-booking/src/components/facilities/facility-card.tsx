@@ -1,8 +1,14 @@
 import Link from "next/link";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { MapPin, Users, Building2 } from "lucide-react";
+import { Building2 } from "lucide-react";
 import type { Facility } from "@/lib/types";
 
 interface FacilityCardProps {
@@ -11,13 +17,13 @@ interface FacilityCardProps {
 
 export function FacilityCard({ facility }: FacilityCardProps) {
   return (
-    <Card className="flex flex-col">
+    <Card className='flex flex-col'>
       <CardHeader>
-        <div className="flex items-start justify-between">
-          <div className="space-y-1">
-            <CardTitle className="text-lg">{facility.name}</CardTitle>
-            <CardDescription className="flex items-center gap-2">
-              <Building2 className="h-4 w-4" />
+        <div className='flex items-start justify-between'>
+          <div className='space-y-1'>
+            <CardTitle className='text-lg'>{facility.name}</CardTitle>
+            <CardDescription className='flex items-center gap-2'>
+              <Building2 className='h-4 w-4' />
               {facility.building}
               {facility.room_number && ` - Room ${facility.room_number}`}
             </CardDescription>
@@ -27,30 +33,26 @@ export function FacilityCard({ facility }: FacilityCardProps) {
           </Badge>
         </div>
       </CardHeader>
-      <CardContent className="flex-1 space-y-4">
-        <div className="space-y-2">
-          <div className="flex items-center gap-2 text-sm text-muted-foreground">
-            <Users className="h-4 w-4" />
-            <span>Capacity: {facility.capacity || "N/A"}</span>
-          </div>
+      <CardContent className='flex-1 space-y-4'>
+        <div className='space-y-2'>
           {facility.description && (
-            <p className="text-sm text-muted-foreground line-clamp-2">
+            <p className='text-sm text-muted-foreground line-clamp-2'>
               {facility.description}
             </p>
           )}
           {facility.amenities && facility.amenities.length > 0 && (
-            <div className="flex flex-wrap gap-1">
+            <div className='flex flex-wrap gap-1'>
               {facility.amenities.map((amenity, index) => (
-                <Badge key={index} variant="outline" className="text-xs">
+                <Badge key={index} variant='outline' className='text-xs'>
                   {amenity}
                 </Badge>
               ))}
             </div>
           )}
         </div>
-        <div className="pt-2">
+        <div className='pt-2'>
           <Link href={`/bookings/new?facility_id=${facility.id}`}>
-            <Button className="w-full" disabled={!facility.is_active}>
+            <Button className='w-full' disabled={!facility.is_active}>
               {facility.is_active ? "Book Now" : "Unavailable"}
             </Button>
           </Link>
@@ -59,4 +61,3 @@ export function FacilityCard({ facility }: FacilityCardProps) {
     </Card>
   );
 }
-

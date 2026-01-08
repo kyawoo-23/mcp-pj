@@ -34,13 +34,43 @@ export type Database = {
   }
   public: {
     Tables: {
+      conversations: {
+        Row: {
+          created_at: string
+          id: string
+          title: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          title?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          title?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "conversations_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       course_sections: {
         Row: {
-          capacity: number
           course_id: string
           created_at: string
           end_time: string | null
-          enrolled_count: number
           id: string
           instructor: string | null
           room_location: string | null
@@ -52,11 +82,9 @@ export type Database = {
           year: number
         }
         Insert: {
-          capacity?: number
           course_id: string
           created_at?: string
           end_time?: string | null
-          enrolled_count?: number
           id?: string
           instructor?: string | null
           room_location?: string | null
@@ -68,11 +96,9 @@ export type Database = {
           year: number
         }
         Update: {
-          capacity?: number
           course_id?: string
           created_at?: string
           end_time?: string | null
-          enrolled_count?: number
           id?: string
           instructor?: string | null
           room_location?: string | null
@@ -130,7 +156,6 @@ export type Database = {
         Row: {
           amenities: string[] | null
           building: string | null
-          capacity: number | null
           created_at: string
           description: string | null
           facility_type: Database["public"]["Enums"]["facility_type"]
@@ -143,7 +168,6 @@ export type Database = {
         Insert: {
           amenities?: string[] | null
           building?: string | null
-          capacity?: number | null
           created_at?: string
           description?: string | null
           facility_type: Database["public"]["Enums"]["facility_type"]
@@ -156,7 +180,6 @@ export type Database = {
         Update: {
           amenities?: string[] | null
           building?: string | null
-          capacity?: number | null
           created_at?: string
           description?: string | null
           facility_type?: Database["public"]["Enums"]["facility_type"]
@@ -222,36 +245,65 @@ export type Database = {
           },
         ]
       }
+      messages: {
+        Row: {
+          content: string
+          conversation_id: string
+          created_at: string
+          id: string
+          parts: Json
+          role: Database["public"]["Enums"]["message_role"]
+        }
+        Insert: {
+          content: string
+          conversation_id: string
+          created_at?: string
+          id?: string
+          parts?: Json
+          role: Database["public"]["Enums"]["message_role"]
+        }
+        Update: {
+          content?: string
+          conversation_id?: string
+          created_at?: string
+          id?: string
+          parts?: Json
+          role?: Database["public"]["Enums"]["message_role"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "messages_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "conversations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           created_at: string
-          department: string | null
           email: string | null
           full_name: string | null
           id: string
-          phone: string | null
           role: Database["public"]["Enums"]["user_role"]
           student_id: string | null
           updated_at: string
         }
         Insert: {
           created_at?: string
-          department?: string | null
           email?: string | null
           full_name?: string | null
           id: string
-          phone?: string | null
           role?: Database["public"]["Enums"]["user_role"]
           student_id?: string | null
           updated_at?: string
         }
         Update: {
           created_at?: string
-          department?: string | null
           email?: string | null
           full_name?: string | null
           id?: string
-          phone?: string | null
           role?: Database["public"]["Enums"]["user_role"]
           student_id?: string | null
           updated_at?: string
@@ -311,7 +363,15 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      changepassword: {
+        Args: {
+          current_id: string
+          current_plain_password: string
+          new_plain_password: string
+        }
+        Returns: string
+      }
+      is_admin: { Args: { user_id: string }; Returns: boolean }
     }
     Enums: {
       booking_status: "pending" | "confirmed" | "cancelled" | "completed"
@@ -323,6 +383,7 @@ export type Database = {
         | "computer_lab"
         | "library_space"
         | "other"
+      message_role: "user" | "assistant" | "system"
       registration_status: "active" | "dropped" | "completed" | "waitlisted"
       user_role: "student" | "admin"
     }
@@ -465,6 +526,7 @@ export const Constants = {
         "library_space",
         "other",
       ],
+      message_role: ["user", "assistant", "system"],
       registration_status: ["active", "dropped", "completed", "waitlisted"],
       user_role: ["student", "admin"],
     },
