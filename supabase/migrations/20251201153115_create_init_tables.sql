@@ -507,3 +507,46 @@ BEGIN
 
 END;
 $$;
+
+-- Function to handle new user creation
+CREATE OR REPLACE FUNCTION public.handle_new_user()
+RETURNS TRIGGER
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+DECLARE
+  v_role text;
+BEGIN
+  v_role := COALESCE(NEW.raw_user_meta_data->>'role', 'student');
+
+  INSERT INTO public.profiles (id, email, full_name, role, student_id)
+  VALUES (
+    NEW.id,
+    NEW.email,
+    NEW.raw_user_meta_data->>'full_name',
+    CASE
+      WHEN v_role = 'admin' THEN 'admin'::user_role
+      ELSE 'student'::user_role
+    END,
+    NEW.raw_user_meta_data->>'student_id'
+  )
+  ON CONFLICT (id) DO NOTHING;
+
+  RETURN NEW;
+END;
+$$;
+
+-- Trigger the function when a user is created and already verified (e.g. from admin API)
+CREATE TRIGGER on_auth_user_created
+  AFTER INSERT ON auth.users
+  FOR EACH ROW
+  WHEN (NEW.email_confirmed_at IS NOT NULL)
+  EXECUTE PROCEDURE public.handle_new_user();
+
+-- Trigger the function when a user is verified (e.g. clicking email link)
+CREATE TRIGGER on_auth_user_verified
+  AFTER UPDATE ON auth.users
+  FOR EACH ROW
+  WHEN (OLD.email_confirmed_at IS NULL AND NEW.email_confirmed_at IS NOT NULL)
+  EXECUTE PROCEDURE public.handle_new_user();
