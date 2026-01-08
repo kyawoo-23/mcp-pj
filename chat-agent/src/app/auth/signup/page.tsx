@@ -76,8 +76,8 @@ export default function SignupPage() {
         throw new Error("Failed to create user");
       }
 
-      toast.success("Account created successfully");
-      router.push("/");
+      toast.success("Account created successfully. Verification email sent.");
+      router.push("/auth/login");
       router.refresh();
     } catch (err: unknown) {
       if (err instanceof Error) {

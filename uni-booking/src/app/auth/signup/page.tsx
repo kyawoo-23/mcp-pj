@@ -19,6 +19,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
+import { toast } from "sonner";
 
 const signupSchema = z
   .object({
@@ -75,7 +76,8 @@ export default function SignupPage() {
         throw new Error("Failed to create user");
       }
 
-      router.push("/facilities");
+      toast.success("Account created successfully. Verification email sent.");
+      router.push("/auth/login");
       router.refresh();
     } catch (err: unknown) {
       if (err instanceof Error) {
