@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   DropdownMenu,
@@ -59,9 +60,11 @@ export function Sidebar({
   defaultCollapsed = false,
 }: SidebarProps) {
   const router = useRouter();
-  const [internalCollapsed, setInternalCollapsed] = React.useState(defaultCollapsed);
+  const [internalCollapsed, setInternalCollapsed] =
+    React.useState(defaultCollapsed);
   const [showLogoutDialog, setShowLogoutDialog] = React.useState(false);
-  const [editingConversation, setEditingConversation] = React.useState<Conversation | null>(null);
+  const [editingConversation, setEditingConversation] =
+    React.useState<Conversation | null>(null);
 
   // When in Sheet, always show expanded
   const collapsed = isInSheet
@@ -95,13 +98,16 @@ export function Sidebar({
   };
 
   const [profileName, setProfileName] = React.useState<string>("User");
+  const [email, setEmail] = React.useState<string>("");
 
   React.useEffect(() => {
     const fetchProfile = async () => {
       const { createClient } = await import("@/lib/supabase/client");
       const supabase = createClient();
-      
-      const { data: { user } } = await supabase.auth.getUser();
+
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
       if (!user) return;
 
       const { data: profile } = await supabase
@@ -109,14 +115,11 @@ export function Sidebar({
         .select("full_name, email")
         .eq("id", user.id)
         .single();
-        
-      if (profile?.full_name) {
-        setProfileName(profile.full_name);
-      } else if (profile?.email) {
-        setProfileName(profile.email);
-      }
+
+      setProfileName(profile?.full_name || "User");
+      setEmail(profile?.email || "");
     };
-    
+
     fetchProfile();
   }, []);
 
@@ -194,20 +197,24 @@ export function Sidebar({
             {conversations.map((conversation) => (
               <div
                 key={conversation.id}
-                className="group relative flex items-center"
+                className='group relative flex items-center'
               >
                 <Button
                   variant='ghost'
                   onClick={() => onSelectConversation(conversation.id)}
                   className={cn(
                     "h-9 w-full overflow-hidden text-ellipsis whitespace-nowrap px-2 text-sm font-normal",
-                    collapsed && !isInSheet ? "justify-center" : "justify-start",
+                    collapsed && !isInSheet
+                      ? "justify-center"
+                      : "justify-start",
                     activeConversationId === conversation.id
                       ? "bg-sidebar-accent text-sidebar-accent-foreground"
                       : "text-muted-foreground hover:bg-sidebar-accent/50 hover:text-sidebar-foreground",
                     (!collapsed || isInSheet) && "pr-8"
                   )}
-                  title={collapsed && !isInSheet ? conversation.title : undefined}
+                  title={
+                    collapsed && !isInSheet ? conversation.title : undefined
+                  }
                 >
                   <MessageSquare
                     className={cn(
@@ -223,25 +230,26 @@ export function Sidebar({
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
                       <Button
-                        variant="ghost"
-                        size="icon"
+                        variant='ghost'
+                        size='icon'
                         className={cn(
                           "absolute right-1 top-1/2 -translate-y-1/2 h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity focus:opacity-100",
-                          activeConversationId === conversation.id && "bg-sidebar-accent"
+                          activeConversationId === conversation.id &&
+                            "bg-sidebar-accent"
                         )}
                       >
-                        <MoreHorizontal className="h-3 w-3 text-muted-foreground" />
-                        <span className="sr-only">More options</span>
+                        <MoreHorizontal className='h-3 w-3 text-muted-foreground' />
+                        <span className='sr-only'>More options</span>
                       </Button>
                     </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
+                    <DropdownMenuContent align='end'>
                       <DropdownMenuItem
                         onClick={(e) => {
                           e.stopPropagation();
                           setEditingConversation(conversation);
                         }}
                       >
-                        <Pencil className="h-4 w-4 mr-2" />
+                        <Pencil className='h-4 w-4 mr-2' />
                         Rename
                       </DropdownMenuItem>
                     </DropdownMenuContent>
@@ -275,10 +283,21 @@ export function Sidebar({
                   collapsed && !isInSheet ? "justify-center" : "gap-2"
                 )}
               >
-                <div className='h-6 w-6 rounded-full bg-sidebar-primary/20 shrink-0' />
+                <Button
+                  variant='ghost'
+                  className='relative h-8 w-8 rounded-full'
+                >
+                  <Avatar className='h-8 w-8'>
+                    <AvatarFallback>
+                      {profileName?.charAt(0).toUpperCase() || "U"}
+                    </AvatarFallback>
+                  </Avatar>
+                </Button>
                 {(!collapsed || isInSheet) && (
                   <div className='flex flex-col min-w-0'>
-                    <span className='text-xs font-medium truncate'>{profileName}</span>
+                    <span className='text-xs font-medium truncate'>
+                      {email}
+                    </span>
                   </div>
                 )}
               </div>

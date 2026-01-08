@@ -1,5 +1,6 @@
 "use client";
 
+import { Eye, EyeOff } from "lucide-react";
 import * as z from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -35,6 +36,8 @@ type FormData = z.infer<typeof FormSchema>;
 
 export default function ResetPassword() {
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const router = useRouter();
   const supabase = createClient();
 
@@ -82,13 +85,28 @@ export default function ResetPassword() {
           <form onSubmit={handleSubmit(onSubmit)} className='space-y-4'>
             <div className='space-y-2'>
               <Label htmlFor='password'>New Password</Label>
-              <Input
-                id='password'
-                type='password'
-                placeholder='Min 6 characters'
-                disabled={loading}
-                {...register("password")}
-              />
+              <div className='relative'>
+                <Input
+                  id='password'
+                  type={showPassword ? "text" : "password"}
+                  placeholder='Min 6 characters'
+                  disabled={loading}
+                  {...register("password")}
+                />
+                <Button
+                  type='button'
+                  variant='ghost'
+                  size='sm'
+                  className='absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent'
+                  onClick={() => setShowPassword(!showPassword)}
+                >
+                  {showPassword ? (
+                    <EyeOff className='h-4 w-4' />
+                  ) : (
+                    <Eye className='h-4 w-4' />
+                  )}
+                </Button>
+              </div>
               {errors.password && (
                 <p className='text-sm text-destructive'>
                   {errors.password.message}
@@ -97,13 +115,28 @@ export default function ResetPassword() {
             </div>
             <div className='space-y-2'>
               <Label htmlFor='confirmPassword'>Confirm Password</Label>
-              <Input
-                id='confirmPassword'
-                type='password'
-                placeholder='Min 6 characters'
-                disabled={loading}
-                {...register("confirmPassword")}
-              />
+              <div className='relative'>
+                <Input
+                  id='confirmPassword'
+                  type={showConfirmPassword ? "text" : "password"}
+                  placeholder='Min 6 characters'
+                  disabled={loading}
+                  {...register("confirmPassword")}
+                />
+                <Button
+                  type='button'
+                  variant='ghost'
+                  size='sm'
+                  className='absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent'
+                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                >
+                  {showConfirmPassword ? (
+                    <EyeOff className='h-4 w-4' />
+                  ) : (
+                    <Eye className='h-4 w-4' />
+                  )}
+                </Button>
+              </div>
               {errors.confirmPassword && (
                 <p className='text-sm text-destructive'>
                   {errors.confirmPassword.message}

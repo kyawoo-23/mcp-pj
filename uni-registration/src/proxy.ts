@@ -36,7 +36,7 @@ export async function proxy(request: NextRequest) {
   } = await supabase.auth.getUser();
 
   // Protect booking routes
- if (
+  if (
     (request.nextUrl.pathname.startsWith("/registrations") ||
       request.nextUrl.pathname.startsWith("/settings")) &&
     !user
@@ -45,11 +45,7 @@ export async function proxy(request: NextRequest) {
   }
 
   // Redirect authenticated users away from auth pages
-  if (
-    (request.nextUrl.pathname.startsWith("/auth/login") ||
-      request.nextUrl.pathname.startsWith("/auth/signup")) &&
-    user
-  ) {
+  if (request.nextUrl.pathname.startsWith("/auth/") && user) {
     return NextResponse.redirect(new URL("/courses", request.url));
   }
 
