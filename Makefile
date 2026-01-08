@@ -24,6 +24,7 @@ uni-booking:
 uni-registration:
 	cd uni-registration && pnpm run dev
 
+# Database commands
 db-reset:
 	supabase db reset
 

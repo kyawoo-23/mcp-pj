@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Eye, EyeOff } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
+import { Routes } from "@/lib/constants";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -102,7 +103,15 @@ export default function LoginPage() {
             </div>
 
             <div className='space-y-2'>
-              <Label htmlFor='password'>Password</Label>
+              <div className='flex items-center justify-between'>
+                <Label htmlFor='password'>Password</Label>
+                <Link
+                  href={Routes.passwordRecovery}
+                  className='text-sm text-primary hover:underline'
+                >
+                  Forgot password?
+                </Link>
+              </div>
               <div className='relative'>
                 <Input
                   id='password'

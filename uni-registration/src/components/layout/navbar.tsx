@@ -19,6 +19,14 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { LogOut, BookOpen, Calendar, Menu, Settings } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
@@ -28,6 +36,7 @@ export function Navbar() {
   const router = useRouter();
   const supabase = createClient();
   const [fullName, setFullName] = useState<string | null>(null);
+  const [showLogoutDialog, setShowLogoutDialog] = useState(false);
 
   useEffect(() => {
     async function getProfile() {
@@ -46,9 +55,15 @@ export function Navbar() {
   }, [user, supabase]);
 
   const handleLogout = async () => {
-    await supabase.auth.signOut();
-    router.push("/auth/login");
-    router.refresh();
+    try {
+      await supabase.auth.signOut();
+      router.push("/auth/login");
+      router.refresh();
+    } catch (error) {
+      console.error("Error logging out:", error);
+    } finally {
+      setShowLogoutDialog(false);
+    }
   };
 
   return (
@@ -105,7 +120,7 @@ export function Navbar() {
                     </DropdownMenuItem>
                   </Link>
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={handleLogout}>
+                  <DropdownMenuItem onClick={() => setShowLogoutDialog(true)}>
                     <LogOut className='mr-2 h-4 w-4' />
                     <span>Log out</span>
                   </DropdownMenuItem>
@@ -149,7 +164,7 @@ export function Navbar() {
                   </DropdownMenuItem>
                 </Link>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={handleLogout}>
+                <DropdownMenuItem onClick={() => setShowLogoutDialog(true)}>
                   <LogOut className='mr-2 h-4 w-4' />
                   <span>Log out</span>
                 </DropdownMenuItem>
@@ -192,6 +207,29 @@ export function Navbar() {
           </Sheet>
         </div>
       </div>
+
+      <Dialog open={showLogoutDialog} onOpenChange={setShowLogoutDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Confirm Logout</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to logout? You will need to sign in again to
+              access your account.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button
+              variant='outline'
+              onClick={() => setShowLogoutDialog(false)}
+            >
+              Cancel
+            </Button>
+            <Button variant='destructive' onClick={handleLogout}>
+              Logout
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </nav>
   );
 }

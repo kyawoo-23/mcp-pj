@@ -1,0 +1,14 @@
+export const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
+
+export const Routes = {
+  home: "/",
+  login: "/auth/login",
+  signup: "/auth/signup",
+  passwordReset: "/auth/reset-password",
+  passwordRecovery: "/auth/password-recovery",
+  courses: "/courses",
+};
+
+export const APIRoutes = {
+  passwordRecovery: "/api/reset-password",
+};
