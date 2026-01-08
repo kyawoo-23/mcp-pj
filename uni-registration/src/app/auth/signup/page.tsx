@@ -60,6 +60,13 @@ export default function SignupPage() {
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email: data.email,
         password: data.password,
+        options: {
+          data: {
+            full_name: data.full_name,
+            student_id: data.student_id || null,
+            role: "student",
+          },
+        },
       });
 
       if (authError) throw authError;
@@ -67,16 +74,6 @@ export default function SignupPage() {
       if (!authData.user) {
         throw new Error("Failed to create user");
       }
-
-      // Create profile
-      const { error: profileError } = await supabase.from("profiles").insert({
-        id: authData.user.id,
-        full_name: data.full_name,
-        student_id: data.student_id || null,
-        role: "student",
-      });
-
-      if (profileError) throw profileError;
 
       router.push("/courses");
       router.refresh();
