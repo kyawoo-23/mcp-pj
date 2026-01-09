@@ -45,6 +45,8 @@ interface SidebarProps {
   isInSheet?: boolean;
   isNewChatDisabled?: boolean;
   defaultCollapsed?: boolean;
+  isCreatingNewChat?: boolean;
+  userProfile?: { full_name: string; email: string };
 }
 
 export function Sidebar({
@@ -57,7 +59,9 @@ export function Sidebar({
   onCollapsedChange,
   isInSheet = false,
   isNewChatDisabled,
+  isCreatingNewChat,
   defaultCollapsed = false,
+  userProfile,
 }: SidebarProps) {
   const router = useRouter();
   const [internalCollapsed, setInternalCollapsed] =
@@ -97,31 +101,9 @@ export function Sidebar({
     }
   };
 
-  const [profileName, setProfileName] = React.useState<string>("User");
-  const [email, setEmail] = React.useState<string>("");
-
-  React.useEffect(() => {
-    const fetchProfile = async () => {
-      const { createClient } = await import("@/lib/supabase/client");
-      const supabase = createClient();
-
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-      if (!user) return;
-
-      const { data: profile } = await supabase
-        .from("profiles")
-        .select("full_name, email")
-        .eq("id", user.id)
-        .single();
-
-      setProfileName(profile?.full_name || "User");
-      setEmail(profile?.email || "");
-    };
-
-    fetchProfile();
-  }, []);
+  // Use profile from server (passed as prop)
+  const profileName = userProfile?.full_name || "User";
+  const email = userProfile?.email || "";
 
   return (
     <div
@@ -168,19 +150,26 @@ export function Sidebar({
       >
         <Button
           onClick={onNewChat}
-          disabled={isNewChatDisabled}
+          disabled={isNewChatDisabled || isCreatingNewChat}
           variant='outline'
           className={cn(
             "w-full border-sidebar-border bg-sidebar-accent/50 text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground text-sm",
             collapsed && !isInSheet
               ? "justify-center px-0"
-              : "justify-start gap-2"
+              : "justify-start gap-2",
+            isCreatingNewChat ? "cursor-not-allowed" : "cursor-pointer"
           )}
           title={collapsed && !isInSheet ? "New Chat" : undefined}
         >
-          <Plus className='h-4 w-4 shrink-0' />
+          {isCreatingNewChat ? (
+            <div className='h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent' />
+          ) : (
+            <Plus className='h-4 w-4 shrink-0' />
+          )}
           {(!collapsed || isInSheet) && (
-            <span className='truncate'>New Chat</span>
+            <span className='truncate'>
+              {isCreatingNewChat ? "Creating..." : "New Chat"}
+            </span>
           )}
         </Button>
       </div>

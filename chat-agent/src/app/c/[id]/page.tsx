@@ -18,7 +18,7 @@ export default async function ChatPage({ params }: ChatPageProps) {
   const { id } = await params;
   const cookieStore = await cookies();
   const defaultCollapsed = cookieStore.get("sidebar:state")?.value === "true";
-  
+
   const supabase = await createClient();
   const {
     data: { user },
@@ -28,8 +28,16 @@ export default async function ChatPage({ params }: ChatPageProps) {
     redirect("/auth/login");
   }
 
-  // Fetch conversations server-side for the sidebar
-  const conversations = await getConversations(user.id);
+  // Fetch conversations and profile server-side (eliminates client-side fetches)
+  const [conversations, profileResult] = await Promise.all([
+    getConversations(user.id),
+    supabase
+      .from("profiles")
+      .select("full_name, email")
+      .eq("id", user.id)
+      .single(),
+  ]);
+  const profile = profileResult.data;
 
   let initialMessages: MessageRow[] = [];
   let activeConversationId: string | null = id;
@@ -39,22 +47,25 @@ export default async function ChatPage({ params }: ChatPageProps) {
   } else {
     // Validate that the conversation belongs to the user and exists
     // The sidebar list already has the user's conversations, we can check there first to avoid a DB call
-    // BUT, the sidebar list might not contain ALL conversations if we paginate later. 
+    // BUT, the sidebar list might not contain ALL conversations if we paginate later.
     // For now, let's query the specific conversation safely.
-    
+
     // Check if the ID looks like a UUID to avoid DB errors
-    const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
-    
+    const isUuid =
+      /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(
+        id
+      );
+
     if (!isUuid) {
-        // If it's not 'new' and not a UUID, it's invalid
-        notFound();
+      // If it's not 'new' and not a UUID, it's invalid
+      notFound();
     }
 
     const result = await getConversationWithMessages(id, user.id);
-    
+
     if (!result) {
       // Conversation not found or doesn't belong to user
-      // Redirect to new chat or 404? 
+      // Redirect to new chat or 404?
       // Let's redirect to /c/new for better UX if a stale link is clicked
       redirect("/c/new");
     }
@@ -70,6 +81,11 @@ export default async function ChatPage({ params }: ChatPageProps) {
       initialActiveConversationId={activeConversationId}
       initialMessages={initialMessages}
       defaultCollapsed={defaultCollapsed}
+      userProfile={
+        profile
+          ? { full_name: profile.full_name || "", email: profile.email || "" }
+          : undefined
+      }
     />
   );
 }

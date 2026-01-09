@@ -30,6 +30,7 @@ interface ChatPageClientProps {
   initialActiveConversationId?: string | null;
   initialMessages?: MessageRow[];
   defaultCollapsed?: boolean;
+  userProfile?: { full_name: string; email: string };
 }
 
 export function ChatPageClient({
@@ -37,6 +38,7 @@ export function ChatPageClient({
   initialActiveConversationId,
   initialMessages = [],
   defaultCollapsed = false,
+  userProfile,
 }: ChatPageClientProps) {
   const router = useRouter();
   const [conversations, setConversations] =
@@ -45,6 +47,7 @@ export function ChatPageClient({
     string | null
   >(initialActiveConversationId || null);
   const [sidebarOpen, setSidebarOpen] = React.useState(false);
+  const [isCreatingNewChat, setIsCreatingNewChat] = React.useState(false);
   const chatInputRef = React.useRef<ChatInputHandle>(null);
 
   const activeConversation = conversations.find(
@@ -150,9 +153,18 @@ export function ChatPageClient({
   );
 
   // Load messages when conversation changes
+  // Skip if we already have initial messages for this conversation
   React.useEffect(() => {
     if (!activeConversationId || activeConversationId === "new") {
       setMessages([]);
+      return;
+    }
+
+    // Skip fetch if we already have initial messages for this conversation
+    if (
+      activeConversationId === initialActiveConversationId &&
+      initialMessages.length > 0
+    ) {
       return;
     }
 
@@ -215,17 +227,21 @@ export function ChatPageClient({
       return;
     }
 
-    const { data, error } = await createConversationAction();
-    if (error) {
-      console.error("Failed to create new conversation:", error);
-      // Fallback: just set to "new" and let the API create it
-      setActiveConversationId("new");
-      setMessages([]);
-    } else if (data) {
-      router.push(`/c/${data.id}`);
-      router.refresh();
+    setIsCreatingNewChat(true);
+    try {
+      const { data, error } = await createConversationAction();
+      if (error) {
+        console.error("Failed to create new conversation:", error);
+        // Fallback: just set to "new" and let the API create it
+        setActiveConversationId("new");
+        setMessages([]);
+      } else if (data) {
+        router.push(`/c/${data.id}`);
+      }
+    } finally {
+      setIsCreatingNewChat(false);
+      setSidebarOpen(false);
     }
-    setSidebarOpen(false);
   };
 
   const handleSelectConversation = (id: string) => {
@@ -294,7 +310,9 @@ export function ChatPageClient({
           onSelectConversation={handleSelectConversation}
           onNewChat={handleNewChat}
           isNewChatDisabled={messages.length === 0 || hasEmptyConversation}
+          isCreatingNewChat={isCreatingNewChat}
           defaultCollapsed={defaultCollapsed}
+          userProfile={userProfile}
         />
       }
     >
