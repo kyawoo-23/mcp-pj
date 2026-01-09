@@ -45,7 +45,11 @@ export async function proxy(request: NextRequest) {
   }
 
   // Redirect authenticated users away from auth pages
-  if (request.nextUrl.pathname.startsWith("/auth/") && user) {
+  if (
+    request.nextUrl.pathname.startsWith("/auth/") &&
+    !request.nextUrl.pathname.startsWith("/auth/reset-password") &&
+    user
+  ) {
     return NextResponse.redirect(new URL("/courses", request.url));
   }
 

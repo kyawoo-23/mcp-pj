@@ -44,8 +44,12 @@ export async function proxy(request: NextRequest) {
     return NextResponse.redirect(new URL("/auth/login", request.url));
   }
 
-  // Redirect logged-in users away from auth pages
-  if (request.nextUrl.pathname.startsWith("/auth/") && user) {
+  // Redirect logged-in users away from auth pages, except for reset-password
+  if (
+    request.nextUrl.pathname.startsWith("/auth/") &&
+    !request.nextUrl.pathname.startsWith("/auth/reset-password") &&
+    user
+  ) {
     return NextResponse.redirect(new URL("/c", request.url));
   }
 
