@@ -329,6 +329,7 @@ export function ChatPageClient({
             chatInputRef.current?.setInput(prompt);
             chatInputRef.current?.focus();
           }}
+          isLoading={isLoading}
         />
 
         <ChatInput

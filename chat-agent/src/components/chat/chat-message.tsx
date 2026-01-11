@@ -1,15 +1,8 @@
 import { cn } from "@/lib/utils";
 import { UserAvatar, AssistantAvatar, SystemIcon } from "./icons/message-icons";
 import ReactMarkdown from "react-markdown";
-import {
-  Search,
-  BookOpen,
-  Calendar,
-  Building2,
-  CheckCircle,
-  AlertCircle,
-  Loader2,
-} from "lucide-react";
+import { Search, CheckCircle, AlertCircle, Loader2 } from "lucide-react";
+import { TOOL_DEFINITIONS } from "@/lib/tool-definitions";
 import type {
   TextPart,
   ToolInvocationPart,
@@ -21,31 +14,11 @@ interface ChatMessageProps {
   showTimestamp?: boolean;
 }
 
-// Tool icon mapping
-const toolIcons: Record<string, React.ReactNode> = {
-  search_courses: <Search className='h-4 w-4' />,
-  get_course_details: <BookOpen className='h-4 w-4' />,
-  register_course: <CheckCircle className='h-4 w-4' />,
-  get_student_registrations: <Calendar className='h-4 w-4' />,
-  search_facilities: <Building2 className='h-4 w-4' />,
-  book_facility: <Calendar className='h-4 w-4' />,
-  get_student_bookings: <Calendar className='h-4 w-4' />,
-};
-
-// Human-readable tool names
-const toolDisplayNames: Record<string, string> = {
-  search_courses: "Searching courses",
-  get_course_details: "Getting course details",
-  register_course: "Registering for course",
-  get_student_registrations: "Fetching your registrations",
-  search_facilities: "Searching facilities",
-  book_facility: "Booking facility",
-  get_student_bookings: "Fetching your bookings",
-};
-
 function ToolInvocation({ part }: { part: ToolInvocationPart }) {
-  const icon = toolIcons[part.toolName] || <Search className='h-4 w-4' />;
-  const displayName = toolDisplayNames[part.toolName] || part.toolName;
+  const toolDef = TOOL_DEFINITIONS[part.toolName];
+  const IconComponent = toolDef?.icon || Search;
+  const icon = <IconComponent className='h-4 w-4' />;
+  const displayName = toolDef?.displayName || part.toolName;
   const isLoading =
     part.state === "input-streaming" || part.state === "input-available";
   const hasResult = part.state === "output-available";

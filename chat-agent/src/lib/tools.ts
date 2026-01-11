@@ -359,6 +359,49 @@ export const createTools = (supabase: SupabaseClient<Database>) => {
     },
   });
 
+  const cancelBooking = tool({
+    description: TOOL_DEFINITIONS.cancel_booking.description,
+    inputSchema: z.object({
+      bookingId: z.string().describe("The UUID of the booking"),
+      studentId: z.string().describe("The UUID of the student"),
+    }),
+    execute: async (params) => {
+      // Check if booking exists and belongs to student
+      const { data: existing, error: checkError } = await supabase
+        .from("facility_bookings")
+        .select("*")
+        .eq("id", params.bookingId)
+        .eq("student_id", params.studentId)
+        .single();
+
+      if (checkError || !existing) {
+        return { error: "Booking not found or does not belong to this student." };
+      }
+
+      if (existing.status === "cancelled") {
+        return { message: "Booking is already cancelled." };
+      }
+
+      const { data, error } = await supabase
+        .from("facility_bookings")
+        .update({
+          status: "cancelled",
+        })
+        .eq("id", params.bookingId)
+        .select()
+        .single();
+
+      if (error) {
+        return { error: `Error cancelling booking: ${error.message}` };
+      }
+
+      return {
+        booking: data,
+        message: "Successfully cancelled booking",
+      };
+    },
+  });
+
   return {
     search_courses: searchCourses,
     get_course_details: getCourseDetails,
@@ -369,5 +412,6 @@ export const createTools = (supabase: SupabaseClient<Database>) => {
     search_facilities: searchFacilities,
     book_facility: bookFacility,
     get_student_bookings: getStudentBookings,
+    cancel_booking: cancelBooking,
   };
 };

@@ -3,15 +3,19 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { ChatMessage } from "./chat-message";
 import { WelcomeMessage } from "./welcome-message";
 import type { ChatMessageData } from "@/lib/types";
+import { AssistantAvatar } from "./icons/message-icons";
+import { Skeleton } from "@/components/ui/skeleton";
 
 interface ChatMessageListProps {
   messages: ChatMessageData[];
   onPromptSelect: (prompt: string) => void;
+  isLoading?: boolean;
 }
 
 export function ChatMessageList({
   messages,
   onPromptSelect,
+  isLoading,
 }: ChatMessageListProps) {
   const bottomRef = React.useRef<HTMLDivElement>(null);
 
@@ -20,11 +24,14 @@ export function ChatMessageList({
     if (bottomRef.current) {
       bottomRef.current.scrollIntoView({ behavior: "smooth" });
     }
-  }, [messages]);
+  }, [messages, isLoading]);
 
   if (messages.length === 0) {
     return <WelcomeMessage onPromptSelect={onPromptSelect} />;
   }
+
+  const isWaitingForResponse =
+    isLoading && messages[messages.length - 1]?.role === "user";
 
   return (
     <div className='flex-1 min-h-0 w-full overflow-hidden'>
@@ -33,6 +40,24 @@ export function ChatMessageList({
           {messages.map((message) => (
             <ChatMessage key={message.id} message={message} />
           ))}
+
+          {isWaitingForResponse && (
+            <div className='flex w-full gap-4 py-4 px-2 md:px-4 flex-row'>
+              <div className='shrink-0 pt-1'>
+                <AssistantAvatar />
+              </div>
+
+              <div className='flex w-full max-w-[80%] flex-col gap-2 items-start'>
+                <div className='rounded-2xl px-4 py-3 text-sm shadow-sm bg-muted/60 text-foreground border border-border/50 rounded-tl-sm w-full max-w-[320px]'>
+                  <div className='flex flex-col gap-2 w-full'>
+                    <Skeleton className='h-4 w-full bg-black/10 dark:bg-white/10' />
+                    <Skeleton className='h-4 w-2/3 bg-black/10 dark:bg-white/10' />
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
           <div ref={bottomRef} className='h-4' />
         </div>
       </ScrollArea>
