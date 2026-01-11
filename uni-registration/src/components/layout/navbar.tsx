@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/components/auth/auth-provider";
 import { Button } from "@/components/ui/button";
@@ -70,7 +71,13 @@ export function Navbar() {
     <nav className='border-b sticky top-0 z-50 bg-background'>
       <div className='container mx-auto flex h-16 items-center justify-between px-4'>
         <Link href='/' className='flex items-center gap-2'>
-          <BookOpen className='h-5 w-5 sm:h-6 sm:w-6' />
+          <Image
+            src='/logo.svg'
+            alt='Uni Registration'
+            width={40}
+            height={40}
+            className='h-5 w-5 sm:h-6 sm:w-6 md:h-10 md:w-10'
+          />
           <span className='text-lg sm:text-xl font-bold'>Uni Registration</span>
         </Link>
 

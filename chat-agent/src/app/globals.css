@@ -45,71 +45,98 @@
 
 :root {
   --radius: 0.625rem;
-  --background: #eeeeee;
-  --foreground: #222831;
+
+  --background: #f8f5f6; /* Very subtle warm tint */
+  --foreground: #1f2933;
+
   --card: #ffffff;
-  --card-foreground: #222831;
+  --card-foreground: #1f2933;
+
   --popover: #ffffff;
-  --popover-foreground: #222831;
-  --primary: #76abae;
-  --primary-foreground: #222831;
-  --secondary: #d1d5db;
-  --secondary-foreground: #222831;
-  --muted: #d1d5db;
-  --muted-foreground: #4b5563;
-  --accent: #d1d5db;
-  --accent-foreground: #222831;
+  --popover-foreground: #1f2933;
+
+  /* PRIMARY: Chulalongkorn Pink (Vibrant but legible) */
+  --primary: #df5a87;
+  --primary-foreground: #ffffff;
+
+  /* SECONDARY: Soft Gray/White for contrast */
+  --secondary: #eff1f5;
+  --secondary-foreground: #1f2933;
+
+  --muted: #e4e7ec;
+  --muted-foreground: #64748b;
+
+  /* ACCENT: Royal Gold / Cream (Phra Kiao inspiration) */
+  --accent: #fff0f5; /* Lavender Blush (Light Pink/Cream) */
+  --accent-foreground: #9d2b55; /* Darker Pink text */
+
   --destructive: oklch(0.577 0.245 27.325);
-  --border: rgba(34, 40, 49, 0.2);
-  --input: rgba(34, 40, 49, 0.2);
-  --ring: #76abae;
-  --chart-1: oklch(0.646 0.222 41.116);
-  --chart-2: oklch(0.6 0.118 184.704);
-  --chart-3: oklch(0.398 0.07 227.392);
-  --chart-4: oklch(0.828 0.189 84.429);
-  --chart-5: oklch(0.769 0.188 70.08);
-  --sidebar: #eeeeee;
-  --sidebar-foreground: #222831;
-  --sidebar-primary: #76abae;
-  --sidebar-primary-foreground: #222831;
-  --sidebar-accent: #d1d5db;
-  --sidebar-accent-foreground: #222831;
-  --sidebar-border: rgba(34, 40, 49, 0.2);
-  --sidebar-ring: #76abae;
+
+  --border: rgba(223, 90, 135, 0.2); /* Subtle pink tint on borders */
+  --input: rgba(31, 41, 51, 0.15);
+  --ring: #df5a87; /* Pink Focus Ring */
+
+  /* CHARTS: Pink & Gold dominance */
+  --chart-1: #df5a87; /* Chula Pink */
+  --chart-2: #d4af37; /* Royal Gold */
+  --chart-3: #f4a6c2; /* Soft Pink */
+  --chart-4: #4b5563; /* Neutral Gray */
+  --chart-5: #60a5fa; /* Sky Blue (optional contrast) */
+
+  --sidebar: #fdf2f6; /* Very light pink tint for sidebar */
+  --sidebar-foreground: #1f2933;
+  --sidebar-primary: #df5a87;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #fce7ef; /* Slightly darker pink for active sidebar items */
+  --sidebar-accent-foreground: #9d2b55;
+  --sidebar-border: rgba(223, 90, 135, 0.15);
+  --sidebar-ring: #df5a87;
 }
 
 .dark {
-  --background: #222831;
-  --foreground: #eeeeee;
-  --card: #31363f;
-  --card-foreground: #eeeeee;
-  --popover: #31363f;
-  --popover-foreground: #eeeeee;
-  --primary: #76abae;
-  --primary-foreground: #222831;
-  --secondary: #31363f;
-  --secondary-foreground: #eeeeee;
-  --muted: #31363f;
-  --muted-foreground: #788c8e;
-  --accent: #31363f;
-  --accent-foreground: #eeeeee;
+  --background: #18181b; /* Zinc-950 */
+  --foreground: #fce7ef;
+
+  --card: #27272a; /* Zinc-900 */
+  --card-foreground: #fce7ef;
+
+  --popover: #27272a;
+  --popover-foreground: #fce7ef;
+
+  /* PRIMARY: Lighter Chula Pink for Dark Mode */
+  --primary: #f58ba8;
+  --primary-foreground: #2a0a14;
+
+  --secondary: #3f3f46;
+  --secondary-foreground: #fce7ef;
+
+  --muted: #27272a;
+  --muted-foreground: #a1a1aa;
+
+  /* ACCENT: Darker muted pink/gold */
+  --accent: #381a25; /* Dark Pink/Brown */
+  --accent-foreground: #f58ba8;
+
   --destructive: oklch(0.704 0.191 22.216);
-  --border: rgba(238, 238, 238, 0.2);
-  --input: rgba(238, 238, 238, 0.2);
-  --ring: #76abae;
-  --chart-1: oklch(0.488 0.243 264.376);
-  --chart-2: oklch(0.696 0.17 162.48);
-  --chart-3: oklch(0.769 0.188 70.08);
-  --chart-4: oklch(0.627 0.265 303.9);
-  --chart-5: oklch(0.645 0.246 16.439);
-  --sidebar: #222831;
-  --sidebar-foreground: #eeeeee;
-  --sidebar-primary: #76abae;
-  --sidebar-primary-foreground: #222831;
-  --sidebar-accent: #31363f;
-  --sidebar-accent-foreground: #eeeeee;
-  --sidebar-border: rgba(238, 238, 238, 0.2);
-  --sidebar-ring: #76abae;
+
+  --border: rgba(245, 139, 168, 0.2);
+  --input: rgba(255, 255, 255, 0.15);
+  --ring: #f58ba8;
+
+  --chart-1: #f58ba8; /* Light Pink */
+  --chart-2: #fade75; /* Light Gold */
+  --chart-3: #c06c8c; /* Muted Pink */
+  --chart-4: #9ca3af; /* Gray */
+  --chart-5: #63a3a3;
+
+  --sidebar: #1f1216; /* Deep brownish black */
+  --sidebar-foreground: #fce7ef;
+  --sidebar-primary: #f58ba8;
+  --sidebar-primary-foreground: #2a0a14;
+  --sidebar-accent: #381a25;
+  --sidebar-accent-foreground: #f58ba8;
+  --sidebar-border: rgba(245, 139, 168, 0.15);
+  --sidebar-ring: #f58ba8;
 }
 
 @layer base {

@@ -1,3 +1,4 @@
+import Image from "next/image";
 import { Menu } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ChatStatus } from "@/lib/types";
@@ -28,6 +29,13 @@ export function ChatHeader({
         </Button>
 
         <div className='flex items-center gap-1.5 sm:gap-2 min-w-0 overflow-hidden group'>
+          <Image
+            src='/logo.svg'
+            alt='Chat Agent'
+            width={20}
+            height={20}
+            className='h-5 w-5'
+          />
           <span className='text-xs sm:text-sm font-medium hidden sm:inline'>
             Chat Agent
           </span>
