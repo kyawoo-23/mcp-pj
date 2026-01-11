@@ -3,8 +3,8 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { cn } from "@/lib/utils";
 import { ThemeProvider } from "@/components/theme-provider";
-import NextTopLoader from "nextjs-toploader";
 import { Toaster } from "@/components/ui/sonner";
+import { ProgressBarProvider } from "@/components/providers/progress-bar-provider";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -41,20 +41,10 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
-          <NextTopLoader
-            color='#df5a87'
-            initialPosition={0.08}
-            crawlSpeed={200}
-            height={3}
-            crawl={true}
-            showSpinner={false}
-            easing='ease'
-            speed={200}
-            zIndex={1600}
-            showAtBottom={false}
-          />
-          {children}
-          <Toaster />
+          <ProgressBarProvider>
+            {children}
+            <Toaster />
+          </ProgressBarProvider>
         </ThemeProvider>
       </body>
     </html>
