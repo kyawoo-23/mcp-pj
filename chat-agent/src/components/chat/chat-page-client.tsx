@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { useRouter } from "next/navigation";
+import { useRouter } from "@bprogress/next/app";
 import { ChatLayout } from "@/components/chat/chat-layout";
 import { Sidebar } from "@/components/chat/sidebar";
 import { ChatMessageList } from "@/components/chat/chat-message-list";

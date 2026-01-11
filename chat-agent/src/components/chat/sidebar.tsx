@@ -1,7 +1,7 @@
 "use client";
 import { EditTitleDialog } from "@/components/chat/edit-title-dialog";
 import * as React from "react";
-import { useRouter } from "next/navigation";
+import { useRouter } from "@bprogress/next/app";
 import {
   Plus,
   MessageSquare,

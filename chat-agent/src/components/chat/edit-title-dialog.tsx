@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { useRouter } from "next/navigation";
+import { useRouter } from "@bprogress/next/app";
 import { toast } from "sonner";
 import {
   Dialog,
@@ -42,7 +42,7 @@ export function EditTitleDialog({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!title.trim()) {
       toast.error("Title cannot be empty");
       return;
@@ -56,7 +56,10 @@ export function EditTitleDialog({
     setIsLoading(true);
 
     try {
-      const { error } = await updateConversationTitleAction(conversationId, title);
+      const { error } = await updateConversationTitleAction(
+        conversationId,
+        title
+      );
 
       if (error) {
         throw new Error(error);
@@ -75,7 +78,7 @@ export function EditTitleDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[425px]">
+      <DialogContent className='sm:max-w-[425px]'>
         <form onSubmit={handleSubmit}>
           <DialogHeader>
             <DialogTitle>Edit Title</DialogTitle>
@@ -83,16 +86,16 @@ export function EditTitleDialog({
               Enter a new title for this conversation.
             </DialogDescription>
           </DialogHeader>
-          <div className="grid gap-4 py-4">
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="title" className="text-right">
+          <div className='grid gap-4 py-4'>
+            <div className='grid grid-cols-4 items-center gap-4'>
+              <Label htmlFor='title' className='text-right'>
                 Title
               </Label>
               <Input
-                id="title"
+                id='title'
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
-                className="col-span-3"
+                className='col-span-3'
                 autoFocus
                 disabled={isLoading}
               />
@@ -100,14 +103,14 @@ export function EditTitleDialog({
           </div>
           <DialogFooter>
             <Button
-              type="button"
-              variant="outline"
+              type='button'
+              variant='outline'
               onClick={() => onOpenChange(false)}
               disabled={isLoading}
             >
               Cancel
             </Button>
-            <Button type="submit" disabled={isLoading}>
+            <Button type='submit' disabled={isLoading}>
               {isLoading ? "Saving..." : "Save changes"}
             </Button>
           </DialogFooter>
