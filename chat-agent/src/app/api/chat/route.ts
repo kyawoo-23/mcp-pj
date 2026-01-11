@@ -154,7 +154,7 @@ export async function POST(req: Request) {
   `;
 
   const result = streamText({
-    model: google("models/gemini-3-flash"),
+    model: google("models/gemini-2.5-pro"),
     system: systemPrompt,
     messages: coreMessages,
     tools: allTools,
