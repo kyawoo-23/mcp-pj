@@ -1,6 +1,7 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { getFacilities } from "@/app/actions/facilities";
+import { useDebounce } from "@/hooks/use-debounce";
 import { Card, CardContent } from "@/components/ui/card";
 import { Spinner } from "@/components/ui/spinner";
 import { FacilityCard } from "@/components/facilities/facility-card";
@@ -12,7 +13,7 @@ import type {
 } from "@/lib/types";
 
 export default function FacilitiesPage() {
-  const [facilities, setFacilities] = useState<Facility[]>([]);
+  const [allFacilities, setAllFacilities] = useState<Facility[]>([]);
   const [loading, setLoading] = useState(true);
   const [filters, setFilters] = useState<IFacilityFilters>({
     is_active: true,
@@ -20,31 +21,61 @@ export default function FacilitiesPage() {
   const [buildings, setBuildings] = useState<string[]>([]);
   const [facilityTypes, setFacilityTypes] = useState<FacilityType[]>([]);
 
+  // Debounce search to avoid excessive re-renders
+  const debouncedSearch = useDebounce(filters.search || "", 300);
+
+  // Fetch all facilities once on mount
   useEffect(() => {
     async function loadFacilities() {
       setLoading(true);
-      const { data, error } = await getFacilities(filters);
+      const { data, error } = await getFacilities({ is_active: true });
       if (error) {
         console.error("Error loading facilities:", error);
       } else {
-        setFacilities(data || []);
-        if (buildings.length === 0 || facilityTypes.length === 0) {
-          const allBuildings = Array.from(
-            new Set((data || []).map((f) => f.building).filter(Boolean))
-          ) as string[];
-          const allTypes = Array.from(
-            new Set((data || []).map((f) => f.facility_type))
-          ) as FacilityType[];
-
-          if (buildings.length === 0) setBuildings(allBuildings);
-          if (facilityTypes.length === 0) setFacilityTypes(allTypes);
-        }
+        setAllFacilities(data || []);
+        // Extract unique buildings and types once
+        const allBuildings = Array.from(
+          new Set((data || []).map((f) => f.building).filter(Boolean))
+        ) as string[];
+        const allTypes = Array.from(
+          new Set((data || []).map((f) => f.facility_type))
+        ) as FacilityType[];
+        setBuildings(allBuildings);
+        setFacilityTypes(allTypes);
       }
       setLoading(false);
     }
 
     loadFacilities();
-  }, [filters]);
+  }, []);
+
+  // Client-side filtering with debounced search
+  const facilities = useMemo(() => {
+    return allFacilities.filter((facility) => {
+      // Filter by type
+      if (
+        filters.facility_type &&
+        facility.facility_type !== filters.facility_type
+      ) {
+        return false;
+      }
+      // Filter by building
+      if (filters.building && facility.building !== filters.building) {
+        return false;
+      }
+      // Filter by search (debounced)
+      if (debouncedSearch) {
+        const searchLower = debouncedSearch.toLowerCase();
+        const matchesSearch =
+          facility.name.toLowerCase().includes(searchLower) ||
+          facility.building?.toLowerCase().includes(searchLower) ||
+          facility.room_number?.toLowerCase().includes(searchLower) ||
+          facility.description?.toLowerCase().includes(searchLower);
+        if (!matchesSearch) return false;
+      }
+      return true;
+    });
+  }, [allFacilities, filters.facility_type, filters.building, debouncedSearch]);
 
   const handleSearchChange = (search: string) => {
     setFilters((prev) => ({ ...prev, search }));

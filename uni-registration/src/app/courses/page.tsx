@@ -1,7 +1,8 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { getCourses } from "@/app/actions/courses";
+import { useDebounce } from "@/hooks/use-debounce";
 import { CourseCard } from "@/components/courses/course-card";
 import { CourseFiltersComponent } from "@/components/courses/course-filters";
 import { Spinner } from "@/components/ui/spinner";
@@ -9,20 +10,24 @@ import { Card, CardContent } from "@/components/ui/card";
 import type { Course, CourseFilters } from "@/lib/types";
 
 export default function CoursesPage() {
-  const [courses, setCourses] = useState<Course[]>([]);
+  const [allCourses, setAllCourses] = useState<Course[]>([]);
   const [loading, setLoading] = useState(true);
   const [filters, setFilters] = useState<CourseFilters>({});
   const [departments, setDepartments] = useState<string[]>([]);
 
+  // Debounce search to avoid excessive filtering
+  const debouncedSearch = useDebounce(filters.search || "", 300);
+
+  // Fetch all courses once on mount
   useEffect(() => {
     async function loadCourses() {
       setLoading(true);
-      const { data, error } = await getCourses(filters);
+      const { data, error } = await getCourses({});
       if (error) {
         console.error("Error loading courses:", error);
       } else {
-        setCourses(data || []);
-        // Extract unique departments
+        setAllCourses(data || []);
+        // Extract unique departments once
         const uniqueDepartments = Array.from(
           new Set(
             (data || [])
@@ -36,7 +41,28 @@ export default function CoursesPage() {
     }
 
     loadCourses();
-  }, [filters]);
+  }, []);
+
+  // Client-side filtering with debounced search
+  const courses = useMemo(() => {
+    return allCourses.filter((course) => {
+      // Filter by department
+      if (filters.department && course.department !== filters.department) {
+        return false;
+      }
+      // Filter by search (debounced)
+      if (debouncedSearch) {
+        const searchLower = debouncedSearch.toLowerCase();
+        const matchesSearch =
+          course.code.toLowerCase().includes(searchLower) ||
+          course.title.toLowerCase().includes(searchLower) ||
+          course.description?.toLowerCase().includes(searchLower) ||
+          course.department?.toLowerCase().includes(searchLower);
+        if (!matchesSearch) return false;
+      }
+      return true;
+    });
+  }, [allCourses, filters.department, debouncedSearch]);
 
   return (
     <div className='container mx-auto px-4 py-8'>

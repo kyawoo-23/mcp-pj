@@ -15,14 +15,22 @@ import CourseDetailClient from "./course-detail-client";
 import { notFound } from "next/navigation";
 
 async function CourseDetail({ courseId }: { courseId: string }) {
-  const { data: course, error: courseError } = await getCourseById(courseId);
+  // Parallelize all API calls for faster loading
+  const [courseResult, sectionsResult, registrationsResult] = await Promise.all(
+    [
+      getCourseById(courseId),
+      getCourseSections(courseId),
+      getUserRegistrations(),
+    ]
+  );
 
-  if (courseError || !course) {
+  if (courseResult.error || !courseResult.data) {
     notFound();
   }
 
-  const { data: sections } = await getCourseSections(courseId);
-  const { data: registrations } = await getUserRegistrations();
+  const course = courseResult.data;
+  const sections = sectionsResult.data;
+  const registrations = registrationsResult.data;
 
   const registeredSectionIds =
     registrations
