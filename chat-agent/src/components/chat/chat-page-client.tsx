@@ -24,6 +24,7 @@ import {
   createConversationAction,
   getConversationWithMessagesAction,
 } from "@/app/actions/conversations";
+import { toast } from "sonner";
 
 interface ChatPageClientProps {
   initialConversations: ConversationWithCount[];
@@ -78,6 +79,15 @@ export function ChatPageClient({
   }, [messages]);
 
   const isLoading = status === "submitted" || status === "streaming";
+
+  // Show toast when error status occurs
+  React.useEffect(() => {
+    if (status === "error") {
+      toast.error("Something went wrong", {
+        description: "Failed to get a response. Please try again.",
+      });
+    }
+  }, [status]);
 
   // Initialize messages from initialMessages prop
   React.useEffect(() => {

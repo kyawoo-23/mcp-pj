@@ -3,6 +3,7 @@ import { Menu } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ChatStatus } from "@/lib/types";
 import { ModeToggle } from "@/components/mode-toggle";
+import { cn } from "@/lib/utils";
 
 interface ChatHeaderProps {
   title: string;
@@ -48,11 +49,14 @@ export function ChatHeader({
 
       <div className='flex items-center gap-1 sm:gap-2 shrink-0'>
         <div className='flex items-center gap-1 sm:gap-1.5 rounded-full md:bg-muted px-1.5 sm:px-2.5 py-0.5 text-xs font-medium'>
-          {status === "submitted" || status === "streaming" ? (
-            <div className='h-1.5 w-1.5 rounded-full bg-green-500 animate-pulse shrink-0' />
-          ) : (
-            <div className='h-1.5 w-1.5 rounded-full bg-zinc-400 shrink-0' />
-          )}
+          <div
+            className={cn("h-1.5 w-1.5 rounded-full shrink-0", {
+              "bg-red-500": status === "error",
+              "bg-green-500 animate-pulse":
+                status === "submitted" || status === "streaming",
+              "bg-zinc-400": status === "ready",
+            })}
+          />
           <span className='text-muted-foreground capitalize hidden sm:inline'>
             {status}
           </span>
