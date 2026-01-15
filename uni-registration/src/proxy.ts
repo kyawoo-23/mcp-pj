@@ -17,7 +17,7 @@ export async function proxy(request: NextRequest) {
           return request.cookies.getAll();
         },
         setAll(cookiesToSet) {
-          cookiesToSet.forEach(({ name, value, options }) =>
+          cookiesToSet.forEach(({ name, value }) =>
             request.cookies.set(name, value)
           );
           response = NextResponse.next({
@@ -38,7 +38,8 @@ export async function proxy(request: NextRequest) {
   // Protect booking routes
   if (
     (request.nextUrl.pathname.startsWith("/registrations") ||
-      request.nextUrl.pathname.startsWith("/settings")) &&
+      request.nextUrl.pathname.startsWith("/settings") ||
+      request.nextUrl.pathname.startsWith("/tasks")) &&
     !user
   ) {
     return NextResponse.redirect(new URL("/auth/login", request.url));

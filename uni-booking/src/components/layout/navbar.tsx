@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import { useAuth } from "@/components/auth/auth-provider";
 import { Button } from "@/components/ui/button";
 import {
@@ -35,6 +35,7 @@ import { createClient } from "@/lib/supabase/client";
 export function Navbar() {
   const { user, loading } = useAuth();
   const router = useRouter();
+  const pathname = usePathname();
   const supabase = createClient();
   const [fullName, setFullName] = useState<string | null>(null);
   const [showLogoutDialog, setShowLogoutDialog] = useState(false);
@@ -54,6 +55,11 @@ export function Navbar() {
     }
     getProfile();
   }, [user, supabase]);
+
+  // Hide navbar on /tasks page
+  if (pathname?.startsWith("/tasks")) {
+    return null;
+  }
 
   const handleLogout = async () => {
     try {

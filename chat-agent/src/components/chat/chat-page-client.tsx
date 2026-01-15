@@ -1,7 +1,9 @@
 "use client";
 
 import * as React from "react";
+import Link from "next/link";
 import { useRouter } from "@bprogress/next/app";
+import { ClipboardCheck } from "lucide-react";
 import { ChatLayout } from "@/components/chat/chat-layout";
 import { Sidebar } from "@/components/chat/sidebar";
 import { ChatMessageList } from "@/components/chat/chat-message-list";
@@ -326,6 +328,20 @@ export function ChatPageClient({
         />
       }
     >
+      {process.env.NEXT_PUBLIC_ENABLE_TASK === "true" && (
+        <div className='fixed right-3 top-16 z-50 sm:right-4 sm:top-16'>
+          <Link
+            href='/tasks'
+            aria-label='Enter task-based completion event'
+            className='group relative inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-full border bg-background shadow-xs px-4 py-2 text-xs sm:text-sm font-medium transition-all motion-safe:animate-in motion-safe:fade-in-0 motion-safe:zoom-in-95 overflow-hidden before:absolute before:left-0 before:top-0 before:z-0 before:h-full before:w-0 before:bg-primary before:transition-[width] before:duration-500 before:ease-out hover:before:w-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 dark:bg-input/30 dark:border-input'
+          >
+            <span className='relative z-10 flex items-center gap-2 text-foreground transition-colors duration-300 group-hover:text-primary-foreground'>
+              <ClipboardCheck className='size-3.5 sm:size-4' />
+              Task Mode
+            </span>
+          </Link>
+        </div>
+      )}
       <ChatHeader
         title={activeConversation?.title || "New Chat"}
         onMobileMenuToggle={() => setSidebarOpen(true)}
