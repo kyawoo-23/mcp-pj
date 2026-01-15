@@ -20,6 +20,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
+import { toast } from "sonner";
 
 const loginSchema = z.object({
   email: z.string().email("Invalid email address"),
@@ -56,6 +57,7 @@ export default function LoginPage() {
 
       if (error) throw error;
 
+      toast.success("Signed in successfully");
       // Redirect to the original page if provided, otherwise go to courses
       const redirectTo = searchParams.get("redirect") || "/courses";
       router.push(redirectTo);

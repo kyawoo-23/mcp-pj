@@ -20,6 +20,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
+import { toast } from "sonner";
 
 const loginSchema = z.object({
   email: z.string().email("Invalid email address"),
@@ -55,6 +56,7 @@ export default function LoginPage() {
 
       if (error) throw error;
 
+      toast.success("Signed in successfully");
       router.push("/facilities");
       router.refresh();
     } catch (err: unknown) {

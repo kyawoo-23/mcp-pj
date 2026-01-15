@@ -31,6 +31,7 @@ import {
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { LogOut, BookOpen, Calendar, Menu, Settings } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
+import { toast } from "sonner";
 
 export function Navbar() {
   const { user, loading } = useAuth();
@@ -64,6 +65,7 @@ export function Navbar() {
   const handleLogout = async () => {
     try {
       await supabase.auth.signOut();
+      toast.success("Logged out successfully");
       router.push("/auth/login");
       router.refresh();
     } catch (error) {
