@@ -57,7 +57,7 @@ export default function Home() {
             <Clock className='mb-2 h-8 w-8 text-primary' />
             <CardTitle>Manage Bookings</CardTitle>
             <CardDescription>
-              View, edit, or cancel your bookings anytime
+              View or cancel your bookings anytime
             </CardDescription>
           </CardHeader>
         </Card>

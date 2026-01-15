@@ -8,7 +8,7 @@ import {
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Calendar, Clock, MapPin, Edit, X } from "lucide-react";
+import { Calendar, Clock, MapPin, X } from "lucide-react";
 import type { FacilityBookingWithDetails } from "@/lib/types";
 import { formatDate, formatTimeRange } from "@/lib/utils/date";
 
@@ -18,8 +18,6 @@ interface BookingCardProps {
 }
 
 export function BookingCard({ booking, onCancel }: BookingCardProps) {
-  const canEdit =
-    booking.status === "pending" || booking.status === "confirmed";
   const canCancel =
     booking.status === "pending" || booking.status === "confirmed";
 
@@ -63,21 +61,11 @@ export function BookingCard({ booking, onCancel }: BookingCardProps) {
           )}
         </div>
         <div className='flex gap-2'>
-          {!canEdit && (
-            <Link href={`/bookings/${booking.id}`}>
-              <Button variant='outline' size='sm'>
-                View Details
-              </Button>
-            </Link>
-          )}
-          {canEdit && (
-            <Link href={`/bookings/${booking.id}`}>
-              <Button variant='outline' size='sm'>
-                <Edit className='h-4 w-4 mr-1' />
-                Edit
-              </Button>
-            </Link>
-          )}
+          <Link href={`/bookings/${booking.id}`}>
+            <Button variant='outline' size='sm'>
+              View Details
+            </Button>
+          </Link>
           {canCancel && onCancel && (
             <Button
               variant='destructive'
