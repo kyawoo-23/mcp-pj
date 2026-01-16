@@ -14,7 +14,8 @@ export async function GET(req: Request) {
   if (code) {
     const { error } = await supabase.auth.exchangeCodeForSession(code);
     if (!error) {
-      return NextResponse.redirect(absoluteUrl(Routes.passwordReset));
+      const origin = url.origin;
+      return NextResponse.redirect(`${origin}${Routes.passwordReset}`);
     }
   }
 
@@ -31,5 +32,6 @@ export async function GET(req: Request) {
     return NextResponse.json({ error: error.message }, { status: 400 });
   }
 
-  return NextResponse.redirect(absoluteUrl(Routes.passwordReset));
+  const origin = url.origin;
+  return NextResponse.redirect(`${origin}${Routes.passwordReset}`);
 }

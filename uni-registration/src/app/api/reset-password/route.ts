@@ -11,8 +11,9 @@ export async function POST(req: Request) {
   }
 
   try {
+    const origin = new URL(req.url).origin;
     const { data, error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${BASE_URL}/api/auth/confirm`,
+      redirectTo: `${origin}/api/auth/confirm`,
     });
 
     if (error) {

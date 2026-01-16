@@ -6,6 +6,9 @@ export function cn(...inputs: ClassValue[]) {
 }
 
 export function absoluteUrl(path: string) {
+  if (typeof window !== "undefined") {
+    return `${window.location.origin}${path}`
+  }
   return `${process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000"}${path}`
 }
 
