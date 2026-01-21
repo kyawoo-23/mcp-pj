@@ -10,6 +10,7 @@ import { createMessage } from "@/lib/db/messages";
 import { MessagePart } from "@/lib/types";
 import { revalidatePath } from "next/cache";
 import { AVAILABLE_TOOLS } from "@/lib/tool-definitions";
+import { getTaskSessionByUser, recordTaskEvent } from "@/lib/task-mode-server";
 
 // Allow streaming responses up to 30 seconds
 export const maxDuration = 30;
@@ -80,8 +81,29 @@ export async function POST(req: Request) {
     currentConversationId = conversationId;
   }
 
-  // Save the last user message to database
+  // Log task mode turn if active
+  const taskSession = await getTaskSessionByUser(
+    supabase,
+    user.id,
+    "chat_agent"
+  );
   const lastMessage = messages[messages.length - 1];
+  if (
+    taskSession &&
+    taskSession.status === "in_progress" &&
+    lastMessage?.role === "user"
+  ) {
+    const textParts = (lastMessage.parts || []).filter(
+      (p): p is { type: "text"; text: string } => p.type === "text"
+    );
+    const content = textParts.map((p) => p.text).join("\n");
+    await recordTaskEvent(supabase, taskSession.id, "turn", "user_message", {
+      conversation_id: conversationId ?? null,
+      message_length: content.length,
+    });
+  }
+
+  // Save the last user message to database
   if (lastMessage && lastMessage.role === "user") {
     const textParts = (lastMessage.parts || []).filter(
       (p): p is { type: "text"; text: string } => p.type === "text"

@@ -16,6 +16,8 @@ import { Calendar, Clock, MapPin, X } from "lucide-react";
 import { cancelBooking } from "@/app/actions/bookings";
 import type { FacilityBookingWithDetails } from "@/lib/types";
 import { formatDate, formatTimeRange } from "@/lib/utils/date";
+import { TaskModeBanner } from "@/components/tasks/task-mode-banner";
+import { logTaskEvent, readStoredTaskSession } from "@/lib/task-mode-client";
 
 interface BookingDetailViewProps {
   booking: FacilityBookingWithDetails;
@@ -45,6 +47,12 @@ export default function BookingDetailView({ booking }: BookingDetailViewProps) {
     setCancelling(true);
 
     try {
+      const stored = readStoredTaskSession();
+      if (stored?.systemType === "uni-booking") {
+        await logTaskEvent(stored.id, "step", "cancel_click", {
+          booking_id: booking.id,
+        });
+      }
       const result = await cancelBooking(booking.id);
 
       if (result.error) {
@@ -54,6 +62,9 @@ export default function BookingDetailView({ booking }: BookingDetailViewProps) {
         });
       } else {
         toast.success("Booking cancelled successfully");
+        if (result.taskCompleted) {
+          toast.success("Task completed: Cancel a booking");
+        }
         router.push("/bookings");
         router.refresh();
       }
@@ -71,6 +82,7 @@ export default function BookingDetailView({ booking }: BookingDetailViewProps) {
 
   return (
     <div className='space-y-6'>
+      <TaskModeBanner />
       <Card>
         <CardHeader>
           <div className='flex items-start justify-between'>

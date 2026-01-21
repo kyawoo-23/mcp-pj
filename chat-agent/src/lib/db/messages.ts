@@ -1,12 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
-import type { MessageRow, MessagePart, Json } from "@/lib/types";
-
-export interface CreateMessageInput {
-  conversationId: string;
-  role: MessageRow["role"];
-  content: string;
-  parts: MessagePart[];
-}
+import type { MessageRow, Json, CreateMessageInput } from "@/lib/types";
 
 export async function getMessages(
   conversationId: string,

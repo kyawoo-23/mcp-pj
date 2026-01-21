@@ -13,6 +13,20 @@ export type MessageUpdate = Database["public"]["Tables"]["messages"]["Update"];
 
 export type MessageRole = Database["public"]["Enums"]["message_role"];
 
+// Profile and Task Session types
+export type ProfileRow = Database["public"]["Tables"]["profiles"]["Row"];
+export type TaskSessionRow = Database["public"]["Tables"]["task_sessions"]["Row"];
+export type TaskDefinitionRow = Database["public"]["Tables"]["task_definitions"]["Row"];
+export type TaskProgressRow = Database["public"]["Tables"]["task_progress"]["Row"];
+export type SurveyRow = Database["public"]["Tables"]["task_surveys"]["Row"];
+export type SurveyQuestionRow = Database["public"]["Tables"]["task_survey_questions"]["Row"];
+export type InterviewQuestionRow = Database["public"]["Tables"]["task_interview_questions"]["Row"];
+export type SurveyResponseRow = Database["public"]["Tables"]["task_survey_responses"]["Row"];
+export type UserInterviewResponseRow = Database["public"]["Tables"]["user_interview_responses"]["Row"];
+
+// Enum types
+export type SystemType = Database["public"]["Enums"]["system_type"];
+
 // Re-export Json type for convenience
 export type { Json };
 
@@ -63,6 +77,14 @@ export interface ToolInvocationPart {
 }
 
 export type MessagePart = TextPart | ToolInvocationPart;
+
+// Input type for creating messages
+export interface CreateMessageInput {
+  conversationId: string;
+  role: MessageRow["role"];
+  content: string;
+  parts: MessagePart[];
+}
 
 export interface ChatMessageData {
   id: string;

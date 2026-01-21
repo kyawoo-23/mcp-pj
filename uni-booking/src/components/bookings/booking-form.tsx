@@ -30,6 +30,8 @@ import { getFacilityAvailability } from "@/app/actions/facilities";
 import { createBooking } from "@/app/actions/bookings";
 import type { Facility, FacilityBooking } from "@/lib/types";
 import { validateTimeRange, hasTimeConflict } from "@/lib/utils/booking";
+import { TaskModeBanner } from "@/components/tasks/task-mode-banner";
+import { logTaskEvent, readStoredTaskSession } from "@/lib/task-mode-client";
 import {
   generateTimeOptions,
   getAvailableEndTimes,
@@ -137,6 +139,13 @@ export function BookingForm({
     setLoading(true);
 
     try {
+      const stored = readStoredTaskSession();
+      if (stored?.systemType === "uni-booking") {
+        await logTaskEvent(stored.id, "step", "booking_submit", {
+          facility_id: data.facility_id,
+          booking_date: data.booking_date,
+        });
+      }
       // Validate time range
       const timeValidation = validateTimeRange(data.start_time, data.end_time);
       if (!timeValidation.valid) {
@@ -161,6 +170,9 @@ export function BookingForm({
         });
       } else {
         toast.success("Booking created successfully");
+        if (result.taskCompleted) {
+          toast.success("Task completed: Book a room",);
+        }
         router.push("/bookings");
         router.refresh();
       }
@@ -177,6 +189,7 @@ export function BookingForm({
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className='space-y-6'>
+      <TaskModeBanner />
       {error && (
         <Alert variant='destructive'>
           <AlertDescription>{error}</AlertDescription>

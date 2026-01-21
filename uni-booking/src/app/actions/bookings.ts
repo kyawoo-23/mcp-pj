@@ -4,11 +4,11 @@ import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
 import type {
   FacilityBookingInsert,
-  FacilityBookingUpdate,
   BookingFormData,
 } from "@/lib/types";
 import { hasTimeConflict, validateTimeRange } from "@/lib/utils/booking";
 import { getFacilityAvailability } from "./facilities";
+import { recordTaskCompletion } from "@/lib/task-mode-server";
 
 export async function createBooking(formData: BookingFormData) {
   const supabase = await createClient();
@@ -85,10 +85,21 @@ export async function createBooking(formData: BookingFormData) {
     return { data: null, error: error.message };
   }
 
+  const taskResult = await recordTaskCompletion(supabase, {
+    userId: user.id,
+    systemType: "uni-booking",
+    taskCode: "book_room",
+    successPayload: {
+      booking_id: data?.id ?? null,
+      facility_id: formData.facility_id,
+      booking_date: formData.booking_date,
+    },
+  });
+
   revalidatePath("/bookings");
   revalidatePath("/facilities");
 
-  return { data, error: null };
+  return { data, error: null, taskCompleted: !taskResult.skipped };
 }
 
 export async function getUserBookings() {
@@ -195,9 +206,19 @@ export async function cancelBooking(id: string) {
     return { data: null, error: error.message };
   }
 
+  const taskResult = await recordTaskCompletion(supabase, {
+    userId: user.id,
+    systemType: "uni-booking",
+    taskCode: "cancel_booking",
+    successPayload: {
+      booking_id: data?.id ?? null,
+      facility_id: data?.facility_id ?? null,
+    },
+  });
+
   revalidatePath("/bookings");
   revalidatePath(`/bookings/${id}`);
 
-  return { data, error: null };
+  return { data, error: null, taskCompleted: !taskResult.skipped };
 }
 

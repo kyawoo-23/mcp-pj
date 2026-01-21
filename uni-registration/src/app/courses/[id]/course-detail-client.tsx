@@ -7,6 +7,8 @@ import { toast } from "sonner";
 import type { CourseSection } from "@/lib/types";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/components/auth/auth-provider";
+import { TaskModeBanner } from "@/components/tasks/task-mode-banner";
+import { logTaskEvent, readStoredTaskSession } from "@/lib/task-mode-client";
 
 interface CourseDetailClientProps {
   sections: CourseSection[];
@@ -33,9 +35,18 @@ export default function CourseDetailClient({
 
     setIsLoading(true);
     try {
+      const stored = readStoredTaskSession();
+      if (stored?.systemType === "uni-registration") {
+        await logTaskEvent(stored.id, "step", "register_click", {
+          section_id: sectionId,
+        });
+      }
       const result = await registerForSection(sectionId);
       if (result.success) {
         toast.success(result.message || "Successfully registered for section");
+        if (result.taskCompleted) {
+          toast.success("Task completed: Register for a course");
+        }
         setRegisteredIds([...registeredIds, sectionId]);
         router.refresh();
       } else {
@@ -57,11 +68,14 @@ export default function CourseDetailClient({
   };
 
   return (
-    <SectionList
-      sections={sections}
-      onRegister={handleRegister}
-      registeredSectionIds={registeredIds}
-      isLoading={isLoading}
-    />
+    <div className='space-y-4'>
+      <TaskModeBanner />
+      <SectionList
+        sections={sections}
+        onRegister={handleRegister}
+        registeredSectionIds={registeredIds}
+        isLoading={isLoading}
+      />
+    </div>
   );
 }

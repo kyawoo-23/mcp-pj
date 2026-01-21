@@ -282,27 +282,33 @@ export type Database = {
       }
       profiles: {
         Row: {
+          age_range: Database["public"]["Enums"]["age_range"] | null
           created_at: string
           email: string | null
           full_name: string | null
+          gender: Database["public"]["Enums"]["gender_identity"] | null
           id: string
           role: Database["public"]["Enums"]["user_role"]
           student_id: string | null
           updated_at: string
         }
         Insert: {
+          age_range?: Database["public"]["Enums"]["age_range"] | null
           created_at?: string
           email?: string | null
           full_name?: string | null
+          gender?: Database["public"]["Enums"]["gender_identity"] | null
           id: string
           role?: Database["public"]["Enums"]["user_role"]
           student_id?: string | null
           updated_at?: string
         }
         Update: {
+          age_range?: Database["public"]["Enums"]["age_range"] | null
           created_at?: string
           email?: string | null
           full_name?: string | null
+          gender?: Database["public"]["Enums"]["gender_identity"] | null
           id?: string
           role?: Database["public"]["Enums"]["user_role"]
           student_id?: string | null
@@ -358,6 +364,327 @@ export type Database = {
           },
         ]
       }
+      task_definitions: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          success_criteria: string | null
+          system_type: Database["public"]["Enums"]["system_type"]
+          task_code: string
+          title: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          success_criteria?: string | null
+          system_type: Database["public"]["Enums"]["system_type"]
+          task_code: string
+          title: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          success_criteria?: string | null
+          system_type?: Database["public"]["Enums"]["system_type"]
+          task_code?: string
+          title?: string
+        }
+        Relationships: []
+      }
+      task_events: {
+        Row: {
+          created_at: string
+          event_name: string
+          event_type: Database["public"]["Enums"]["task_event_type"]
+          id: string
+          metadata: Json
+          session_id: string
+        }
+        Insert: {
+          created_at?: string
+          event_name: string
+          event_type: Database["public"]["Enums"]["task_event_type"]
+          id?: string
+          metadata?: Json
+          session_id: string
+        }
+        Update: {
+          created_at?: string
+          event_name?: string
+          event_type?: Database["public"]["Enums"]["task_event_type"]
+          id?: string
+          metadata?: Json
+          session_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "task_events_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "task_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      task_interview_questions: {
+        Row: {
+          created_at: string
+          id: string
+          order_index: number
+          question_text: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          order_index: number
+          question_text: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          order_index?: number
+          question_text?: string
+        }
+        Relationships: []
+      }
+      task_progress: {
+        Row: {
+          completed_at: string | null
+          created_at: string
+          id: string
+          session_id: string
+          started_at: string | null
+          status: Database["public"]["Enums"]["task_progress_status"]
+          success_payload: Json
+          task_definition_id: string
+          updated_at: string
+        }
+        Insert: {
+          completed_at?: string | null
+          created_at?: string
+          id?: string
+          session_id: string
+          started_at?: string | null
+          status?: Database["public"]["Enums"]["task_progress_status"]
+          success_payload?: Json
+          task_definition_id: string
+          updated_at?: string
+        }
+        Update: {
+          completed_at?: string | null
+          created_at?: string
+          id?: string
+          session_id?: string
+          started_at?: string | null
+          status?: Database["public"]["Enums"]["task_progress_status"]
+          success_payload?: Json
+          task_definition_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "task_progress_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "task_sessions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "task_progress_task_definition_id_fkey"
+            columns: ["task_definition_id"]
+            isOneToOne: false
+            referencedRelation: "task_definitions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      task_sessions: {
+        Row: {
+          completed_at: string | null
+          created_at: string
+          id: string
+          started_at: string | null
+          status: Database["public"]["Enums"]["task_session_status"]
+          system_type: Database["public"]["Enums"]["system_type"]
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          completed_at?: string | null
+          created_at?: string
+          id?: string
+          started_at?: string | null
+          status?: Database["public"]["Enums"]["task_session_status"]
+          system_type: Database["public"]["Enums"]["system_type"]
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          completed_at?: string | null
+          created_at?: string
+          id?: string
+          started_at?: string | null
+          status?: Database["public"]["Enums"]["task_session_status"]
+          system_type?: Database["public"]["Enums"]["system_type"]
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "task_sessions_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      task_survey_questions: {
+        Row: {
+          created_at: string
+          id: string
+          max_value: number | null
+          min_value: number | null
+          order_index: number
+          question_text: string
+          scale_type: Database["public"]["Enums"]["survey_scale_type"]
+          survey_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          max_value?: number | null
+          min_value?: number | null
+          order_index: number
+          question_text: string
+          scale_type: Database["public"]["Enums"]["survey_scale_type"]
+          survey_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          max_value?: number | null
+          min_value?: number | null
+          order_index?: number
+          question_text?: string
+          scale_type?: Database["public"]["Enums"]["survey_scale_type"]
+          survey_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "task_survey_questions_survey_id_fkey"
+            columns: ["survey_id"]
+            isOneToOne: false
+            referencedRelation: "task_surveys"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      task_survey_responses: {
+        Row: {
+          created_at: string
+          id: string
+          question_id: string
+          response_text: string | null
+          response_value: number | null
+          session_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          question_id: string
+          response_text?: string | null
+          response_value?: number | null
+          session_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          question_id?: string
+          response_text?: string | null
+          response_value?: number | null
+          session_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "task_survey_responses_question_id_fkey"
+            columns: ["question_id"]
+            isOneToOne: false
+            referencedRelation: "task_survey_questions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "task_survey_responses_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "task_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      task_surveys: {
+        Row: {
+          created_at: string
+          id: string
+          survey_name: string
+          version: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          survey_name: string
+          version: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          survey_name?: string
+          version?: string
+        }
+        Relationships: []
+      }
+      user_interview_responses: {
+        Row: {
+          created_at: string
+          id: string
+          question_id: string
+          response_text: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          question_id: string
+          response_text: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          question_id?: string
+          response_text?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_interview_responses_question_id_fkey"
+            columns: ["question_id"]
+            isOneToOne: false
+            referencedRelation: "task_interview_questions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_interview_responses_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
@@ -374,6 +701,14 @@ export type Database = {
       is_admin: { Args: { user_id: string }; Returns: boolean }
     }
     Enums: {
+      age_range:
+        | "under_18"
+        | "18_24"
+        | "25_34"
+        | "35_44"
+        | "45_54"
+        | "55_plus"
+        | "prefer_not_say"
       booking_status: "pending" | "confirmed" | "cancelled" | "completed"
       facility_type:
         | "study_room"
@@ -383,8 +718,14 @@ export type Database = {
         | "computer_lab"
         | "library_space"
         | "other"
+      gender_identity: "female" | "male" | "prefer_not_say"
       message_role: "user" | "assistant" | "system"
       registration_status: "active" | "dropped" | "completed" | "waitlisted"
+      survey_scale_type: "likert_5" | "likert_7" | "numeric_0_100" | "free_text"
+      system_type: "chat_agent" | "uni-registration" | "uni-booking"
+      task_event_type: "step" | "turn" | "survey" | "interview" | "system"
+      task_progress_status: "not_started" | "in_progress" | "completed"
+      task_session_status: "not_started" | "in_progress" | "completed"
       user_role: "student" | "admin"
     }
     CompositeTypes: {
@@ -516,6 +857,15 @@ export const Constants = {
   },
   public: {
     Enums: {
+      age_range: [
+        "under_18",
+        "18_24",
+        "25_34",
+        "35_44",
+        "45_54",
+        "55_plus",
+        "prefer_not_say",
+      ],
       booking_status: ["pending", "confirmed", "cancelled", "completed"],
       facility_type: [
         "study_room",
@@ -526,8 +876,14 @@ export const Constants = {
         "library_space",
         "other",
       ],
+      gender_identity: ["female", "male", "prefer_not_say"],
       message_role: ["user", "assistant", "system"],
       registration_status: ["active", "dropped", "completed", "waitlisted"],
+      survey_scale_type: ["likert_5", "likert_7", "numeric_0_100", "free_text"],
+      system_type: ["chat_agent", "uni-registration", "uni-booking"],
+      task_event_type: ["step", "turn", "survey", "interview", "system"],
+      task_progress_status: ["not_started", "in_progress", "completed"],
+      task_session_status: ["not_started", "in_progress", "completed"],
       user_role: ["student", "admin"],
     },
   },

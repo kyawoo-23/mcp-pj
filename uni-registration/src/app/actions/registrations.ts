@@ -2,6 +2,7 @@
 
 import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
+import { recordTaskCompletion } from "@/lib/task-mode-server";
 
 export async function getUserRegistrations() {
   const supabase = await createClient();
@@ -68,14 +69,16 @@ export async function registerForSection(sectionId: string) {
 
 
   // Register for section
-  const { error: insertError } = await supabase
+  const { data: registration, error: insertError } = await supabase
     .from("student_registrations")
     .insert({
       student_id: user.id,
       section_id: sectionId,
       status: "active",
       registered_at: new Date().toISOString(),
-    });
+    })
+    .select()
+    .single();
 
   if (insertError) {
     return { success: false, error: insertError.message };
@@ -83,9 +86,19 @@ export async function registerForSection(sectionId: string) {
 
 
 
+  const taskResult = await recordTaskCompletion(supabase, {
+    userId: user.id,
+    systemType: "uni-registration",
+    taskCode: "register_course",
+    successPayload: {
+      section_id: sectionId,
+      registration_id: registration?.id ?? null,
+    },
+  });
+
   revalidatePath("/registrations");
   revalidatePath("/courses");
-  return { success: true, message: "Successfully registered for section" };
+  return { success: true, message: "Successfully registered for section", taskCompleted: !taskResult.skipped };
 }
 
 export async function dropRegistration(registrationId: string) {
@@ -114,13 +127,15 @@ export async function dropRegistration(registrationId: string) {
   }
 
   // Update registration status to dropped
-  const { error: updateError } = await supabase
+  const { data: updatedRegistration, error: updateError } = await supabase
     .from("student_registrations")
     .update({
       status: "dropped",
       dropped_at: new Date().toISOString(),
     })
-    .eq("id", registrationId);
+    .eq("id", registrationId)
+    .select()
+    .single();
 
   if (updateError) {
     return { success: false, error: updateError.message };
@@ -128,9 +143,20 @@ export async function dropRegistration(registrationId: string) {
 
 
 
+  const taskResult = await recordTaskCompletion(supabase, {
+    userId: user.id,
+    systemType: "uni-registration",
+    taskCode: "drop_course",
+    successPayload: {
+      registration_id: registrationId,
+      section_id: registration.section_id ?? null,
+      dropped_id: updatedRegistration?.id ?? null,
+    },
+  });
+
   revalidatePath("/registrations");
   revalidatePath("/courses");
-  return { success: true, message: "Successfully dropped course" };
+  return { success: true, message: "Successfully dropped course", taskCompleted: !taskResult.skipped };
 }
 
 export async function getSectionAvailability(sectionId: string) {
