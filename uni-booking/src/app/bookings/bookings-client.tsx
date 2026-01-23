@@ -8,8 +8,6 @@ import { cancelBooking } from "@/app/actions/bookings";
 import type { FacilityBookingWithDetails } from "@/lib/types";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { toast } from "sonner";
-import { TaskModeBanner } from "@/components/tasks/task-mode-banner";
-import { logTaskEvent, readStoredTaskSession } from "@/lib/task-mode-client";
 
 interface BookingsClientProps {
   bookings: FacilityBookingWithDetails[];
@@ -26,12 +24,6 @@ export default function BookingsClient({ bookings }: BookingsClientProps) {
     }
 
     setError(null);
-    const stored = readStoredTaskSession();
-    if (stored?.systemType === "uni-booking") {
-      await logTaskEvent(stored.id, "step", "cancel_click", {
-        booking_id: id,
-      });
-    }
     const result = await cancelBooking(id);
 
     if (result.error) {
@@ -68,7 +60,6 @@ export default function BookingsClient({ bookings }: BookingsClientProps) {
 
   return (
     <div className="space-y-4">
-      <TaskModeBanner />
       {error && (
         <Alert variant="destructive">
           <AlertDescription>{error}</AlertDescription>

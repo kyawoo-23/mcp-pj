@@ -24,7 +24,7 @@ CREATE TYPE gender_identity AS ENUM (
 );
 
 -- Task mode
-CREATE TYPE system_type AS ENUM ('chat_agent', 'uni-registration', 'uni-booking');
+CREATE TYPE system_type AS ENUM ('chat_agent', 'traditional');
 CREATE TYPE task_session_status AS ENUM ('not_started', 'in_progress', 'completed');
 CREATE TYPE task_progress_status AS ENUM ('not_started', 'in_progress', 'completed');
 CREATE TYPE task_event_type AS ENUM ('step', 'turn', 'survey', 'interview', 'system');
@@ -326,3 +326,86 @@ CREATE POLICY "Users can update own user interview responses"
   ON user_interview_responses FOR UPDATE
   TO authenticated
   USING (user_id = auth.uid());
+
+-- ----------------------------------------------------------------------------
+-- 8. DELETE POLICIES
+-- ----------------------------------------------------------------------------
+
+CREATE POLICY "Users can delete own task progress"
+  ON task_progress FOR DELETE
+  TO authenticated
+  USING (
+    EXISTS (
+      SELECT 1 FROM task_sessions
+      WHERE task_sessions.id = task_progress.session_id
+      AND task_sessions.user_id = auth.uid()
+    )
+  );
+
+CREATE POLICY "Users can delete own task events"
+  ON task_events FOR DELETE
+  TO authenticated
+  USING (
+    EXISTS (
+      SELECT 1 FROM task_sessions
+      WHERE task_sessions.id = task_events.session_id
+      AND task_sessions.user_id = auth.uid()
+    )
+  );
+
+CREATE POLICY "Users can delete own task survey responses"
+  ON task_survey_responses FOR DELETE
+  TO authenticated
+  USING (
+    EXISTS (
+      SELECT 1 FROM task_sessions
+      WHERE task_sessions.id = task_survey_responses.session_id
+      AND task_sessions.user_id = auth.uid()
+    )
+  );
+
+CREATE POLICY "Users can delete own interview responses"
+  ON user_interview_responses FOR DELETE
+  TO authenticated
+  USING (user_id = auth.uid());
+
+-- ----------------------------------------------------------------------------
+-- 9. FUNCTIONS & TRIGGERS
+-- ----------------------------------------------------------------------------
+
+CREATE OR REPLACE FUNCTION enforce_single_task_in_progress()
+RETURNS trigger AS $$
+DECLARE
+  v_user_id uuid;
+BEGIN
+  IF NEW.status = 'in_progress' THEN
+    SELECT user_id INTO v_user_id
+    FROM task_sessions
+    WHERE id = NEW.session_id;
+
+    UPDATE task_progress
+    SET status = 'not_started',
+        updated_at = now()
+    WHERE session_id IN (
+      SELECT id FROM task_sessions WHERE user_id = v_user_id
+    )
+      AND status = 'in_progress'
+      AND (session_id <> NEW.session_id OR task_definition_id <> NEW.task_definition_id);
+  END IF;
+
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+
+CREATE TRIGGER enforce_single_task_progress
+  BEFORE INSERT OR UPDATE ON task_progress
+  FOR EACH ROW
+  EXECUTE FUNCTION enforce_single_task_in_progress();
+
+-- ----------------------------------------------------------------------------
+-- 10. REALTIME
+-- ----------------------------------------------------------------------------
+
+-- Enable realtime for task_progress table
+alter publication supabase_realtime add table task_progress;

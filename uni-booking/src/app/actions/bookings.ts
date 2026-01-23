@@ -87,7 +87,7 @@ export async function createBooking(formData: BookingFormData) {
 
   const taskResult = await recordTaskCompletion(supabase, {
     userId: user.id,
-    systemType: "uni-booking",
+    systemType: "traditional",
     taskCode: "book_room",
     successPayload: {
       booking_id: data?.id ?? null,
@@ -208,7 +208,7 @@ export async function cancelBooking(id: string) {
 
   const taskResult = await recordTaskCompletion(supabase, {
     userId: user.id,
-    systemType: "uni-booking",
+    systemType: "traditional",
     taskCode: "cancel_booking",
     successPayload: {
       booking_id: data?.id ?? null,

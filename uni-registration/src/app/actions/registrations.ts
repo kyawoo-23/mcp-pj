@@ -88,7 +88,7 @@ export async function registerForSection(sectionId: string) {
 
   const taskResult = await recordTaskCompletion(supabase, {
     userId: user.id,
-    systemType: "uni-registration",
+    systemType: "traditional",
     taskCode: "register_course",
     successPayload: {
       section_id: sectionId,
@@ -145,7 +145,7 @@ export async function dropRegistration(registrationId: string) {
 
   const taskResult = await recordTaskCompletion(supabase, {
     userId: user.id,
-    systemType: "uni-registration",
+    systemType: "traditional",
     taskCode: "drop_course",
     successPayload: {
       registration_id: registrationId,

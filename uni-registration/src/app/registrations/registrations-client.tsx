@@ -8,8 +8,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import type { StudentRegistrationWithDetails } from "@/lib/types";
 import { useRouter } from "next/navigation";
-import { TaskModeBanner } from "@/components/tasks/task-mode-banner";
-import { logTaskEvent, readStoredTaskSession } from "@/lib/task-mode-client";
 
 interface RegistrationsClientProps {
   registrations: StudentRegistrationWithDetails[];
@@ -24,12 +22,6 @@ export default function RegistrationsClient({
   const handleDrop = async (registrationId: string) => {
     setIsLoading(true);
     try {
-      const stored = readStoredTaskSession();
-      if (stored?.systemType === "uni-registration") {
-        await logTaskEvent(stored.id, "step", "drop_click", {
-          registration_id: registrationId,
-        });
-      }
       const result = await dropRegistration(registrationId);
       if (result.success) {
         toast.success(result.message || "Successfully dropped course");
@@ -49,7 +41,6 @@ export default function RegistrationsClient({
 
   return (
     <div className="space-y-4">
-      <TaskModeBanner />
       <Tabs defaultValue="list" className="w-full">
         <TabsList>
           <TabsTrigger value="list">List View</TabsTrigger>

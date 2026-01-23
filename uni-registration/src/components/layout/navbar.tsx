@@ -57,11 +57,6 @@ export function Navbar() {
     getProfile();
   }, [user, supabase]);
 
-  // Hide navbar on /tasks page
-  if (pathname?.startsWith("/tasks")) {
-    return null;
-  }
-
   const handleLogout = async () => {
     try {
       await supabase.auth.signOut();

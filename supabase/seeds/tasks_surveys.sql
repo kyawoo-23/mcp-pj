@@ -8,10 +8,10 @@ VALUES
   ('chat_agent', 'drop_course', 'Drop a course', 'Drop an existing course registration via chat', 'Registration status set to dropped'),
   ('chat_agent', 'book_room', 'Book a room', 'Book a facility via chat', 'Booking created in facility_bookings'),
   ('chat_agent', 'cancel_booking', 'Cancel a booking', 'Cancel an existing booking via chat', 'Booking status set to cancelled'),
-  ('uni-registration', 'register_course', 'Register for a course', 'Complete a course registration in the UI', 'Registration created in student_registrations'),
-  ('uni-registration', 'drop_course', 'Drop a course', 'Drop an existing course registration in the UI', 'Registration status set to dropped'),
-  ('uni-booking', 'book_room', 'Book a room', 'Book a facility in the UI', 'Booking created in facility_bookings'),
-  ('uni-booking', 'cancel_booking', 'Cancel a booking', 'Cancel an existing booking in the UI', 'Booking status set to cancelled');
+  ('traditional', 'register_course', 'Register for a course', 'Complete a course registration in the UI', 'Registration created in student_registrations'),
+  ('traditional', 'drop_course', 'Drop a course', 'Drop an existing course registration in the UI', 'Registration status set to dropped'),
+  ('traditional', 'book_room', 'Book a room', 'Book a facility in the UI', 'Booking created in facility_bookings'),
+  ('traditional', 'cancel_booking', 'Cancel a booking', 'Cancel an existing booking in the UI', 'Booking status set to cancelled');
 
 INSERT INTO task_surveys (survey_name, version)
 VALUES

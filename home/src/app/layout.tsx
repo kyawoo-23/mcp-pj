@@ -2,10 +2,17 @@ import React from "react";
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { Analytics } from "@vercel/analytics/next";
+import Providers from "@/components/providers";
+import { Toaster } from "@/components/ui/sonner";
+import { ThemeProvider } from "@/components/theme-provider";
+import { cn } from "@/lib/utils";
 import "./globals.css";
 
-const _geist = Geist({ subsets: ["latin"] });
-const _geistMono = Geist_Mono({ subsets: ["latin"] });
+const _geist = Geist({ variable: "--font-geist-sans", subsets: ["latin"] });
+const _geistMono = Geist_Mono({
+  variable: "--font-geist-mono",
+  subsets: ["latin"],
+});
 
 export const metadata: Metadata = {
   title: "MCP Research | Traditional Web Portals vs Chat Interfaces",
@@ -37,10 +44,26 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang='en'>
-      <body className={`font-sans antialiased`}>
-        {children}
-        <Analytics />
+    <html lang='en' suppressHydrationWarning>
+      <body
+        className={cn(
+          "min-h-screen bg-background font-sans antialiased",
+          _geist.variable,
+          _geistMono.variable,
+        )}
+      >
+        <ThemeProvider
+          attribute='class'
+          defaultTheme='system'
+          enableSystem={false}
+          disableTransitionOnChange
+        >
+          <Providers>
+            {children}
+            <Toaster />
+            <Analytics />
+          </Providers>
+        </ThemeProvider>
       </body>
     </html>
   );

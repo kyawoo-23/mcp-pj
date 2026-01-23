@@ -1,17 +1,14 @@
 "use client";
 
 import * as React from "react";
-import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useRouter } from "@bprogress/next/app";
-import { ClipboardCheck } from "lucide-react";
 import { ChatLayout } from "@/components/chat/chat-layout";
 import { Sidebar } from "@/components/chat/sidebar";
 import { ChatMessageList } from "@/components/chat/chat-message-list";
 import { ChatInput, ChatInputHandle } from "@/components/chat/chat-input";
 import { ChatHeader } from "@/components/chat/chat-header";
-import { Button } from "@/components/ui/button";
-import { readStoredTaskSession } from "@/lib/task-mode-client";
+import { TaskIndicator } from "@/components/tasks/task-indicator";
 import { useChat } from "@ai-sdk/react";
 import type {
   MessageRole,
@@ -56,17 +53,15 @@ export function ChatPageClient({
   const [sidebarOpen, setSidebarOpen] = React.useState(false);
   const [isCreatingNewChat, setIsCreatingNewChat] = React.useState(false);
   const chatInputRef = React.useRef<ChatInputHandle>(null);
-  const [taskModeActive, setTaskModeActive] = React.useState(false);
-  const taskParam = searchParams?.get("task");
+  const taskCode = searchParams?.get("task_code");
   const taskPrompts: Record<string, string> = {
     register_course:
       "I want to register for a course. Please help me find a course and register.",
     drop_course: "I want to drop one of my registered courses.",
-    book_room:
-      "I want to book a study room. Please help me find and book one.",
+    book_room: "I want to book a study room. Please help me find and book one.",
     cancel_booking: "I want to cancel an existing booking.",
   };
-  const taskPrompt = taskParam ? taskPrompts[taskParam] : undefined;
+  const taskPrompt = taskCode ? taskPrompts[taskCode] : undefined;
 
   const activeConversation = conversations.find(
     (c) => c.id === activeConversationId
@@ -94,13 +89,6 @@ export function ChatPageClient({
   React.useEffect(() => {
     messagesRef.current = messages;
   }, [messages]);
-
-  React.useEffect(() => {
-    const stored = readStoredTaskSession();
-    if (stored?.systemType === "chat_agent") {
-      setTaskModeActive(true);
-    }
-  }, []);
 
   React.useEffect(() => {
     if (taskPrompt) {
@@ -357,42 +345,7 @@ export function ChatPageClient({
         />
       }
     >
-      {process.env.NEXT_PUBLIC_ENABLE_TASK === "true" && (
-        <div className='fixed right-3 top-16 z-50 sm:right-4 sm:top-16'>
-          <Link
-            href={readStoredTaskSession()?.systemType === "chat_agent" ? "/tasks/session" : "/tasks"}
-            aria-label='Enter task-based completion event'
-            className='group relative inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-full border bg-background shadow-xs px-4 py-2 text-xs sm:text-sm font-medium transition-all motion-safe:animate-in motion-safe:fade-in-0 motion-safe:zoom-in-95 overflow-hidden before:absolute before:left-0 before:top-0 before:z-0 before:h-full before:w-0 before:bg-primary before:transition-[width] before:duration-500 before:ease-out hover:before:w-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 dark:bg-input/30 dark:border-input'
-          >
-            <span className='relative z-10 flex items-center gap-2 text-foreground transition-colors duration-300 group-hover:text-primary-foreground'>
-              <ClipboardCheck className='size-3.5 sm:size-4' />
-              Task Mode
-            </span>
-          </Link>
-        </div>
-      )}
-      {(taskModeActive && !!taskPrompt) && (
-        <div className='fixed right-3 top-28 z-40 hidden w-72 rounded-xl border bg-background p-4 shadow-sm sm:block'>
-          <div className='text-sm font-semibold'>Task Mode</div>
-          <div className='mt-2 text-xs text-muted-foreground'>
-            Use the prompt to complete the task. Progress is tracked
-            automatically.
-          </div>
-          {taskPrompt && (
-            <div className='mt-3 rounded-lg border bg-muted/50 p-2 text-xs'>
-              {taskPrompt}
-            </div>
-          )}
-          <Button
-            variant='outline'
-            size='sm'
-            className='mt-3 w-full'
-            onClick={() => router.push("/tasks/session")}
-          >
-            View Task Checklist
-          </Button>
-        </div>
-      )}
+      <TaskIndicator />
       <ChatHeader
         title={activeConversation?.title || "New Chat"}
         onMobileMenuToggle={() => setSidebarOpen(true)}

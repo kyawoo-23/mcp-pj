@@ -722,7 +722,7 @@ export type Database = {
       message_role: "user" | "assistant" | "system"
       registration_status: "active" | "dropped" | "completed" | "waitlisted"
       survey_scale_type: "likert_5" | "likert_7" | "numeric_0_100" | "free_text"
-      system_type: "chat_agent" | "uni-registration" | "uni-booking"
+      system_type: "chat_agent" | "traditional"
       task_event_type: "step" | "turn" | "survey" | "interview" | "system"
       task_progress_status: "not_started" | "in_progress" | "completed"
       task_session_status: "not_started" | "in_progress" | "completed"
@@ -880,7 +880,7 @@ export const Constants = {
       message_role: ["user", "assistant", "system"],
       registration_status: ["active", "dropped", "completed", "waitlisted"],
       survey_scale_type: ["likert_5", "likert_7", "numeric_0_100", "free_text"],
-      system_type: ["chat_agent", "uni-registration", "uni-booking"],
+      system_type: ["chat_agent", "traditional"],
       task_event_type: ["step", "turn", "survey", "interview", "system"],
       task_progress_status: ["not_started", "in_progress", "completed"],
       task_session_status: ["not_started", "in_progress", "completed"],
