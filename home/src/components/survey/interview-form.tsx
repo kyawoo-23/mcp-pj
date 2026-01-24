@@ -2,12 +2,13 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
-import type { InterviewQuestionRow, UserInterviewResponseRow } from "@/lib/types";
+import type {
+  InterviewQuestionRow,
+  UserInterviewResponseRow,
+} from "@/lib/types";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Alert, AlertDescription } from "@/components/ui/alert";
 import { toast } from "sonner";
 
 interface InterviewFormProps {
@@ -37,17 +38,20 @@ export function InterviewForm({
   }, [interviewResponses]);
 
   const sortedQuestions = useMemo(() => {
-    return [...interviewQuestions].sort((a, b) => a.order_index - b.order_index);
+    return [...interviewQuestions].sort(
+      (a, b) => a.order_index - b.order_index,
+    );
   }, [interviewQuestions]);
 
   const handleSubmit = async () => {
     if (!enabled || saving) return;
     const unanswered = sortedQuestions.filter(
-      (question) => !responses[question.id] || responses[question.id].trim() === ""
+      (question) =>
+        !responses[question.id] || responses[question.id].trim() === "",
     );
     if (unanswered.length) {
       toast.error(
-        `Please answer all questions. ${unanswered.length} remaining.`
+        `Please answer all questions. ${unanswered.length} remaining.`,
       );
       return;
     }
@@ -62,11 +66,13 @@ export function InterviewForm({
         return;
       }
 
-      const entries = Object.entries(responses).map(([questionId, responseText]) => ({
-        user_id: user.id,
-        question_id: questionId,
-        response_text: responseText,
-      }));
+      const entries = Object.entries(responses).map(
+        ([questionId, responseText]) => ({
+          user_id: user.id,
+          question_id: questionId,
+          response_text: responseText,
+        }),
+      );
 
       const { error } = await supabase
         .from("user_interview_responses")
@@ -87,46 +93,31 @@ export function InterviewForm({
   };
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Final Interview</CardTitle>
-        <CardDescription>
-          Answer these questions after completing both surveys.
-        </CardDescription>
-      </CardHeader>
-      <CardContent className='space-y-6'>
-        {!enabled && (
-          <Alert>
-            <AlertDescription>
-              Complete both surveys to unlock the interview form.
-            </AlertDescription>
-          </Alert>
-        )}
-        {sortedQuestions.map((question) => (
-          <div key={question.id} className='space-y-2'>
-            <Label className='text-sm font-medium'>
-              {question.order_index}. {question.question_text}
-            </Label>
-            <Textarea
-              value={responses[question.id] ?? ""}
-              onChange={(event) =>
-                setResponses((prev) => ({
-                  ...prev,
-                  [question.id]: event.target.value,
-                }))
-              }
-              disabled={!enabled}
-            />
-          </div>
-        ))}
-        <Button
-          className='w-full sm:w-fit'
-          disabled={!enabled || saving}
-          onClick={handleSubmit}
-        >
-          {saving ? "Submitting..." : "Submit interview"}
-        </Button>
-      </CardContent>
-    </Card>
+    <div className='space-y-6'>
+      {sortedQuestions.map((question) => (
+        <div key={question.id} className='space-y-2'>
+          <Label className='text-sm font-medium'>
+            {question.order_index}. {question.question_text}
+          </Label>
+          <Textarea
+            value={responses[question.id] ?? ""}
+            onChange={(event) =>
+              setResponses((prev) => ({
+                ...prev,
+                [question.id]: event.target.value,
+              }))
+            }
+            disabled={!enabled}
+          />
+        </div>
+      ))}
+      <Button
+        className='w-full sm:w-fit'
+        disabled={!enabled || saving}
+        onClick={handleSubmit}
+      >
+        {saving ? "Submitting..." : "Submit interview"}
+      </Button>
+    </div>
   );
 }

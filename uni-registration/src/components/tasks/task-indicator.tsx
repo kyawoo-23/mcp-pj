@@ -5,6 +5,7 @@ import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
+import { getSurveyUrl } from "@/lib/constants";
 
 const taskLabels: Record<string, string> = {
   register_course: "Register for a course",
@@ -94,7 +95,9 @@ export function TaskIndicator() {
   }, [supabase]);
 
   useEffect(() => {
-    refreshActiveTask();
+    (async () => {
+      await refreshActiveTask();
+    })();
   }, [refreshActiveTask]);
 
   // Realtime subscription for immediate updates
@@ -128,46 +131,14 @@ export function TaskIndicator() {
     };
   }, [activeTask?.progressId, activeTask?.status, supabase, activeTask]);
 
-  const handleReset = async () => {
-    if (!activeTask) return;
-    const now = new Date().toISOString();
-    await supabase
-      .from("task_progress")
-      .delete()
-      .eq("id", activeTask.progressId);
-
-    await supabase
-      .from("task_events")
-      .delete()
-      .eq("session_id", activeTask.sessionId)
-      .eq("metadata->>task_code", activeTask.taskCode);
-
-    await supabase
-      .from("task_survey_responses")
-      .delete()
-      .eq("session_id", activeTask.sessionId);
-
-    await supabase
-      .from("task_sessions")
-      .update({ status: "in_progress", completed_at: null, updated_at: now })
-      .eq("id", activeTask.sessionId);
-
-    await supabase
-      .from("user_interview_responses")
-      .delete()
-      .eq("user_id", (await supabase.auth.getUser()).data.user?.id ?? "");
-
-    await refreshActiveTask();
-  };
-
-  const surveyLink = useMemo(() => "http://localhost:4003/survey", []);
+  const surveyLink = useMemo(() => getSurveyUrl(), []);
 
   if (loading || !activeTask || !isVisible) return null;
 
   const isCompleted = activeTask.status === "completed";
 
   return (
-    <div className='fixed bottom-4 right-4 z-50 hidden w-72 sm:block'>
+    <div className='fixed top-20 right-4 z-50 hidden w-72 sm:block'>
       <Card
         className={`shadow-md transition-all duration-500 ${isCompleted ? "border-green-500 ring-1 ring-green-500" : ""}`}
       >
@@ -184,9 +155,6 @@ export function TaskIndicator() {
           <div className='flex flex-col gap-2'>
             <Button variant='outline' size='sm' asChild>
               <a href={surveyLink}>Return to survey</a>
-            </Button>
-            <Button variant='ghost' size='sm' onClick={handleReset}>
-              Reset task
             </Button>
           </div>
         </CardContent>

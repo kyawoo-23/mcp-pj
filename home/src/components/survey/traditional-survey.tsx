@@ -9,12 +9,16 @@ import type {
   TaskSessionRow,
 } from "@/lib/types";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Alert, AlertDescription } from "@/components/ui/alert";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { toast } from "sonner";
 
 interface TraditionalSurveyProps {
@@ -39,7 +43,9 @@ export function TraditionalSurvey({
 
   const sessionResponses = useMemo(() => {
     if (!session) return [];
-    return surveyResponses.filter((response) => response.session_id === session.id);
+    return surveyResponses.filter(
+      (response) => response.session_id === session.id,
+    );
   }, [surveyResponses, session]);
 
   const [responses, setResponses] = useState<Record<string, string>>({});
@@ -71,12 +77,13 @@ export function TraditionalSurvey({
   const handleSubmit = async () => {
     if (!session || !enabled || saving) return;
     const unanswered = surveyQuestionsSorted.filter(
-      (question) => !responses[question.id] || responses[question.id].trim() === ""
+      (question) =>
+        !responses[question.id] || responses[question.id].trim() === "",
     );
 
     if (unanswered.length) {
       toast.error(
-        `Please answer all questions. ${unanswered.length} remaining.`
+        `Please answer all questions. ${unanswered.length} remaining.`,
       );
       return;
     }
@@ -115,6 +122,20 @@ export function TraditionalSurvey({
         return;
       }
 
+      // Start the chat_agent session after traditional survey is completed
+      await supabase
+        .from("task_sessions")
+        .upsert(
+          {
+            user_id: session.user_id,
+            system_type: "chat_agent",
+            status: "in_progress",
+            started_at: now,
+            updated_at: now,
+          },
+          { onConflict: "user_id,system_type" },
+        );
+
       toast.success("Traditional survey submitted.");
       await onSubmitted();
     } finally {
@@ -123,109 +144,94 @@ export function TraditionalSurvey({
   };
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Traditional System Survey</CardTitle>
-        <CardDescription>
-          Complete this survey after finishing all traditional tasks.
-        </CardDescription>
-      </CardHeader>
-      <CardContent className='space-y-6'>
-        {!enabled && (
-          <Alert>
-            <AlertDescription>
-              Finish all traditional tasks to unlock this survey.
-            </AlertDescription>
-          </Alert>
-        )}
-        {surveyQuestionsSorted.map((question) => {
-          const survey = surveyById.get(question.survey_id);
-          const value = responses[question.id] ?? "";
-          return (
-            <div key={question.id} className='space-y-2'>
-              <Label className='text-sm font-medium'>
-                {survey?.survey_name ? `${survey.survey_name}: ` : ""}
-                {question.order_index}. {question.question_text}
-              </Label>
-              {question.scale_type === "likert_5" && (
-                <Select
-                  value={value}
-                  onValueChange={(val) =>
-                    setResponses((prev) => ({ ...prev, [question.id]: val }))
-                  }
-                  disabled={!enabled}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder='Select 1-5' />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {[1, 2, 3, 4, 5].map((option) => (
-                      <SelectItem key={option} value={String(option)}>
-                        {option}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              )}
-              {question.scale_type === "likert_7" && (
-                <Select
-                  value={value}
-                  onValueChange={(val) =>
-                    setResponses((prev) => ({ ...prev, [question.id]: val }))
-                  }
-                  disabled={!enabled}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder='Select 1-7' />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {[1, 2, 3, 4, 5, 6, 7].map((option) => (
-                      <SelectItem key={option} value={String(option)}>
-                        {option}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              )}
-              {question.scale_type === "numeric_0_100" && (
-                <Input
-                  type='number'
-                  min={question.min_value ?? 0}
-                  max={question.max_value ?? 100}
-                  value={value}
-                  onChange={(event) =>
-                    setResponses((prev) => ({
-                      ...prev,
-                      [question.id]: event.target.value,
-                    }))
-                  }
-                  disabled={!enabled}
-                />
-              )}
-              {question.scale_type === "free_text" && (
-                <Textarea
-                  value={value}
-                  onChange={(event) =>
-                    setResponses((prev) => ({
-                      ...prev,
-                      [question.id]: event.target.value,
-                    }))
-                  }
-                  disabled={!enabled}
-                />
-              )}
-            </div>
-          );
-        })}
+    <div className='space-y-6'>
+      {surveyQuestionsSorted.map((question) => {
+        const survey = surveyById.get(question.survey_id);
+        const value = responses[question.id] ?? "";
+        return (
+          <div key={question.id} className='space-y-2'>
+            <Label className='text-sm font-medium'>
+              {survey?.survey_name ? `${survey.survey_name}: ` : ""}
+              {question.order_index}. {question.question_text}
+            </Label>
+            {question.scale_type === "likert_5" && (
+              <Select
+                value={value}
+                onValueChange={(val) =>
+                  setResponses((prev) => ({ ...prev, [question.id]: val }))
+                }
+                disabled={!enabled}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder='Select 1-5' />
+                </SelectTrigger>
+                <SelectContent>
+                  {[1, 2, 3, 4, 5].map((option) => (
+                    <SelectItem key={option} value={String(option)}>
+                      {option}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
+            {question.scale_type === "likert_7" && (
+              <Select
+                value={value}
+                onValueChange={(val) =>
+                  setResponses((prev) => ({ ...prev, [question.id]: val }))
+                }
+                disabled={!enabled}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder='Select 1-7' />
+                </SelectTrigger>
+                <SelectContent>
+                  {[1, 2, 3, 4, 5, 6, 7].map((option) => (
+                    <SelectItem key={option} value={String(option)}>
+                      {option}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
+            {question.scale_type === "numeric_0_100" && (
+              <Input
+                type='number'
+                min={question.min_value ?? 0}
+                max={question.max_value ?? 100}
+                value={value}
+                onChange={(event) =>
+                  setResponses((prev) => ({
+                    ...prev,
+                    [question.id]: event.target.value,
+                  }))
+                }
+                disabled={!enabled}
+              />
+            )}
+            {question.scale_type === "free_text" && (
+              <Textarea
+                value={value}
+                onChange={(event) =>
+                  setResponses((prev) => ({
+                    ...prev,
+                    [question.id]: event.target.value,
+                  }))
+                }
+                disabled={!enabled}
+              />
+            )}
+          </div>
+        );
+      })}
 
-        <Button
-          className='w-full sm:w-fit'
-          disabled={!enabled || saving}
-          onClick={handleSubmit}
-        >
-          {saving ? "Submitting..." : "Submit traditional survey"}
-        </Button>
-      </CardContent>
-    </Card>
+      <Button
+        className='w-full sm:w-fit'
+        disabled={!enabled || saving}
+        onClick={handleSubmit}
+      >
+        {saving ? "Submitting..." : "Submit traditional survey"}
+      </Button>
+    </div>
   );
 }

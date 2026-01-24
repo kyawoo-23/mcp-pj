@@ -15,6 +15,7 @@ const taskLabels: Record<string, string> = {
 
 import { useTaskStore } from "@/lib/store";
 import Link from "next/link";
+import { getSurveyUrl } from "@/lib/constants";
 
 export function TaskIndicator() {
   const supabase = createClient();
@@ -91,7 +92,9 @@ export function TaskIndicator() {
   }, [supabase, setActiveTask]);
 
   useEffect(() => {
-    refreshActiveTask();
+    (async () => {
+      await refreshActiveTask();
+    })();
   }, [refreshActiveTask]);
 
   // Realtime subscription for immediate updates
@@ -131,14 +134,14 @@ export function TaskIndicator() {
     activeTask,
   ]);
 
-  const surveyLink = useMemo(() => "http://localhost:4003/survey", []);
+  const surveyLink = useMemo(() => getSurveyUrl(), []);
 
   if (loading || !activeTask || !isVisible) return null;
 
   const isCompleted = activeTask.status === "completed";
 
   return (
-    <div className='fixed bottom-4 right-4 z-50 hidden w-72 sm:block'>
+    <div className='fixed top-16 right-4 z-50 hidden w-72 sm:block'>
       <Card
         className={`shadow-md transition-all duration-500 ${isCompleted ? "border-green-500 ring-1 ring-green-500" : ""}`}
       >

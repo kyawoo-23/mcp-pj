@@ -116,11 +116,16 @@ export function Navbar() {
                     </Avatar>
                   </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align='end'>
+                <DropdownMenuContent align='end' className='w-56'>
                   <div className='flex flex-col space-y-1 p-2'>
                     <p className='text-sm font-medium leading-none'>
                       {fullName || user.email}
                     </p>
+                    {fullName && (
+                      <p className='text-xs text-muted-foreground truncate'>
+                        {user.email}
+                      </p>
+                    )}
                   </div>
                   <DropdownMenuSeparator />
                   <Link href='/settings'>
@@ -130,7 +135,10 @@ export function Navbar() {
                     </DropdownMenuItem>
                   </Link>
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={() => setShowLogoutDialog(true)}>
+                  <DropdownMenuItem
+                    onClick={() => setShowLogoutDialog(true)}
+                    className='text-destructive focus:text-destructive'
+                  >
                     <LogOut className='mr-2 h-4 w-4' />
                     <span>Log out</span>
                   </DropdownMenuItem>
@@ -160,11 +168,16 @@ export function Navbar() {
                   </Avatar>
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align='end'>
+              <DropdownMenuContent align='end' className='w-56'>
                 <div className='flex flex-col space-y-1 p-2'>
                   <p className='text-sm font-medium leading-none'>
                     {fullName || user.email}
                   </p>
+                  {fullName && (
+                    <p className='text-xs text-muted-foreground truncate'>
+                      {user.email}
+                    </p>
+                  )}
                 </div>
                 <DropdownMenuSeparator />
                 <Link href='/settings'>
@@ -174,7 +187,10 @@ export function Navbar() {
                   </DropdownMenuItem>
                 </Link>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={() => setShowLogoutDialog(true)}>
+                <DropdownMenuItem
+                  onClick={() => setShowLogoutDialog(true)}
+                  className='text-destructive focus:text-destructive'
+                >
                   <LogOut className='mr-2 h-4 w-4' />
                   <span>Log out</span>
                 </DropdownMenuItem>
