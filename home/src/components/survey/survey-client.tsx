@@ -109,11 +109,20 @@ export function SurveyPageClient({
     interviewResponses,
   });
 
+  const [isRefreshing, setIsRefreshing] = useState(false);
+
+  const handleRefresh = async () => {
+    setIsRefreshing(true);
+    await refreshTaskData();
+    setTimeout(() => setIsRefreshing(false), 500); // Minimum spin time for better UX
+  };
+
   // Auto-expand logic - follows UI order: traditional first, then chat
   useEffect(() => {
     if (requiresDemographics) return;
 
     if (!isStarted) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setActiveSection("intro");
     } else if (!traditionalTasksCompleted) {
       setActiveSection("traditional_tasks");
@@ -143,10 +152,24 @@ export function SurveyPageClient({
     }
   };
 
+  const handleResetTask = async (
+    task: TaskDefinitionRow,
+    session: TaskSessionRow,
+  ) => {
+    const progress = progressByTaskId.get(task.id);
+    if (progress?.status === "completed") {
+      return;
+    }
+    await resetTask(task, session);
+  };
+
   if (requiresDemographics) {
     return (
       <div className='min-h-screen bg-background'>
-        <SurveyNavbar />
+        <SurveyNavbar
+          onRefresh={handleRefresh}
+          isRefreshing={isRefreshing}
+        />
         <div className='p-6'>
           <div className='mx-auto w-full max-w-5xl'>
             <DemographicsForm
@@ -163,7 +186,10 @@ export function SurveyPageClient({
 
   return (
     <div className='min-h-screen bg-background'>
-      <SurveyNavbar />
+      <SurveyNavbar
+        onRefresh={handleRefresh}
+        isRefreshing={isRefreshing}
+      />
       <div className='p-6'>
         <div className='mx-auto flex w-full max-w-5xl flex-col gap-6'>
           {/* Intro Section */}
@@ -230,7 +256,7 @@ export function SurveyPageClient({
               progressByTaskId={progressByTaskId}
               activeTaskId={activeTask?.task_definition_id}
               onOpenTask={openTask}
-              onResetTask={resetTask}
+              onResetTask={handleResetTask}
             />
           </SurveySection>
 
@@ -279,7 +305,7 @@ export function SurveyPageClient({
               progressByTaskId={progressByTaskId}
               activeTaskId={activeTask?.task_definition_id}
               onOpenTask={openTask}
-              onResetTask={resetTask}
+              onResetTask={handleResetTask}
             />
           </SurveySection>
 

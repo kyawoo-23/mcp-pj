@@ -450,6 +450,45 @@ export type Database = {
         }
         Relationships: []
       }
+      task_interview_responses: {
+        Row: {
+          created_at: string
+          id: string
+          question_id: string
+          response_text: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          question_id: string
+          response_text: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          question_id?: string
+          response_text?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "task_interview_responses_question_id_fkey"
+            columns: ["question_id"]
+            isOneToOne: false
+            referencedRelation: "task_interview_questions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "task_interview_responses_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       task_progress: {
         Row: {
           completed_at: string | null
@@ -645,45 +684,6 @@ export type Database = {
           version?: string
         }
         Relationships: []
-      }
-      user_interview_responses: {
-        Row: {
-          created_at: string
-          id: string
-          question_id: string
-          response_text: string
-          user_id: string
-        }
-        Insert: {
-          created_at?: string
-          id?: string
-          question_id: string
-          response_text: string
-          user_id: string
-        }
-        Update: {
-          created_at?: string
-          id?: string
-          question_id?: string
-          response_text?: string
-          user_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "user_interview_responses_question_id_fkey"
-            columns: ["question_id"]
-            isOneToOne: false
-            referencedRelation: "task_interview_questions"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "user_interview_responses_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
       }
     }
     Views: {

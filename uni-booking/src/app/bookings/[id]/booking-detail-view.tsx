@@ -10,6 +10,14 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Calendar, Clock, MapPin, X } from "lucide-react";
@@ -24,6 +32,7 @@ interface BookingDetailViewProps {
 export default function BookingDetailView({ booking }: BookingDetailViewProps) {
   const router = useRouter();
   const [cancelling, setCancelling] = useState(false);
+  const [isCancelDialogOpen, setIsCancelDialogOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const canCancel =
@@ -37,10 +46,7 @@ export default function BookingDetailView({ booking }: BookingDetailViewProps) {
   };
 
   const handleCancel = async () => {
-    if (!confirm("Are you sure you want to cancel this booking?")) {
-      return;
-    }
-
+    setIsCancelDialogOpen(false);
     setError(null);
     setCancelling(true);
 
@@ -119,14 +125,43 @@ export default function BookingDetailView({ booking }: BookingDetailViewProps) {
 
       <div className='flex justify-end gap-2'>
         {canCancel && (
-          <Button
-            variant='destructive'
-            onClick={handleCancel}
-            disabled={cancelling}
-          >
-            <X className='h-4 w-4 mr-1' />
-            {cancelling ? "Cancelling..." : "Cancel Booking"}
-          </Button>
+          <>
+            <Button
+              variant='destructive'
+              onClick={() => setIsCancelDialogOpen(true)}
+              disabled={cancelling}
+            >
+              <X className='h-4 w-4 mr-1' />
+              {cancelling ? "Cancelling..." : "Cancel Booking"}
+            </Button>
+
+            <Dialog open={isCancelDialogOpen} onOpenChange={setIsCancelDialogOpen}>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Cancel Booking</DialogTitle>
+                  <DialogDescription>
+                    Are you sure you want to cancel this booking? This action cannot be undone.
+                  </DialogDescription>
+                </DialogHeader>
+                <DialogFooter>
+                  <Button
+                    variant="outline"
+                    onClick={() => setIsCancelDialogOpen(false)}
+                    disabled={cancelling}
+                  >
+                    Keep Booking
+                  </Button>
+                  <Button
+                    variant="destructive"
+                    onClick={handleCancel}
+                    disabled={cancelling}
+                  >
+                    {cancelling ? "Cancelling..." : "Yes, Cancel Booking"}
+                  </Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
+          </>
         )}
         <div className='flex gap-2'>
           <Button variant='outline' onClick={() => router.back()}>

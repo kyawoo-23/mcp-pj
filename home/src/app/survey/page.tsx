@@ -90,7 +90,7 @@ export default async function SurveyPage() {
     : Promise.resolve({ data: [] });
 
   const interviewResponsesPromise = supabase
-    .from("user_interview_responses")
+    .from("task_interview_responses")
     .select("id, question_id, response_text, user_id, created_at")
     .eq("user_id", user.id);
 

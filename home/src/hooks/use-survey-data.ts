@@ -139,7 +139,7 @@ export function useSurveyData({
           .select("id, question_id, response_value, response_text, session_id, created_at")
           .in("session_id", latestSessionIds),
         supabase
-          .from("user_interview_responses")
+          .from("task_interview_responses")
           .select("id, question_id, response_text, user_id, created_at")
           .eq("user_id", user.id),
       ]);
@@ -207,7 +207,6 @@ export function useSurveyData({
         .from("task_sessions")
         .upsert(
           [
-            { user_id: profileState.id, system_type: "chat_agent", status: "not_started", updated_at: now },
             { user_id: profileState.id, system_type: "traditional", status: "not_started", updated_at: now },
           ],
           { onConflict: "user_id,system_type" },
@@ -273,7 +272,7 @@ export function useSurveyData({
     await supabase.from("task_events").delete().eq("session_id", session.id).eq("metadata->>task_code", task.task_code);
     await supabase.from("task_survey_responses").delete().eq("session_id", session.id);
     await supabase.from("task_sessions").update({ status: "in_progress", completed_at: null, updated_at: now }).eq("id", session.id);
-    await supabase.from("user_interview_responses").delete().eq("user_id", session.user_id);
+    await supabase.from("task_interview_responses").delete().eq("user_id", session.user_id);
 
     toast.success("Task reset");
     await refreshTaskData();

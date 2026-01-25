@@ -1,7 +1,16 @@
 "use client";
 
+import { useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import type {
   SystemType,
   TaskDefinitionRow,
@@ -29,7 +38,6 @@ const statusVariantMap: Record<
 };
 
 export function TaskList({
-  systemType,
   session,
   tasks,
   progressByTaskId,
@@ -37,9 +45,10 @@ export function TaskList({
   onOpenTask,
   onResetTask,
 }: TaskListProps) {
-  const completedCount = tasks.filter(
-    (task) => progressByTaskId.get(task.id)?.status === "completed",
-  ).length;
+  const [taskToReset, setTaskToReset] = useState<{
+    task: TaskDefinitionRow;
+    session: TaskSessionRow;
+  } | null>(null);
 
   return (
     <div className='space-y-4'>
@@ -79,8 +88,10 @@ export function TaskList({
               <Button
                 variant='ghost'
                 size='sm'
-                disabled={!session || status === "not_started"}
-                onClick={() => session && onResetTask(task, session)}
+                disabled={!session || status === "not_started" || status === "completed"}
+                onClick={() =>
+                  session && setTaskToReset({ task, session })
+                }
               >
                 Reset task
               </Button>
@@ -88,6 +99,41 @@ export function TaskList({
           </div>
         );
       })}
+
+      <Dialog
+        open={!!taskToReset}
+        onOpenChange={(open) => !open && setTaskToReset(null)}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Reset Task?</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to reset this task? This will clear all
+              progress and responses for this task. This action cannot be
+              undone.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button
+              variant='outline'
+              onClick={() => setTaskToReset(null)}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant='destructive'
+              onClick={() => {
+                if (taskToReset) {
+                  onResetTask(taskToReset.task, taskToReset.session);
+                  setTaskToReset(null);
+                }
+              }}
+            >
+              Reset Task
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

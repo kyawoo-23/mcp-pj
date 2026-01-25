@@ -22,7 +22,7 @@ export type SurveyRow = Database["public"]["Tables"]["task_surveys"]["Row"];
 export type SurveyQuestionRow = Database["public"]["Tables"]["task_survey_questions"]["Row"];
 export type InterviewQuestionRow = Database["public"]["Tables"]["task_interview_questions"]["Row"];
 export type SurveyResponseRow = Database["public"]["Tables"]["task_survey_responses"]["Row"];
-export type UserInterviewResponseRow = Database["public"]["Tables"]["user_interview_responses"]["Row"];
+export type UserInterviewResponseRow = Database["public"]["Tables"]["task_interview_responses"]["Row"];
 
 // Enum types
 export type SystemType = Database["public"]["Enums"]["system_type"];

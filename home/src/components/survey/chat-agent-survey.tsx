@@ -65,7 +65,13 @@ export function ChatAgentSurvey({
   }, [sessionResponses]);
 
   const surveyQuestionsSorted = useMemo(() => {
-    return [...surveyQuestions].sort((a, b) => a.order_index - b.order_index);
+    return [...surveyQuestions].sort((a, b) => {
+      // Group by scale_type first
+      if (a.scale_type < b.scale_type) return -1;
+      if (a.scale_type > b.scale_type) return 1;
+      // Then sort by order_index
+      return a.order_index - b.order_index;
+    });
   }, [surveyQuestions]);
 
   const surveyById = useMemo(() => {

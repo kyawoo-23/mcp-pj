@@ -41,7 +41,7 @@ export function TaskIndicator() {
       .from("task_sessions")
       .select("id, system_type")
       .eq("user_id", user.id)
-      .in("system_type", ["chat_agent", "traditional"]);
+      .eq("system_type", "traditional");
 
     const sessionIds = (sessions || []).map((session) => session.id);
     if (!sessionIds.length) {

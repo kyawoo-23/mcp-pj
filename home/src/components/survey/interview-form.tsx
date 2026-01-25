@@ -75,7 +75,7 @@ export function InterviewForm({
       );
 
       const { error } = await supabase
-        .from("user_interview_responses")
+        .from("task_interview_responses")
         .upsert(entries, { onConflict: "user_id,question_id" });
 
       if (error) {

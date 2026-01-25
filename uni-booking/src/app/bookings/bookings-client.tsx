@@ -4,6 +4,15 @@ import { useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { BookingCard } from "@/components/bookings/booking-card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { cancelBooking } from "@/app/actions/bookings";
 import type { FacilityBookingWithDetails } from "@/lib/types";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -17,14 +26,20 @@ export default function BookingsClient({ bookings }: BookingsClientProps) {
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
   const [selectedStatus, setSelectedStatus] = useState<string>("all");
+  const [bookingToCancel, setBookingToCancel] = useState<string | null>(null);
+  const [isCancelling, setIsCancelling] = useState(false);
 
-  const handleCancel = async (id: string) => {
-    if (!confirm("Are you sure you want to cancel this booking?")) {
-      return;
-    }
+  const handleCancelClick = (id: string) => {
+    setBookingToCancel(id);
+  };
 
+  const confirmCancel = async () => {
+    if (!bookingToCancel) return;
+
+    setIsCancelling(true);
     setError(null);
-    const result = await cancelBooking(id);
+
+    const result = await cancelBooking(bookingToCancel);
 
     if (result.error) {
       setError(result.error);
@@ -35,6 +50,9 @@ export default function BookingsClient({ bookings }: BookingsClientProps) {
       toast.success("Booking cancelled successfully");
       router.refresh();
     }
+
+    setIsCancelling(false);
+    setBookingToCancel(null);
   };
 
   const filteredBookings = useMemo(() => {
@@ -87,7 +105,7 @@ export default function BookingsClient({ bookings }: BookingsClientProps) {
               <BookingCard
                 key={booking.id}
                 booking={booking}
-                onCancel={handleCancel}
+                onCancel={handleCancelClick}
               />
             ))}
           </div>
@@ -98,6 +116,33 @@ export default function BookingsClient({ bookings }: BookingsClientProps) {
           )}
         </TabsContent>
       </Tabs>
+
+      <Dialog open={!!bookingToCancel} onOpenChange={(open) => !open && setBookingToCancel(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Cancel Booking</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to cancel this booking? This action cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setBookingToCancel(null)}
+              disabled={isCancelling}
+            >
+              Keep Booking
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={confirmCancel}
+              disabled={isCancelling}
+            >
+              {isCancelling ? "Cancelling..." : "Yes, Cancel Booking"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

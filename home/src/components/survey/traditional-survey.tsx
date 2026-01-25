@@ -65,7 +65,13 @@ export function TraditionalSurvey({
   }, [sessionResponses]);
 
   const surveyQuestionsSorted = useMemo(() => {
-    return [...surveyQuestions].sort((a, b) => a.order_index - b.order_index);
+    return [...surveyQuestions].sort((a, b) => {
+      // Group by scale_type first
+      if (a.scale_type < b.scale_type) return -1;
+      if (a.scale_type > b.scale_type) return 1;
+      // Then sort by order_index
+      return a.order_index - b.order_index;
+    });
   }, [surveyQuestions]);
 
   const surveyById = useMemo(() => {
@@ -123,18 +129,16 @@ export function TraditionalSurvey({
       }
 
       // Start the chat_agent session after traditional survey is completed
-      await supabase
-        .from("task_sessions")
-        .upsert(
-          {
-            user_id: session.user_id,
-            system_type: "chat_agent",
-            status: "in_progress",
-            started_at: now,
-            updated_at: now,
-          },
-          { onConflict: "user_id,system_type" },
-        );
+      await supabase.from("task_sessions").upsert(
+        {
+          user_id: session.user_id,
+          system_type: "chat_agent",
+          status: "in_progress",
+          started_at: now,
+          updated_at: now,
+        },
+        { onConflict: "user_id,system_type" },
+      );
 
       toast.success("Traditional survey submitted.");
       await onSubmitted();

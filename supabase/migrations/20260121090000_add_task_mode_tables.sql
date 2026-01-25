@@ -127,7 +127,7 @@ CREATE TABLE task_interview_questions (
   UNIQUE (order_index)
 );
 
-CREATE TABLE user_interview_responses (
+CREATE TABLE task_interview_responses (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id uuid NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
   question_id uuid NOT NULL REFERENCES task_interview_questions(id) ON DELETE CASCADE,
@@ -163,8 +163,8 @@ CREATE INDEX idx_task_events_type ON task_events(event_type);
 CREATE INDEX idx_task_survey_questions_survey ON task_survey_questions(survey_id);
 CREATE INDEX idx_task_survey_responses_session ON task_survey_responses(session_id);
 CREATE INDEX idx_task_interview_questions_order ON task_interview_questions(order_index);
-CREATE INDEX idx_user_interview_responses_user_id ON user_interview_responses(user_id);
-CREATE INDEX idx_user_interview_responses_question_id ON user_interview_responses(question_id);
+CREATE INDEX idx_task_interview_responses_user_id ON task_interview_responses(user_id);
+CREATE INDEX idx_task_interview_responses_question_id ON task_interview_responses(question_id);
 
 
 -- ----------------------------------------------------------------------------
@@ -179,7 +179,7 @@ ALTER TABLE task_surveys ENABLE ROW LEVEL SECURITY;
 ALTER TABLE task_survey_questions ENABLE ROW LEVEL SECURITY;
 ALTER TABLE task_survey_responses ENABLE ROW LEVEL SECURITY;
 ALTER TABLE task_interview_questions ENABLE ROW LEVEL SECURITY;
-ALTER TABLE user_interview_responses ENABLE ROW LEVEL SECURITY;
+ALTER TABLE task_interview_responses ENABLE ROW LEVEL SECURITY;
 
 -- ----------------------------------------------------------------------------
 -- 7. RLS POLICIES
@@ -313,17 +313,17 @@ CREATE POLICY "Public can read task interview questions"
 
 -- User interview responses: users can manage their own responses
 CREATE POLICY "Users can view own user interview responses"
-  ON user_interview_responses FOR SELECT
+  ON task_interview_responses FOR SELECT
   TO authenticated
   USING (user_id = auth.uid());
 
 CREATE POLICY "Users can insert own user interview responses"
-  ON user_interview_responses FOR INSERT
+  ON task_interview_responses FOR INSERT
   TO authenticated
   WITH CHECK (user_id = auth.uid());
 
 CREATE POLICY "Users can update own user interview responses"
-  ON user_interview_responses FOR UPDATE
+  ON task_interview_responses FOR UPDATE
   TO authenticated
   USING (user_id = auth.uid());
 
@@ -365,7 +365,7 @@ CREATE POLICY "Users can delete own task survey responses"
   );
 
 CREATE POLICY "Users can delete own interview responses"
-  ON user_interview_responses FOR DELETE
+  ON task_interview_responses FOR DELETE
   TO authenticated
   USING (user_id = auth.uid());
 

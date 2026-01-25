@@ -13,7 +13,7 @@ export type SurveyResponseRow =
 export type InterviewQuestionRow =
   Database["public"]["Tables"]["task_interview_questions"]["Row"];
 export type UserInterviewResponseRow =
-  Database["public"]["Tables"]["user_interview_responses"]["Row"];
+  Database["public"]["Tables"]["task_interview_responses"]["Row"];
 export type SystemType = Database["public"]["Enums"]["system_type"];
 
 export type { Json };

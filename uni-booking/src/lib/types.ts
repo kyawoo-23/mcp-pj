@@ -25,7 +25,7 @@ export type TaskSurvey = Database["public"]["Tables"]["task_surveys"]["Row"];
 export type TaskSurveyQuestion = Database["public"]["Tables"]["task_survey_questions"]["Row"];
 export type TaskSurveyResponse = Database["public"]["Tables"]["task_survey_responses"]["Row"];
 export type TaskInterviewQuestion = Database["public"]["Tables"]["task_interview_questions"]["Row"];
-export type UserInterviewResponse = Database["public"]["Tables"]["user_interview_responses"]["Row"];
+export type UserInterviewResponse = Database["public"]["Tables"]["task_interview_responses"]["Row"];
 
 // Enums
 export type BookingStatus = Database["public"]["Enums"]["booking_status"];

@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { LogOut, Settings, GraduationCap } from "lucide-react";
+import { LogOut, Settings, GraduationCap, RefreshCw } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 
@@ -25,7 +25,12 @@ import {
 } from "@/components/ui/dialog";
 import { createClient } from "@/lib/supabase/client";
 
-export function SurveyNavbar() {
+export interface SurveyNavbarProps {
+  onRefresh?: () => void;
+  isRefreshing?: boolean;
+}
+
+export function SurveyNavbar({ onRefresh, isRefreshing }: SurveyNavbarProps) {
   const router = useRouter();
   const supabase = createClient();
   const [user, setUser] = useState<any>(null);
@@ -97,6 +102,21 @@ export function SurveyNavbar() {
         </div>
 
         <div className='flex items-center gap-2'>
+          {onRefresh && (
+            <Button
+              variant='ghost'
+              size='icon'
+              onClick={onRefresh}
+              disabled={isRefreshing}
+              className='mr-1 text-muted-foreground hover:text-foreground'
+              title='Refresh Status'
+            >
+              <RefreshCw
+                className={`h-4 w-4 ${isRefreshing ? "animate-spin" : ""}`}
+              />
+            </Button>
+          )}
+
           {user && (
             <>
               <DropdownMenu>
