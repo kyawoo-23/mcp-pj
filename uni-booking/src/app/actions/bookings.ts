@@ -85,7 +85,7 @@ export async function createBooking(formData: BookingFormData) {
     return { data: null, error: error.message };
   }
 
-  const taskResult = await recordTaskCompletion(supabase, {
+  await recordTaskCompletion(supabase, {
     userId: user.id,
     systemType: "traditional",
     taskCode: "book_room",
@@ -99,7 +99,7 @@ export async function createBooking(formData: BookingFormData) {
   revalidatePath("/bookings");
   revalidatePath("/facilities");
 
-  return { data, error: null, taskCompleted: !taskResult.skipped };
+  return { data, error: null };
 }
 
 export async function getUserBookings() {
@@ -206,7 +206,7 @@ export async function cancelBooking(id: string) {
     return { data: null, error: error.message };
   }
 
-  const taskResult = await recordTaskCompletion(supabase, {
+  await recordTaskCompletion(supabase, {
     userId: user.id,
     systemType: "traditional",
     taskCode: "cancel_booking",
@@ -219,6 +219,6 @@ export async function cancelBooking(id: string) {
   revalidatePath("/bookings");
   revalidatePath(`/bookings/${id}`);
 
-  return { data, error: null, taskCompleted: !taskResult.skipped };
+  return { data, error: null };
 }
 

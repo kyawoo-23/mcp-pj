@@ -25,9 +25,6 @@ export default function RegistrationsClient({
       const result = await dropRegistration(registrationId);
       if (result.success) {
         toast.success(result.message || "Successfully dropped course");
-        if (result.taskCompleted) {
-          toast.success("Task completed: Drop a course");
-        }
         router.refresh();
       } else {
         toast.error(result.error || "Failed to drop course");

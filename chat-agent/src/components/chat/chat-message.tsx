@@ -1,5 +1,3 @@
-import { useEffect, useRef } from "react";
-import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { UserAvatar, AssistantAvatar, SystemIcon } from "./icons/message-icons";
 import ReactMarkdown from "react-markdown";
@@ -27,31 +25,6 @@ function ToolInvocation({ part }: { part: ToolInvocationPart }) {
   const hasError = part.state === "output-error";
   const result = part.output as Record<string, unknown> | undefined;
   const resultHasError = result && "error" in result;
-  const hasShownToast = useRef(false);
-
-  // Task-completing tools
-  const taskCompletingTools = ["register_course", "drop_course", "book_room", "cancel_booking"];
-  const taskNames: Record<string, string> = {
-    register_course: "Register for a course",
-    drop_course: "Drop a course",
-    book_room: "Book a room",
-    cancel_booking: "Cancel a booking",
-  };
-
-  // Show toast when task-completing tool succeeds
-  useEffect(() => {
-    if (
-      hasResult &&
-      !resultHasError &&
-      taskCompletingTools.includes(part.toolName) &&
-      !hasShownToast.current &&
-      result &&
-      result.message
-    ) {
-      hasShownToast.current = true;
-      toast.success(`Task completed: ${taskNames[part.toolName]}`);
-    }
-  }, [hasResult, resultHasError, part.toolName, result]);
 
   return (
     <div className='my-2 rounded-lg border border-border/60 bg-muted/30 overflow-hidden'>

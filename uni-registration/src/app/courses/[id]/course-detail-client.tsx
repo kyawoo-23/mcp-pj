@@ -36,9 +36,6 @@ export default function CourseDetailClient({
       const result = await registerForSection(sectionId);
       if (result.success) {
         toast.success(result.message || "Successfully registered for section");
-        if (result.taskCompleted) {
-          toast.success("Task completed: Register for a course");
-        }
         setRegisteredIds([...registeredIds, sectionId]);
         router.refresh();
       } else {

@@ -86,7 +86,7 @@ export async function registerForSection(sectionId: string) {
 
 
 
-  const taskResult = await recordTaskCompletion(supabase, {
+  await recordTaskCompletion(supabase, {
     userId: user.id,
     systemType: "traditional",
     taskCode: "register_course",
@@ -98,7 +98,7 @@ export async function registerForSection(sectionId: string) {
 
   revalidatePath("/registrations");
   revalidatePath("/courses");
-  return { success: true, message: "Successfully registered for section", taskCompleted: !taskResult.skipped };
+  return { success: true, message: "Successfully registered for section" };
 }
 
 export async function dropRegistration(registrationId: string) {
@@ -143,7 +143,7 @@ export async function dropRegistration(registrationId: string) {
 
 
 
-  const taskResult = await recordTaskCompletion(supabase, {
+  await recordTaskCompletion(supabase, {
     userId: user.id,
     systemType: "traditional",
     taskCode: "drop_course",
@@ -156,7 +156,7 @@ export async function dropRegistration(registrationId: string) {
 
   revalidatePath("/registrations");
   revalidatePath("/courses");
-  return { success: true, message: "Successfully dropped course", taskCompleted: !taskResult.skipped };
+  return { success: true, message: "Successfully dropped course" };
 }
 
 export async function getSectionAvailability(sectionId: string) {

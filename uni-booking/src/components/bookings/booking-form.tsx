@@ -161,9 +161,6 @@ export function BookingForm({
         });
       } else {
         toast.success("Booking created successfully");
-        if (result.taskCompleted) {
-          toast.success("Task completed: Book a room",);
-        }
         router.push("/bookings");
         router.refresh();
       }

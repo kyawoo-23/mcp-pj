@@ -60,9 +60,6 @@ export default function BookingDetailView({ booking }: BookingDetailViewProps) {
         });
       } else {
         toast.success("Booking cancelled successfully");
-        if (result.taskCompleted) {
-          toast.success("Task completed: Cancel a booking");
-        }
         router.push("/bookings");
         router.refresh();
       }
