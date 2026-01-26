@@ -1,5 +1,3 @@
-import { Check, X, Minus } from "lucide-react";
-
 const comparisons = [
   {
     aspect: "Interaction Method",
@@ -13,61 +11,55 @@ const comparisons = [
   },
   {
     aspect: "Learning Curve",
-    traditional: "Moderate - UI familiarity needed",
-    mcp: "Low - conversational",
+    traditional: "Moderate - need to learn the interface",
+    mcp: "Low - just chat naturally",
   },
   {
     aspect: "Task Completion",
-    traditional: "Step-by-step workflow",
-    mcp: "Context-aware, adaptive",
+    traditional: "Follow steps one by one",
+    mcp: "AI adapts to what you need",
   },
   {
     aspect: "User Control",
-    traditional: "High - explicit actions",
-    mcp: "Moderate - AI-mediated",
+    traditional: "High - you control every step",
+    mcp: "Moderate - AI helps along the way",
   },
   {
     aspect: "Accessibility",
     traditional: "Depends on implementation",
-    mcp: "Voice & text friendly",
+    mcp: "Text friendly",
   },
 ];
 
-const techStack = {
-  traditional: ["Next.js 16", "React 19", "Tailwind CSS", "shadcn/ui", "Supabase"],
-  mcp: ["Next.js 16", "MCP SDK", "AI SDK", "Supabase", "TypeScript"],
-};
-
 export function ComparisonTable() {
   return (
-    <section className="py-24 px-6 bg-background">
-      <div className="max-w-6xl mx-auto">
-        <div className="text-center mb-16">
-          <span className="text-sm font-medium tracking-wide uppercase text-muted-foreground mb-4 block">
+    <section className='py-24 px-6 bg-background'>
+      <div className='max-w-6xl mx-auto'>
+        <div className='text-center mb-16'>
+          <span className='text-sm md:text-base font-semibold tracking-wide uppercase text-foreground/80 mb-4 block'>
             Side-by-Side
           </span>
-          <h2 className="text-3xl md:text-4xl font-medium tracking-tight mb-4">
+          <h2 className='text-3xl md:text-4xl font-medium tracking-tight mb-4'>
             Comparison Overview
           </h2>
-          <p className="text-muted-foreground max-w-2xl mx-auto">
-            Key differences between traditional web portals and MCP-powered 
-            conversational interfaces.
+          <p className='text-foreground/90 max-w-2xl mx-auto text-base'>
+            Here&apos;s how the two approaches compare side by side.
           </p>
         </div>
 
         {/* Comparison Table */}
-        <div className="overflow-x-auto mb-16">
-          <table className="w-full border-collapse">
+        <div className='overflow-x-auto mb-16'>
+          <table className='w-full border-collapse'>
             <thead>
-              <tr className="border-b border-border">
-                <th className="text-left py-4 px-4 text-sm font-medium text-muted-foreground">
+              <tr className='border-b-2 border-border'>
+                <th className='text-left py-5 px-5 text-base font-semibold text-foreground'>
                   Aspect
                 </th>
-                <th className="text-left py-4 px-4 text-sm font-medium text-muted-foreground">
+                <th className='text-left py-5 px-5 text-base font-semibold text-foreground'>
                   Traditional Portal
                 </th>
-                <th className="text-left py-4 px-4 text-sm font-medium text-muted-foreground">
-                  MCP Chat Agent
+                <th className='text-left py-5 px-5 text-base font-semibold text-foreground'>
+                  AI Chat Assistant
                 </th>
               </tr>
             </thead>
@@ -75,49 +67,21 @@ export function ComparisonTable() {
               {comparisons.map((row, index) => (
                 <tr
                   key={index}
-                  className="border-b border-border hover:bg-muted/30 transition-colors"
+                  className='border-b border-border hover:bg-muted/40 transition-colors'
                 >
-                  <td className="py-4 px-4 font-medium text-foreground">
+                  <td className='py-5 px-5 font-semibold text-base text-foreground'>
                     {row.aspect}
                   </td>
-                  <td className="py-4 px-4 text-muted-foreground">
+                  <td className='py-5 px-5 text-base text-foreground/85'>
                     {row.traditional}
                   </td>
-                  <td className="py-4 px-4 text-muted-foreground">{row.mcp}</td>
+                  <td className='py-5 px-5 text-base text-foreground/85'>
+                    {row.mcp}
+                  </td>
                 </tr>
               ))}
             </tbody>
           </table>
-        </div>
-
-        {/* Tech Stack Comparison */}
-        <div className="grid md:grid-cols-2 gap-8">
-          <div className="p-6 rounded-xl border border-border bg-card">
-            <h3 className="font-medium mb-4">Traditional Portal Stack</h3>
-            <div className="flex flex-wrap gap-2">
-              {techStack.traditional.map((tech, index) => (
-                <span
-                  key={index}
-                  className="text-sm px-3 py-1.5 bg-muted rounded-full text-foreground/80"
-                >
-                  {tech}
-                </span>
-              ))}
-            </div>
-          </div>
-          <div className="p-6 rounded-xl border border-border bg-card">
-            <h3 className="font-medium mb-4">MCP Chat Agent Stack</h3>
-            <div className="flex flex-wrap gap-2">
-              {techStack.mcp.map((tech, index) => (
-                <span
-                  key={index}
-                  className="text-sm px-3 py-1.5 bg-muted rounded-full text-foreground/80"
-                >
-                  {tech}
-                </span>
-              ))}
-            </div>
-          </div>
         </div>
       </div>
     </section>

@@ -68,3 +68,39 @@ export function getSurveyUrl(): string {
     ? "https://mcp-pj.vercel.app/survey"
     : "https://mcp-project.app/survey";
 }
+
+export function getChatAgentBaseUrl(): string {
+  const isDevMode = process.env.NEXT_PUBLIC_DEV_MODE === "true";
+  const isVercel = typeof window !== "undefined" && window.location.hostname.includes("vercel");
+
+  if (isDevMode) {
+    return "http://localhost:4000";
+  }
+  return isVercel
+    ? "https://mcp-pj-chat-agent.vercel.app"
+    : "https://chat-agent.mcp-project.app";
+}
+
+export function getUniBookingBaseUrl(): string {
+  const isDevMode = process.env.NEXT_PUBLIC_DEV_MODE === "true";
+  const isVercel = typeof window !== "undefined" && window.location.hostname.includes("vercel");
+
+  if (isDevMode) {
+    return "http://localhost:4001";
+  }
+  return isVercel
+    ? "https://mcp-pj-uni-booking.vercel.app"
+    : "https://uni-booking.mcp-project.app";
+}
+
+export function getUniRegistrationBaseUrl(): string {
+  const isDevMode = process.env.NEXT_PUBLIC_DEV_MODE === "true";
+  const isVercel = typeof window !== "undefined" && window.location.hostname.includes("vercel");
+
+  if (isDevMode) {
+    return "http://localhost:4002";
+  }
+  return isVercel
+    ? "https://mcp-pj-uni-registration.vercel.app"
+    : "https://uni-registration.mcp-project.app";
+}

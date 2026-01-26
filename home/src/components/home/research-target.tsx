@@ -2,10 +2,10 @@ import { Target, HelpCircle, Database } from "lucide-react";
 
 export function ResearchTarget() {
   const questions = [
-    "Which approach provides better user experience?",
-    "Which is more efficient for completing tasks?",
-    "How do users perceive each interface?",
-    "Does user-centered design remain essential with AI mediation?",
+    "Which way feels easier to use?",
+    "Which helps you get things done faster?",
+    "Which do you prefer overall?",
+    "How does chatting with AI compare to clicking through forms?",
   ];
 
   return (
@@ -15,29 +15,29 @@ export function ResearchTarget() {
           {/* Left Column - Objective */}
           <div>
             <div className="flex items-center gap-3 mb-6">
-              <div className="p-2 rounded-lg bg-muted">
-                <Target className="w-5 h-5 text-foreground" />
+              <div className="p-2.5 rounded-lg bg-muted">
+                <Target className="w-6 h-6 text-foreground" />
               </div>
-              <span className="text-sm font-medium tracking-wide uppercase text-muted-foreground">
-                Research Objective
+              <span className="text-sm md:text-base font-semibold tracking-wide uppercase text-foreground/80">
+                What We're Studying
               </span>
             </div>
             <h2 className="text-3xl md:text-4xl font-medium tracking-tight mb-6 text-balance">
-              Compare user experience and efficiency between two paradigms
+              Comparing two ways to use websites
             </h2>
-            <p className="text-muted-foreground leading-relaxed mb-8">
-              This research investigates how the Model Context Protocol may reshape 
-              conventional interaction models by shifting from interface-driven to 
-              intent-driven experiences, examining whether user-centered design 
-              remains essential when AI mediates interactions.
+            <p className="text-foreground/90 leading-relaxed mb-8 text-base">
+              We want to understand which approach works better: traditional websites 
+              where you click through pages and fill out forms, or chatting with an AI 
+              assistant that helps you get things done through conversation.
             </p>
             
-            <div className="flex items-start gap-3 p-4 rounded-lg bg-muted/50 border border-border">
-              <Database className="w-5 h-5 text-accent mt-0.5 shrink-0" />
+            <div className="flex items-start gap-3 p-5 rounded-lg bg-muted/50 border-2 border-border">
+              <Database className="w-6 h-6 text-accent-foreground mt-0.5 shrink-0" />
               <div>
-                <p className="font-medium text-sm mb-1">Shared Infrastructure</p>
-                <p className="text-sm text-muted-foreground">
-                  All prototype systems use the same Supabase backend for fair comparison
+                <p className="font-semibold text-base mb-1.5">Fair Comparison</p>
+                <p className="text-base text-foreground/85">
+                  Both approaches use the same systems behind the scenes, so we can 
+                  fairly compare how they feel to use.
                 </p>
               </div>
             </div>
@@ -46,11 +46,11 @@ export function ResearchTarget() {
           {/* Right Column - Research Questions */}
           <div>
             <div className="flex items-center gap-3 mb-6">
-              <div className="p-2 rounded-lg bg-muted">
-                <HelpCircle className="w-5 h-5 text-foreground" />
+              <div className="p-2.5 rounded-lg bg-muted">
+                <HelpCircle className="w-6 h-6 text-foreground" />
               </div>
-              <span className="text-sm font-medium tracking-wide uppercase text-muted-foreground">
-                Research Questions
+              <span className="text-sm md:text-base font-semibold tracking-wide uppercase text-foreground/80">
+                What We Want to Know
               </span>
             </div>
             
@@ -58,12 +58,12 @@ export function ResearchTarget() {
               {questions.map((question, index) => (
                 <div
                   key={index}
-                  className="flex items-start gap-4 p-5 rounded-lg border border-border bg-card hover:border-foreground/20 transition-colors"
+                  className="flex items-start gap-4 p-6 rounded-lg border-2 border-border bg-card hover:border-foreground/40 transition-colors"
                 >
-                  <span className="text-4xl font-light text-muted-foreground/50">
+                  <span className="text-4xl font-semibold text-foreground/70">
                     {index + 1}
                   </span>
-                  <p className="text-foreground font-medium pt-2">{question}</p>
+                  <p className="text-foreground font-semibold pt-2 text-base">{question}</p>
                 </div>
               ))}
             </div>

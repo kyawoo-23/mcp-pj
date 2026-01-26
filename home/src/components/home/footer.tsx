@@ -1,35 +1,42 @@
+import Link from "next/link";
+import {
+  getChatAgentBaseUrl,
+  getUniBookingBaseUrl,
+  getUniRegistrationBaseUrl,
+} from "@/utils/constants";
+
 export function Footer() {
   const links = [
-    { label: "uni-booking", port: 4001 },
-    { label: "uni-registration", port: 4002 },
-    { label: "chat-agent", port: 4000 },
+    { label: "uni-booking", url: getUniBookingBaseUrl() },
+    { label: "uni-registration", url: getUniRegistrationBaseUrl() },
+    { label: "chat-agent", url: getChatAgentBaseUrl() },
   ];
 
   return (
-    <footer className="py-12 px-6 bg-foreground text-primary-foreground">
-      <div className="max-w-6xl mx-auto">
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-8">
+    <footer className='py-12 px-6 bg-foreground text-primary-foreground'>
+      <div className='max-w-6xl mx-auto'>
+        <div className='flex flex-col md:flex-row justify-between items-start md:items-center gap-8'>
           <div>
-            <h3 className="font-medium text-lg mb-2">MCP Research Project</h3>
-            <p className="text-sm text-muted-foreground max-w-md">
-              Exploring the future of human-computer interaction through 
-              Model Context Protocol and conversational AI.
+            <h3 className='font-semibold text-lg mb-2'>Website Design Study</h3>
+            <p className='text-base text-primary-foreground/85 max-w-md'>
+              Comparing traditional websites with AI chat assistants to
+              understand which approach works better for users.
             </p>
           </div>
 
-          <div className="flex flex-col sm:flex-row gap-6">
+          <div className='flex flex-col sm:flex-row gap-6'>
             <div>
-              <p className="text-xs uppercase tracking-wide text-muted-foreground mb-3">
+              <p className='text-xs md:text-sm uppercase tracking-wide text-primary-foreground/80 mb-3 font-semibold'>
                 Projects
               </p>
-              <div className="flex flex-col gap-2">
+              <div className='flex flex-col gap-2'>
                 {links.map((link) => (
                   <a
                     key={link.label}
-                    href={`http://localhost:${link.port}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-sm text-primary-foreground/70 hover:text-primary-foreground transition-colors"
+                    href={link.url}
+                    target='_blank'
+                    rel='noopener noreferrer'
+                    className='text-base text-primary-foreground/85 hover:text-primary-foreground transition-colors font-medium'
                   >
                     {link.label}
                   </a>
@@ -38,23 +45,36 @@ export function Footer() {
             </div>
 
             <div>
-              <p className="text-xs uppercase tracking-wide text-muted-foreground mb-3">
+              <p className='text-xs md:text-sm uppercase tracking-wide text-primary-foreground/80 mb-3 font-semibold'>
+                Participate
+              </p>
+              <div className='flex flex-col gap-2'>
+                <Link
+                  href='/survey'
+                  className='text-base text-primary-foreground/85 hover:text-primary-foreground transition-colors font-medium'
+                >
+                  Take the Survey
+                </Link>
+              </div>
+            </div>
+            <div>
+              <p className='text-xs md:text-sm uppercase tracking-wide text-primary-foreground/80 mb-3 font-semibold'>
                 Resources
               </p>
-              <div className="flex flex-col gap-2">
+              <div className='flex flex-col gap-2'>
                 <a
-                  href="https://modelcontextprotocol.io"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-sm text-primary-foreground/70 hover:text-primary-foreground transition-colors"
+                  href='https://modelcontextprotocol.io'
+                  target='_blank'
+                  rel='noopener noreferrer'
+                  className='text-base text-primary-foreground/85 hover:text-primary-foreground transition-colors font-medium'
                 >
                   MCP Documentation
                 </a>
                 <a
-                  href="https://supabase.com"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-sm text-primary-foreground/70 hover:text-primary-foreground transition-colors"
+                  href='https://supabase.com'
+                  target='_blank'
+                  rel='noopener noreferrer'
+                  className='text-base text-primary-foreground/85 hover:text-primary-foreground transition-colors font-medium'
                 >
                   Supabase
                 </a>
@@ -63,9 +83,9 @@ export function Footer() {
           </div>
         </div>
 
-        <div className="mt-12 pt-8 border-t border-primary-foreground/10">
-          <p className="text-sm text-muted-foreground text-center">
-            Research Study on Traditional Web Portals vs. MCP Chat Interfaces
+        <div className='mt-12 pt-8 border-t border-primary-foreground/20'>
+          <p className='text-base text-primary-foreground/80 text-center font-medium'>
+            User Experience Study: Traditional Websites vs. AI Chat Assistants
           </p>
         </div>
       </div>

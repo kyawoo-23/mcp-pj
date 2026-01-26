@@ -1,4 +1,5 @@
 import { MessageSquare, ArrowUpRight, Sparkles } from "lucide-react";
+import { getChatAgentBaseUrl } from "@/utils/constants";
 
 export function MCPChatAgent() {
   const features = [
@@ -11,8 +12,8 @@ export function MCPChatAgent() {
       description: "Register for courses by simply describing your needs",
     },
     {
-      title: "Context-Aware Responses",
-      description: "AI understands user profile and preferences",
+      title: "Smart Understanding",
+      description: "The AI remembers your information and preferences",
     },
     {
       title: "Unified Interface",
@@ -26,38 +27,37 @@ export function MCPChatAgent() {
         <div className="grid lg:grid-cols-2 gap-16 items-center">
           {/* Left Column - Content */}
           <div>
-            <div className="flex items-center gap-2 mb-6">
-              <span className="text-sm font-medium tracking-wide uppercase text-muted-foreground">
-                Approach B
-              </span>
-              <span className="inline-flex items-center gap-1 text-xs font-medium bg-accent text-accent-foreground px-2 py-1 rounded-full">
-                <Sparkles className="w-3 h-3" />
-                MCP Powered
+            <div className="flex items-center gap-3 mb-6">
+              <div className="inline-flex items-center gap-3 px-6 py-3 bg-purple-500/20 border-2 border-purple-500/40 rounded-full">
+                <span className="text-lg md:text-xl font-bold tracking-wide uppercase text-purple-300">
+                  Approach B
+                </span>
+              </div>
+              <span className="inline-flex items-center gap-1.5 text-xs font-semibold bg-accent text-accent-foreground px-3 py-1.5 rounded-full">
+                <Sparkles className="w-4 h-4" />
+                AI Powered
               </span>
             </div>
             
             <h2 className="text-3xl md:text-4xl font-medium tracking-tight mb-6 text-balance">
-              Conversational Chat Interface
+              Chat with an AI Assistant
             </h2>
             
-            <p className="text-muted-foreground leading-relaxed mb-8">
-              Intent-driven experience powered by the Model Context Protocol, 
-              enabling natural language interaction for completing university 
-              tasks through AI-mediated conversation.
+            <p className="text-primary-foreground/90 leading-relaxed mb-8 text-base">
+              Instead of clicking through pages, just tell the AI what you need. 
+              It understands your request and helps you complete tasks through 
+              natural conversation.
             </p>
 
             <div className="flex items-center gap-4 mb-8">
-              <span className="text-xs font-mono text-muted-foreground bg-primary-foreground/10 px-3 py-1.5 rounded">
-                Port 4000
-              </span>
               <a
-                href="http://localhost:4000"
+                href={getChatAgentBaseUrl()}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center gap-2 px-5 py-2.5 bg-primary-foreground text-foreground rounded-full text-sm font-medium hover:bg-primary-foreground/90 transition-colors"
+                className="inline-flex items-center gap-2 px-6 py-3 bg-primary-foreground text-foreground rounded-full text-base font-semibold hover:bg-primary-foreground/90 transition-colors shadow-md"
               >
                 Try Chat Agent
-                <ArrowUpRight className="w-4 h-4" />
+                <ArrowUpRight className="w-5 h-5" />
               </a>
             </div>
           </div>
@@ -67,16 +67,16 @@ export function MCPChatAgent() {
             {features.map((feature, index) => (
               <div
                 key={index}
-                className="flex items-start gap-4 p-5 rounded-xl bg-primary-foreground/5 border border-primary-foreground/10"
+                className="flex items-start gap-4 p-6 rounded-xl bg-primary-foreground/10 border-2 border-primary-foreground/20"
               >
-                <div className="p-2 rounded-lg bg-primary-foreground/10 shrink-0">
-                  <MessageSquare className="w-5 h-5 text-primary-foreground" />
+                <div className="p-2.5 rounded-lg bg-primary-foreground/20 shrink-0">
+                  <MessageSquare className="w-6 h-6 text-primary-foreground" />
                 </div>
                 <div>
-                  <h3 className="font-medium mb-1 text-primary-foreground">
+                  <h3 className="font-semibold mb-2 text-base text-primary-foreground">
                     {feature.title}
                   </h3>
-                  <p className="text-sm text-muted-foreground">
+                  <p className="text-base text-primary-foreground/85">
                     {feature.description}
                   </p>
                 </div>
