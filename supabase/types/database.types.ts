@@ -583,6 +583,7 @@ export type Database = {
       }
       task_survey_questions: {
         Row: {
+          construct: Database["public"]["Enums"]["survey_construct"] | null
           created_at: string
           id: string
           max_value: number | null
@@ -593,6 +594,7 @@ export type Database = {
           survey_id: string
         }
         Insert: {
+          construct?: Database["public"]["Enums"]["survey_construct"] | null
           created_at?: string
           id?: string
           max_value?: number | null
@@ -603,6 +605,7 @@ export type Database = {
           survey_id: string
         }
         Update: {
+          construct?: Database["public"]["Enums"]["survey_construct"] | null
           created_at?: string
           id?: string
           max_value?: number | null
@@ -721,6 +724,13 @@ export type Database = {
       gender_identity: "female" | "male" | "prefer_not_say"
       message_role: "user" | "assistant" | "system"
       registration_status: "active" | "dropped" | "completed" | "waitlisted"
+      survey_construct:
+        | "Usability"
+        | "Workload"
+        | "Autonomy"
+        | "Competence"
+        | "Performance Satisfaction"
+        | "System Satisfaction"
       survey_scale_type: "likert_5" | "likert_7" | "numeric_0_100" | "free_text"
       system_type: "chat_agent" | "traditional"
       task_event_type: "step" | "turn" | "survey" | "interview" | "system"
@@ -879,6 +889,14 @@ export const Constants = {
       gender_identity: ["female", "male", "prefer_not_say"],
       message_role: ["user", "assistant", "system"],
       registration_status: ["active", "dropped", "completed", "waitlisted"],
+      survey_construct: [
+        "Usability",
+        "Workload",
+        "Autonomy",
+        "Competence",
+        "Performance Satisfaction",
+        "System Satisfaction",
+      ],
       survey_scale_type: ["likert_5", "likert_7", "numeric_0_100", "free_text"],
       system_type: ["chat_agent", "traditional"],
       task_event_type: ["step", "turn", "survey", "interview", "system"],

@@ -50,7 +50,7 @@ export function DemographicsForm({
   };
 
   return (
-    <div className='flex min-h-screen items-center justify-center bg-background p-6'>
+    <div className='flex min-h-screen items-center justify-center bg-background p-6 pb-32'>
       <Card className='w-full max-w-xl shadow-lg'>
         <CardHeader>
           <CardTitle>Survey Demographics</CardTitle>

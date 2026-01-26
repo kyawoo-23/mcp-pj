@@ -69,6 +69,25 @@ export async function recordTaskCompletion(
     return { skipped: true, reason: "no_task_definition" };
   }
 
+  // Query existing task_progress to check current status
+  const { data: existingProgress } = await supabase
+    .from("task_progress")
+    .select("status, started_at")
+    .eq("session_id", session.id)
+    .eq("task_definition_id", taskDefinition.id)
+    .maybeSingle();
+
+  // Only mark as completed if task is currently in progress
+  if (existingProgress?.status !== "in_progress") {
+    return {
+      skipped: true,
+      reason:
+        existingProgress?.status === "completed"
+          ? "already_completed"
+          : "not_in_progress",
+    };
+  }
+
   const now = new Date().toISOString();
   const nextStatus: TaskProgressStatus = "completed";
 
@@ -77,7 +96,7 @@ export async function recordTaskCompletion(
       session_id: session.id,
       task_definition_id: taskDefinition.id,
       status: nextStatus,
-      started_at: session.started_at ?? now,
+      started_at: existingProgress?.started_at ?? session.started_at ?? now,
       completed_at: now,
       success_payload: successPayload,
       updated_at: now,
