@@ -6,6 +6,12 @@ import type {
   InterviewQuestionRow,
   UserInterviewResponseRow,
 } from "@/lib/types";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -94,30 +100,49 @@ export function InterviewForm({
 
   return (
     <div className='space-y-6'>
-      {sortedQuestions.map((question) => (
-        <div key={question.id} className='space-y-2'>
-          <Label className='text-sm font-medium'>
-            {question.order_index}. {question.question_text}
-          </Label>
-          <Textarea
-            value={responses[question.id] ?? ""}
-            onChange={(event) =>
-              setResponses((prev) => ({
-                ...prev,
-                [question.id]: event.target.value,
-              }))
-            }
-            disabled={!enabled}
-          />
-        </div>
-      ))}
-      <Button
-        className='w-full sm:w-fit'
-        disabled={!enabled || saving}
-        onClick={handleSubmit}
-      >
-        {saving ? "Submitting..." : "Submit interview"}
-      </Button>
+      <Card className='border-primary/10'>
+        <CardHeader className='pb-4'>
+          <CardTitle className='text-lg font-medium'>
+            Final Interview Questions
+          </CardTitle>
+        </CardHeader>
+        <CardContent className='space-y-6'>
+          {sortedQuestions.map((question) => (
+            <div key={question.id} className='space-y-3'>
+              <Label className='text-sm font-normal leading-relaxed'>
+                <span className='mr-2 font-medium text-muted-foreground'>
+                  {question.order_index}.
+                </span>
+                {question.question_text}
+              </Label>
+              <div className='pl-6'>
+                <Textarea
+                  value={responses[question.id] ?? ""}
+                  onChange={(event) =>
+                    setResponses((prev) => ({
+                      ...prev,
+                      [question.id]: event.target.value,
+                    }))
+                  }
+                  disabled={!enabled}
+                  className='resize-none'
+                />
+              </div>
+            </div>
+          ))}
+        </CardContent>
+      </Card>
+
+      <div className='flex justify-end pt-4'>
+        <Button
+          className='w-full sm:w-fit'
+          disabled={!enabled || saving}
+          onClick={handleSubmit}
+          size='lg'
+        >
+          {saving ? "Submitting..." : "Submit Interview"}
+        </Button>
+      </div>
     </div>
   );
 }

@@ -106,7 +106,7 @@ export function SurveyNavbar({ onRefresh, isRefreshing }: SurveyNavbarProps) {
           {onRefresh && (
             <Button
               variant='ghost'
-              size='icon'
+              size='default'
               onClick={onRefresh}
               disabled={isRefreshing}
               className='mr-1 text-muted-foreground hover:text-foreground'
@@ -115,6 +115,7 @@ export function SurveyNavbar({ onRefresh, isRefreshing }: SurveyNavbarProps) {
               <RefreshCw
                 className={`h-4 w-4 ${isRefreshing ? "animate-spin" : ""}`}
               />
+              <span className='hidden sm:block'>Refresh Status</span>
             </Button>
           )}
 

@@ -19,7 +19,29 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { toast } from "sonner";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { TlxScale } from "@/components/survey/tlx-scale";
+
+const SURVEY_CONFIG: Record<string, { title: string; description: string }> = {
+  SUS: {
+    title: "System Usability",
+    description: "Please share your thoughts on the system's usability.",
+  },
+  RAW_TLX: {
+    title: "Workload Assessment",
+    description: "Please assess the mental and physical demand of the tasks.",
+  },
+  SDT: {
+    title: "User Experience",
+    description: "Please evaluate your sense of control and competence while using the system.",
+  },
+};
 
 interface TraditionalSurveyProps {
   session?: TaskSessionRow;
@@ -64,14 +86,25 @@ export function TraditionalSurvey({
     setResponses(initial);
   }, [sessionResponses]);
 
-  const surveyQuestionsSorted = useMemo(() => {
-    return [...surveyQuestions].sort((a, b) => {
-      // Group by scale_type first
-      if (a.scale_type < b.scale_type) return -1;
-      if (a.scale_type > b.scale_type) return 1;
-      // Then sort by order_index
-      return a.order_index - b.order_index;
+  const surveyGroups = useMemo(() => {
+    const groups = new Map<string, SurveyQuestionRow[]>();
+    
+    // Sort questions by order_index first
+    const sortedQuestions = [...surveyQuestions].sort(
+      (a, b) => a.order_index - b.order_index
+    );
+
+    sortedQuestions.forEach((q) => {
+      if (!groups.has(q.survey_id)) {
+        groups.set(q.survey_id, []);
+      }
+      groups.get(q.survey_id)?.push(q);
     });
+
+    // Return array of entries, sorted by survey name to ensure consistent order (SUS, RAW_TLX, SDT)
+    // You might want a specific order. Let's try to order by our known types if possible, or just keep insertion order if the DB returns them consistently.
+    // The DB insertion order was SUS, RAW_TLX, SDT.
+    return Array.from(groups.entries());
   }, [surveyQuestions]);
 
   const surveyById = useMemo(() => {
@@ -82,7 +115,8 @@ export function TraditionalSurvey({
 
   const handleSubmit = async () => {
     if (!session || !enabled || saving) return;
-    const unanswered = surveyQuestionsSorted.filter(
+    
+    const unanswered = surveyQuestions.filter(
       (question) =>
         !responses[question.id] || responses[question.id].trim() === "",
     );
@@ -148,93 +182,127 @@ export function TraditionalSurvey({
   };
 
   return (
-    <div className='space-y-6'>
-      {surveyQuestionsSorted.map((question) => {
-        const survey = surveyById.get(question.survey_id);
-        const value = responses[question.id] ?? "";
+    <div className='space-y-8'>
+      {surveyGroups.map(([surveyId, questions]) => {
+        const survey = surveyById.get(surveyId);
+        const config = survey?.survey_name
+          ? SURVEY_CONFIG[survey.survey_name]
+          : null;
+        const title = config?.title || survey?.survey_name || "Survey Section";
+        const description = config?.description;
+
         return (
-          <div key={question.id} className='space-y-2'>
-            <Label className='text-sm font-medium'>
-              {survey?.survey_name ? `${survey.survey_name}: ` : ""}
-              {question.order_index}. {question.question_text}
-            </Label>
-            {question.scale_type === "likert_5" && (
-              <Select
-                value={value}
-                onValueChange={(val) =>
-                  setResponses((prev) => ({ ...prev, [question.id]: val }))
-                }
-                disabled={!enabled}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder='Select 1-5' />
-                </SelectTrigger>
-                <SelectContent>
-                  {[1, 2, 3, 4, 5].map((option) => (
-                    <SelectItem key={option} value={String(option)}>
-                      {option}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            )}
-            {question.scale_type === "likert_7" && (
-              <Select
-                value={value}
-                onValueChange={(val) =>
-                  setResponses((prev) => ({ ...prev, [question.id]: val }))
-                }
-                disabled={!enabled}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder='Select 1-7' />
-                </SelectTrigger>
-                <SelectContent>
-                  {[1, 2, 3, 4, 5, 6, 7].map((option) => (
-                    <SelectItem key={option} value={String(option)}>
-                      {option}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            )}
-            {question.scale_type === "numeric_0_100" && (
-              <TlxScale
-                value={value}
-                min={question.min_value ?? 0}
-                max={question.max_value ?? 100}
-                onChange={(val) =>
-                  setResponses((prev) => ({
-                    ...prev,
-                    [question.id]: String(val),
-                  }))
-                }
-                disabled={!enabled}
-              />
-            )}
-            {question.scale_type === "free_text" && (
-              <Textarea
-                value={value}
-                onChange={(event) =>
-                  setResponses((prev) => ({
-                    ...prev,
-                    [question.id]: event.target.value,
-                  }))
-                }
-                disabled={!enabled}
-              />
-            )}
-          </div>
+          <Card key={surveyId} className='border-primary/10'>
+            <CardHeader className='pb-4'>
+              <CardTitle className='text-lg font-medium'>{title}</CardTitle>
+              {description && (
+                <CardDescription>{description}</CardDescription>
+              )}
+            </CardHeader>
+            <CardContent className='space-y-6'>
+              {questions.map((question) => {
+                const value = responses[question.id] ?? "";
+                return (
+                  <div key={question.id} className='space-y-3'>
+                    <Label className='text-sm font-normal leading-relaxed'>
+                      <span className='mr-2 font-medium text-muted-foreground'>
+                        {question.order_index}.
+                      </span>
+                      {question.question_text}
+                    </Label>
+                    <div className='pl-6'>
+                      {question.scale_type === "likert_5" && (
+                        <Select
+                          value={value}
+                          onValueChange={(val) =>
+                            setResponses((prev) => ({
+                              ...prev,
+                              [question.id]: val,
+                            }))
+                          }
+                          disabled={!enabled}
+                        >
+                          <SelectTrigger className='w-full sm:w-[200px]'>
+                            <SelectValue placeholder='Select 1-5' />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {[1, 2, 3, 4, 5].map((option) => (
+                              <SelectItem key={option} value={String(option)}>
+                                {option}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      )}
+                      {question.scale_type === "likert_7" && (
+                        <Select
+                          value={value}
+                          onValueChange={(val) =>
+                            setResponses((prev) => ({
+                              ...prev,
+                              [question.id]: val,
+                            }))
+                          }
+                          disabled={!enabled}
+                        >
+                          <SelectTrigger className='w-full sm:w-[200px]'>
+                            <SelectValue placeholder='Select 1-7' />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {[1, 2, 3, 4, 5, 6, 7].map((option) => (
+                              <SelectItem key={option} value={String(option)}>
+                                {option}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      )}
+                      {question.scale_type === "numeric_0_100" && (
+                        <TlxScale
+                          value={value}
+                          min={question.min_value ?? 0}
+                          max={question.max_value ?? 100}
+                          onChange={(val) =>
+                            setResponses((prev) => ({
+                              ...prev,
+                              [question.id]: String(val),
+                            }))
+                          }
+                          disabled={!enabled}
+                        />
+                      )}
+                      {question.scale_type === "free_text" && (
+                        <Textarea
+                          value={value}
+                          onChange={(event) =>
+                            setResponses((prev) => ({
+                              ...prev,
+                              [question.id]: event.target.value,
+                            }))
+                          }
+                          disabled={!enabled}
+                          className='resize-none'
+                        />
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </CardContent>
+          </Card>
         );
       })}
 
-      <Button
-        className='w-full sm:w-fit'
-        disabled={!enabled || saving}
-        onClick={handleSubmit}
-      >
-        {saving ? "Submitting..." : "Submit traditional survey"}
-      </Button>
+      <div className='flex justify-end pt-4'>
+        <Button
+          className='w-full sm:w-fit'
+          disabled={!enabled || saving}
+          onClick={handleSubmit}
+          size='lg'
+        >
+          {saving ? "Submitting..." : "Submit Traditional Survey"}
+        </Button>
+      </div>
     </div>
   );
 }

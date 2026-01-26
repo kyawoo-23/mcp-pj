@@ -21,6 +21,7 @@ import { SurveySection } from "@/components/survey/survey-section";
 import { DemographicsForm } from "@/components/survey/demographics-form";
 import { useSurveyData } from "@/hooks/use-survey-data";
 import { SurveyNavbar } from "@/components/survey/survey-navbar";
+import { toast } from "sonner";
 
 interface SurveyPageClientProps {
   profile: Pick<ProfileRow, "id" | "age_range" | "gender"> | null;
@@ -113,8 +114,14 @@ export function SurveyPageClient({
 
   const handleRefresh = async () => {
     setIsRefreshing(true);
-    await refreshTaskData();
-    setTimeout(() => setIsRefreshing(false), 500); // Minimum spin time for better UX
+    try {
+      await refreshTaskData();
+      toast.success("Status refreshed");
+    } catch {
+      toast.error("Failed to refresh status");
+    } finally {
+      setTimeout(() => setIsRefreshing(false), 500); // Minimum spin time for better UX
+    }
   };
 
   // Auto-expand logic - follows UI order: traditional first, then chat
@@ -122,7 +129,6 @@ export function SurveyPageClient({
     if (requiresDemographics) return;
 
     if (!isStarted) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
       setActiveSection("intro");
     } else if (!traditionalTasksCompleted) {
       setActiveSection("traditional_tasks");
@@ -163,13 +169,29 @@ export function SurveyPageClient({
     await resetTask(task, session);
   };
 
+  const getNextSectionMessage = (): string => {
+    if (!traditionalTasksCompleted) {
+      return "Session started. Please proceed to Part 1: Traditional Portal Tasks below.";
+    }
+    if (!traditionalSurveyCompleted) {
+      return "Traditional tasks completed. Please proceed to Part 2: Traditional Portal Experience below.";
+    }
+    if (!chatTasksCompleted) {
+      return "Traditional survey completed. Please proceed to Part 3: Chat Agent Tasks below.";
+    }
+    if (!chatSurveyCompleted) {
+      return "Chat agent tasks completed. Please proceed to Part 4: Chat Agent Experience below.";
+    }
+    if (!interviewCompleted) {
+      return "Chat agent survey completed. Please proceed to Part 5: Final Thoughts below.";
+    }
+    return "All sections completed. Thank you for participating!";
+  };
+
   if (requiresDemographics) {
     return (
       <div className='min-h-screen bg-background'>
-        <SurveyNavbar
-          onRefresh={handleRefresh}
-          isRefreshing={isRefreshing}
-        />
+        <SurveyNavbar onRefresh={handleRefresh} isRefreshing={isRefreshing} />
         <div className='p-6'>
           <div className='mx-auto w-full max-w-5xl'>
             <DemographicsForm
@@ -186,10 +208,7 @@ export function SurveyPageClient({
 
   return (
     <div className='min-h-screen bg-background'>
-      <SurveyNavbar
-        onRefresh={handleRefresh}
-        isRefreshing={isRefreshing}
-      />
+      <SurveyNavbar onRefresh={handleRefresh} isRefreshing={isRefreshing} />
       <div className='p-6'>
         <div className='mx-auto flex w-full max-w-5xl flex-col gap-6'>
           {/* Intro Section */}
@@ -226,8 +245,7 @@ export function SurveyPageClient({
               {isStarted && (
                 <div className='flex items-center gap-2 text-green-600'>
                   <span className='text-sm font-medium'>
-                    Session started. Please proceed to the first task section
-                    below.
+                    {getNextSectionMessage()}
                   </span>
                 </div>
               )}
@@ -280,7 +298,9 @@ export function SurveyPageClient({
               surveys={surveys}
               surveyQuestions={surveyQuestions}
               surveyResponses={surveyResponsesState}
-              enabled={traditionalSurveyAvailable && !traditionalSurveyCompleted}
+              enabled={
+                traditionalSurveyAvailable && !traditionalSurveyCompleted
+              }
               onSubmitted={refreshTaskData}
             />
           </SurveySection>
