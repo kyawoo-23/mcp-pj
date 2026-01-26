@@ -24,6 +24,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { createClient } from "@/lib/supabase/client";
+import { User } from "@supabase/supabase-js";
 
 export interface SurveyNavbarProps {
   onRefresh?: () => void;
@@ -33,7 +34,7 @@ export interface SurveyNavbarProps {
 export function SurveyNavbar({ onRefresh, isRefreshing }: SurveyNavbarProps) {
   const router = useRouter();
   const supabase = createClient();
-  const [user, setUser] = useState<any>(null);
+  const [user, setUser] = useState<User | null>(null);
   const [fullName, setFullName] = useState<string | null>(null);
   const [showLogoutDialog, setShowLogoutDialog] = useState(false);
 
@@ -74,7 +75,7 @@ export function SurveyNavbar({ onRefresh, isRefreshing }: SurveyNavbarProps) {
   };
 
   return (
-    <header className='sticky top-0 z-10 border-b bg-background/95 backdrop-blur supports-backdrop-filter:bg-background/60'>
+    <header className='sticky top-0 z-50 border-b bg-background/95 backdrop-blur supports-backdrop-filter:bg-background/60'>
       <div className='container mx-auto flex h-16 items-center justify-between px-6'>
         <div className='flex items-center gap-4 overflow-hidden'>
           <Link

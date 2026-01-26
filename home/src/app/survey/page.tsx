@@ -37,7 +37,7 @@ export default async function SurveyPage() {
   const surveysPromise = supabase
     .from("task_surveys")
     .select("id, survey_name, version, created_at")
-    .in("survey_name", ["SUS", "NASA_TLX"]);
+    .in("survey_name", ["SUS", "RAW_TLX", "SDT"]);
 
   const interviewQuestionsPromise = supabase
     .from("task_interview_questions")

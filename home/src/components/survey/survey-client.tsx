@@ -280,7 +280,7 @@ export function SurveyPageClient({
               surveys={surveys}
               surveyQuestions={surveyQuestions}
               surveyResponses={surveyResponsesState}
-              enabled={traditionalSurveyAvailable}
+              enabled={traditionalSurveyAvailable && !traditionalSurveyCompleted}
               onSubmitted={refreshTaskData}
             />
           </SurveySection>
@@ -327,7 +327,7 @@ export function SurveyPageClient({
               surveys={surveys}
               surveyQuestions={surveyQuestions}
               surveyResponses={surveyResponsesState}
-              enabled={chatSurveyAvailable}
+              enabled={chatSurveyAvailable && !chatSurveyCompleted}
               onSubmitted={refreshTaskData}
             />
           </SurveySection>
@@ -348,7 +348,7 @@ export function SurveyPageClient({
             <InterviewForm
               interviewQuestions={interviewQuestions}
               interviewResponses={interviewResponsesState}
-              enabled={interviewAvailable}
+              enabled={interviewAvailable && !interviewCompleted}
               onSubmitted={refreshTaskData}
             />
           </SurveySection>

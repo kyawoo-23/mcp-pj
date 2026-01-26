@@ -32,6 +32,16 @@ CREATE TYPE task_event_type AS ENUM ('step', 'turn', 'survey', 'interview', 'sys
 -- Survey scales
 CREATE TYPE survey_scale_type AS ENUM ('likert_5', 'likert_7', 'numeric_0_100', 'free_text');
 
+-- Survey constructs
+CREATE TYPE survey_construct AS ENUM (
+  'Usability',
+  'Workload',
+  'Autonomy',
+  'Competence',
+  'Performance Satisfaction',
+  'System Satisfaction'
+);
+
 -- ----------------------------------------------------------------------------
 -- 2. ALTER EXISTING TABLES
 -- ----------------------------------------------------------------------------
@@ -105,6 +115,7 @@ CREATE TABLE task_survey_questions (
   min_value integer,
   max_value integer,
   order_index integer NOT NULL,
+  construct survey_construct,
   created_at timestamptz NOT NULL DEFAULT now(),
   UNIQUE (survey_id, order_index)
 );

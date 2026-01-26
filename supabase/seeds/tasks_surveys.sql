@@ -16,12 +16,13 @@ VALUES
 INSERT INTO task_surveys (survey_name, version)
 VALUES
   ('SUS', '1'),
-  ('NASA_TLX', '1')
+  ('RAW_TLX', '1'),  -- Raw-TLX: Unweighted NASA-TLX (no pairwise comparisons, no weighting)
+  ('SDT', '1')
 ON CONFLICT (survey_name, version) DO NOTHING;
 
 -- SUS questions (Likert 1-5)
-INSERT INTO task_survey_questions (survey_id, question_text, scale_type, min_value, max_value, order_index)
-SELECT id, question_text, 'likert_5', 1, 5, order_index
+INSERT INTO task_survey_questions (survey_id, question_text, scale_type, min_value, max_value, order_index, construct)
+SELECT id, question_text, 'likert_5', 1, 5, order_index, 'Usability'::survey_construct
 FROM task_surveys
 CROSS JOIN (
   VALUES
@@ -32,32 +33,70 @@ CROSS JOIN (
     (5, 'I found the various functions in this system were well integrated.'),
     (6, 'I thought there was too much inconsistency in this system.'),
     (7, 'I would imagine that most people would learn to use this system very quickly.'),
-    (8, 'I found the system very cumbersome to use.'),
+    (8, 'I felt the system was awkward or difficult to use.'),
     (9, 'I felt very confident using the system.'),
     (10, 'I needed to learn a lot of things before I could get going with this system.')
 ) AS sus(order_index, question_text)
 WHERE task_surveys.survey_name = 'SUS' AND task_surveys.version = '1';
 
--- NASA-TLX questions (0-100)
-INSERT INTO task_survey_questions (survey_id, question_text, scale_type, min_value, max_value, order_index)
-SELECT id, question_text, 'numeric_0_100', 0, 100, order_index
+-- Raw-TLX questions (0-100 scale)
+-- Raw-TLX = Unweighted NASA-TLX (no pairwise comparisons, no weighting)
+-- Scoring: Average of 6 dimensions, with Performance reverse-coded during analysis
+-- 
+-- IMPORTANT: Performance (order_index = 4) is reverse-coded during analysis:
+--   performance_workload = 100 - performance_score
+-- This is because high performance = good, but high workload = bad.
+-- Do NOT change stored values; apply reverse-coding only during analysis.
+--
+-- Raw-TLX formula:
+--   Raw_TLX = (mental_demand + physical_demand + temporal_demand + 
+--              (100 - performance) + effort + frustration) / 6
+INSERT INTO task_survey_questions (survey_id, question_text, scale_type, min_value, max_value, order_index, construct)
+SELECT id, question_text, 'numeric_0_100', 0, 100, order_index, 'Workload'::survey_construct
 FROM task_surveys
 CROSS JOIN (
   VALUES
     (1, 'Mental demand: How mentally demanding was the task?'),
     (2, 'Physical demand: How physically demanding was the task?'),
     (3, 'Temporal demand: How hurried or rushed was the pace of the task?'),
-    (4, 'Performance: How successful were you in accomplishing what you were asked to do?'),
+    (4, 'Performance: How successful were you in accomplishing what you were asked to do?'),  -- REVERSE-CODED in analysis
     (5, 'Effort: How hard did you have to work to accomplish your level of performance?'),
     (6, 'Frustration: How insecure, discouraged, irritated, stressed, and annoyed were you?')
 ) AS tlx(order_index, question_text)
-WHERE task_surveys.survey_name = 'NASA_TLX' AND task_surveys.version = '1';
+WHERE task_surveys.survey_name = 'RAW_TLX' AND task_surveys.version = '1';
+
+-- SDT (Autonomy, Competence, Satisfaction) questions (Likert 1-7)
+INSERT INTO task_survey_questions (survey_id, question_text, scale_type, min_value, max_value, order_index, construct)
+SELECT id, question_text, 'likert_7', 1, 7, order_index, construct::survey_construct
+FROM task_surveys
+CROSS JOIN (
+  VALUES
+    -- Autonomy
+    (1, 'I felt I had control over how to complete the tasks.', 'Autonomy'),
+    (2, 'I felt able to use the system in my own way.', 'Autonomy'),
+    (3, 'My actions in the system felt voluntary and self-endorsed.', 'Autonomy'),
+    
+    -- Competence
+    (4, 'I felt competent while using the system.', 'Competence'),
+    (5, 'I felt capable of achieving my goals with this system.', 'Competence'),
+    (6, 'I felt effective in using the system.', 'Competence'),
+
+    -- Performance Satisfaction
+    (7, 'I am satisfied with my performance in the tasks.', 'Performance Satisfaction'),
+    (8, 'I am satisfied with the results I achieved.', 'Performance Satisfaction'),
+
+    -- System Satisfaction
+    (9, 'Overall, I am satisfied with this system.', 'System Satisfaction'),
+    (10, 'This system meets my expectations for completing these tasks.', 'System Satisfaction')
+) AS sdt(order_index, question_text, construct)
+WHERE task_surveys.survey_name = 'SDT' AND task_surveys.version = '1';
 
 -- Interview questions
 INSERT INTO task_interview_questions (question_text, order_index)
 VALUES
   ('Which system felt more in control?', 1),
   ('Where did you hesitate?', 2),
-  ('Did the AI behave as expected?', 3),
-  ('Which system would you prefer for real use, and why?', 4)
+  ('At any point, did you feel unsure what the system was doing on your behalf?', 3),
+  ('Did the AI behave as expected?', 4),
+  ('Which system would you prefer for real use, and why?', 5)
 ON CONFLICT (order_index) DO NOTHING;

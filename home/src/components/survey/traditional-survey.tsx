@@ -10,7 +10,6 @@ import type {
 } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import {
   Select,
@@ -20,6 +19,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { toast } from "sonner";
+import { TlxScale } from "@/components/survey/tlx-scale";
 
 interface TraditionalSurveyProps {
   session?: TaskSessionRow;
@@ -199,15 +199,14 @@ export function TraditionalSurvey({
               </Select>
             )}
             {question.scale_type === "numeric_0_100" && (
-              <Input
-                type='number'
+              <TlxScale
+                value={value}
                 min={question.min_value ?? 0}
                 max={question.max_value ?? 100}
-                value={value}
-                onChange={(event) =>
+                onChange={(val) =>
                   setResponses((prev) => ({
                     ...prev,
-                    [question.id]: event.target.value,
+                    [question.id]: String(val),
                   }))
                 }
                 disabled={!enabled}
