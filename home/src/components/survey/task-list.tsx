@@ -24,7 +24,10 @@ interface TaskListProps {
   tasks: TaskDefinitionRow[];
   progressByTaskId: Map<string, TaskProgressRow>;
   activeTaskId?: string;
-  onOpenTask: (task: TaskDefinitionRow, session: TaskSessionRow) => void;
+  onOpenTask: (
+    task: TaskDefinitionRow,
+    session: TaskSessionRow,
+  ) => void | Promise<void>;
   onResetTask: (task: TaskDefinitionRow, session: TaskSessionRow) => void;
 }
 
@@ -45,6 +48,7 @@ export function TaskList({
   onOpenTask,
   onResetTask,
 }: TaskListProps) {
+  const [openingTaskId, setOpeningTaskId] = useState<string | null>(null);
   const [taskToReset, setTaskToReset] = useState<{
     task: TaskDefinitionRow;
     session: TaskSessionRow;
@@ -80,10 +84,18 @@ export function TaskList({
               <Button
                 variant='outline'
                 size='sm'
-                disabled={!canOpen}
-                onClick={() => session && onOpenTask(task, session)}
+                disabled={!canOpen || openingTaskId === task.id}
+                onClick={async () => {
+                  if (!session) return;
+                  setOpeningTaskId(task.id);
+                  try {
+                    await onOpenTask(task, session);
+                  } finally {
+                    setOpeningTaskId(null);
+                  }
+                }}
               >
-                Open task
+                {openingTaskId === task.id ? "Opening..." : "Open task"}
               </Button>
               <Button
                 variant='ghost'
