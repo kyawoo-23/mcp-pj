@@ -21,35 +21,44 @@ export function registerCourseTools(server: McpServer) {
         ),
     },
     async ({ query }) => {
-      let baseQuery = supabase.from("courses").select("*");
+      console.log(`🔧 [Tool] search_courses called with query: ${query || "(all courses)"}`);
+      
+      try {
+        let baseQuery = supabase.from("courses").select("*");
 
-      if (query) {
-        baseQuery = baseQuery.or(
-          `code.ilike.%${query}%,title.ilike.%${query}%`
-        );
-      }
+        if (query) {
+          baseQuery = baseQuery.or(
+            `code.ilike.%${query}%,title.ilike.%${query}%`
+          );
+        }
 
-      const { data, error } = await baseQuery.limit(50);
+        const { data, error } = await baseQuery.limit(50);
 
-      if (error) {
+        if (error) {
+          console.error(`❌ [Tool Error] search_courses failed: ${error.message}`);
+          return {
+            content: [
+              {
+                type: "text" as const,
+                text: JSON.stringify({ error: `Error searching courses: ${error.message}` }),
+              },
+            ],
+          };
+        }
+
         return {
           content: [
             {
               type: "text" as const,
-              text: JSON.stringify({ error: `Error searching courses: ${error.message}` }),
+              text: JSON.stringify({ courses: data }),
             },
           ],
         };
+      } catch (err) {
+        const errorMsg = err instanceof Error ? err.message : String(err);
+        console.error(`❌ [Tool Exception] search_courses exception: ${errorMsg}`);
+        throw err;
       }
-
-      return {
-        content: [
-          {
-            type: "text" as const,
-            text: JSON.stringify({ courses: data }),
-          },
-        ],
-      };
     }
   );
 
@@ -61,31 +70,40 @@ export function registerCourseTools(server: McpServer) {
       courseId: z.string().describe("The UUID of the course"),
     },
     async ({ courseId }) => {
-      const { data, error } = await supabase
-        .from("courses")
-        .select("*")
-        .eq("id", courseId)
-        .single();
+      console.log(`🔧 [Tool] get_course_details called with courseId: ${courseId}`);
+      
+      try {
+        const { data, error } = await supabase
+          .from("courses")
+          .select("*")
+          .eq("id", courseId)
+          .single();
 
-      if (error) {
+        if (error) {
+          console.error(`❌ [Tool Error] get_course_details failed: ${error.message}`);
+          return {
+            content: [
+              {
+                type: "text" as const,
+                text: JSON.stringify({ error: `Error getting course details: ${error.message}` }),
+              },
+            ],
+          };
+        }
+
         return {
           content: [
             {
               type: "text" as const,
-              text: JSON.stringify({ error: `Error getting course details: ${error.message}` }),
+              text: JSON.stringify({ course: data }),
             },
           ],
         };
+      } catch (err) {
+        const errorMsg = err instanceof Error ? err.message : String(err);
+        console.error(`❌ [Tool Exception] get_course_details exception: ${errorMsg}`);
+        throw err;
       }
-
-      return {
-        content: [
-          {
-            type: "text" as const,
-            text: JSON.stringify({ course: data }),
-          },
-        ],
-      };
     }
   );
 
@@ -97,31 +115,40 @@ export function registerCourseTools(server: McpServer) {
       courseId: z.string().describe("The UUID of the course"),
     },
     async ({ courseId }) => {
-      const { data, error } = await supabase
-        .from("course_sections")
-        .select("*")
-        .eq("course_id", courseId)
-        .order("section_number", { ascending: true });
+      console.log(`🔧 [Tool] get_course_sections called with courseId: ${courseId}`);
+      
+      try {
+        const { data, error } = await supabase
+          .from("course_sections")
+          .select("*")
+          .eq("course_id", courseId)
+          .order("section_number", { ascending: true });
 
-      if (error) {
+        if (error) {
+          console.error(`❌ [Tool Error] get_course_sections failed: ${error.message}`);
+          return {
+            content: [
+              {
+                type: "text" as const,
+                text: JSON.stringify({ error: `Error getting course sections: ${error.message}` }),
+              },
+            ],
+          };
+        }
+
         return {
           content: [
             {
               type: "text" as const,
-              text: JSON.stringify({ error: `Error getting course sections: ${error.message}` }),
+              text: JSON.stringify({ sections: data }),
             },
           ],
         };
+      } catch (err) {
+        const errorMsg = err instanceof Error ? err.message : String(err);
+        console.error(`❌ [Tool Exception] get_course_sections exception: ${errorMsg}`);
+        throw err;
       }
-
-      return {
-        content: [
-          {
-            type: "text" as const,
-            text: JSON.stringify({ sections: data }),
-          },
-        ],
-      };
     }
   );
 
@@ -134,58 +161,67 @@ export function registerCourseTools(server: McpServer) {
       sectionId: z.string().describe("The UUID of the course section"),
     },
     async ({ studentId, sectionId }) => {
-      // First check if already registered
-      const { data: existing } = await supabase
-        .from("student_registrations")
-        .select("*")
-        .eq("student_id", studentId)
-        .eq("section_id", sectionId)
-        .eq("status", "active")
-        .single();
+      console.log(`🔧 [Tool] register_course called with studentId: ${studentId}, sectionId: ${sectionId}`);
+      
+      try {
+        // First check if already registered
+        const { data: existing } = await supabase
+          .from("student_registrations")
+          .select("*")
+          .eq("student_id", studentId)
+          .eq("section_id", sectionId)
+          .eq("status", "active")
+          .single();
 
-      if (existing) {
+        if (existing) {
+          return {
+            content: [
+              {
+                type: "text" as const,
+                text: JSON.stringify({ error: "Student is already registered for this section." }),
+              },
+            ],
+          };
+        }
+
+        const { data, error } = await supabase
+          .from("student_registrations")
+          .insert({
+            student_id: studentId,
+            section_id: sectionId,
+            status: "active",
+          })
+          .select()
+          .single();
+
+        if (error) {
+          console.error(`❌ [Tool Error] register_course failed: ${error.message}`);
+          return {
+            content: [
+              {
+                type: "text" as const,
+                text: JSON.stringify({ error: `Error registering course: ${error.message}` }),
+              },
+            ],
+          };
+        }
+
         return {
           content: [
             {
               type: "text" as const,
-              text: JSON.stringify({ error: "Student is already registered for this section." }),
+              text: JSON.stringify({
+                registration: data,
+                message: "Successfully registered for course",
+              }),
             },
           ],
         };
+      } catch (err) {
+        const errorMsg = err instanceof Error ? err.message : String(err);
+        console.error(`❌ [Tool Exception] register_course exception: ${errorMsg}`);
+        throw err;
       }
-
-      const { data, error } = await supabase
-        .from("student_registrations")
-        .insert({
-          student_id: studentId,
-          section_id: sectionId,
-          status: "active",
-        })
-        .select()
-        .single();
-
-      if (error) {
-        return {
-          content: [
-            {
-              type: "text" as const,
-              text: JSON.stringify({ error: `Error registering course: ${error.message}` }),
-            },
-          ],
-        };
-      }
-
-      return {
-        content: [
-          {
-            type: "text" as const,
-            text: JSON.stringify({
-              registration: data,
-              message: "Successfully registered for course",
-            }),
-          },
-        ],
-      };
     }
   );
 
@@ -197,39 +233,48 @@ export function registerCourseTools(server: McpServer) {
       studentId: z.string().describe("The UUID of the student"),
     },
     async ({ studentId }) => {
-      const { data, error } = await supabase
-        .from("student_registrations")
-        .select(
-          `
-          *,
-          course_sections (
+      console.log(`🔧 [Tool] get_student_registrations called with studentId: ${studentId}`);
+      
+      try {
+        const { data, error } = await supabase
+          .from("student_registrations")
+          .select(
+            `
             *,
-            courses (*)
+            course_sections (
+              *,
+              courses (*)
+            )
+          `
           )
-        `
-        )
-        .eq("student_id", studentId)
-        .eq("status", "active");
+          .eq("student_id", studentId)
+          .eq("status", "active");
 
-      if (error) {
+        if (error) {
+          console.error(`❌ [Tool Error] get_student_registrations failed: ${error.message}`);
+          return {
+            content: [
+              {
+                type: "text" as const,
+                text: JSON.stringify({ error: `Error fetching registrations: ${error.message}` }),
+              },
+            ],
+          };
+        }
+
         return {
           content: [
             {
               type: "text" as const,
-              text: JSON.stringify({ error: `Error fetching registrations: ${error.message}` }),
+              text: JSON.stringify({ registrations: data }),
             },
           ],
         };
+      } catch (err) {
+        const errorMsg = err instanceof Error ? err.message : String(err);
+        console.error(`❌ [Tool Exception] get_student_registrations exception: ${errorMsg}`);
+        throw err;
       }
-
-      return {
-        content: [
-          {
-            type: "text" as const,
-            text: JSON.stringify({ registrations: data }),
-          },
-        ],
-      };
     }
   );
 
@@ -242,60 +287,69 @@ export function registerCourseTools(server: McpServer) {
       sectionId: z.string().describe("The UUID of the course section"),
     },
     async ({ studentId, sectionId }) => {
-      // Check if registration exists and is active
-      const { data: existing, error: checkError } = await supabase
-        .from("student_registrations")
-        .select("*")
-        .eq("student_id", studentId)
-        .eq("section_id", sectionId)
-        .eq("status", "active")
-        .single();
+      console.log(`🔧 [Tool] drop_course called with studentId: ${studentId}, sectionId: ${sectionId}`);
+      
+      try {
+        // Check if registration exists and is active
+        const { data: existing, error: checkError } = await supabase
+          .from("student_registrations")
+          .select("*")
+          .eq("student_id", studentId)
+          .eq("section_id", sectionId)
+          .eq("status", "active")
+          .single();
 
-      if (checkError || !existing) {
+        if (checkError || !existing) {
+          return {
+            content: [
+              {
+                type: "text" as const,
+                text: JSON.stringify({
+                  error: "Active registration not found for this course section.",
+                }),
+              },
+            ],
+          };
+        }
+
+        const { data, error } = await supabase
+          .from("student_registrations")
+          .update({
+            status: "dropped",
+            dropped_at: new Date().toISOString(),
+          })
+          .eq("id", existing.id)
+          .select()
+          .single();
+
+        if (error) {
+          console.error(`❌ [Tool Error] drop_course failed: ${error.message}`);
+          return {
+            content: [
+              {
+                type: "text" as const,
+                text: JSON.stringify({ error: `Error dropping course: ${error.message}` }),
+              },
+            ],
+          };
+        }
+
         return {
           content: [
             {
               type: "text" as const,
               text: JSON.stringify({
-                error: "Active registration not found for this course section.",
+                registration: data,
+                message: "Successfully dropped course",
               }),
             },
           ],
         };
+      } catch (err) {
+        const errorMsg = err instanceof Error ? err.message : String(err);
+        console.error(`❌ [Tool Exception] drop_course exception: ${errorMsg}`);
+        throw err;
       }
-
-      const { data, error } = await supabase
-        .from("student_registrations")
-        .update({
-          status: "dropped",
-          dropped_at: new Date().toISOString(),
-        })
-        .eq("id", existing.id)
-        .select()
-        .single();
-
-      if (error) {
-        return {
-          content: [
-            {
-              type: "text" as const,
-              text: JSON.stringify({ error: `Error dropping course: ${error.message}` }),
-            },
-          ],
-        };
-      }
-
-      return {
-        content: [
-          {
-            type: "text" as const,
-            text: JSON.stringify({
-              registration: data,
-              message: "Successfully dropped course",
-            }),
-          },
-        ],
-      };
     }
   );
 }

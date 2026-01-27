@@ -1,13 +1,13 @@
 services:
   - type: web
     name: mcp-server
-    env: node
+    env: bun
     rootDir: mcp-server
-    buildCommand: npm install -g pnpm && pnpm install && pnpm run build
-    startCommand: pnpm start
+    buildCommand: bun install && bun run build
+    startCommand: bun run start
     envVars:
-      - key: NODE_VERSION
-        value: 22.22.0
+      - key: BUN_VERSION
+        value: 1.1.0
       - key: SUPABASE_URL
         sync: false
       - key: SUPABASE_SERVICE_ROLE_KEY

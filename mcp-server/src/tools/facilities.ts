@@ -51,42 +51,51 @@ export function registerFacilityTools(server: McpServer) {
         .describe("Filter by facility type"),
     },
     async ({ query, type }) => {
-      let dbQuery = supabase
-        .from("facilities")
-        .select("*")
-        .eq("is_active", true);
+      console.log(`🔧 [Tool] search_facilities called with query: ${query || "(all)"}, type: ${type || "(all)"}`);
+      
+      try {
+        let dbQuery = supabase
+          .from("facilities")
+          .select("*")
+          .eq("is_active", true);
 
-      if (query) {
-        dbQuery = dbQuery.ilike("name", `%${query}%`);
-      }
+        if (query) {
+          dbQuery = dbQuery.ilike("name", `%${query}%`);
+        }
 
-      if (type) {
-        dbQuery = dbQuery.eq("facility_type", type);
-      }
+        if (type) {
+          dbQuery = dbQuery.eq("facility_type", type);
+        }
 
-      const { data, error } = await dbQuery.limit(50);
+        const { data, error } = await dbQuery.limit(50);
 
-      if (error) {
+        if (error) {
+          console.error(`❌ [Tool Error] search_facilities failed: ${error.message}`);
+          return {
+            content: [
+              {
+                type: "text" as const,
+                text: JSON.stringify({
+                  error: `Error searching facilities: ${error.message}`,
+                }),
+              },
+            ],
+          };
+        }
+
         return {
           content: [
             {
               type: "text" as const,
-              text: JSON.stringify({
-                error: `Error searching facilities: ${error.message}`,
-              }),
+              text: JSON.stringify({ facilities: data }),
             },
           ],
         };
+      } catch (err) {
+        const errorMsg = err instanceof Error ? err.message : String(err);
+        console.error(`❌ [Tool Exception] search_facilities exception: ${errorMsg}`);
+        throw err;
       }
-
-      return {
-        content: [
-          {
-            type: "text" as const,
-            text: JSON.stringify({ facilities: data }),
-          },
-        ],
-      };
     }
   );
 
@@ -107,127 +116,137 @@ export function registerFacilityTools(server: McpServer) {
       purpose: z.string().optional().describe("Purpose of booking (optional)"),
     },
     async ({ studentId, facilityId, bookingDate, startTime, endTime, purpose }) => {
-      // Normalize times
-      const normalizedStartTime = normalizeTime(startTime);
-      const normalizedEndTime = normalizeTime(endTime);
+      console.log(`🔧 [Tool] book_facility called with facilityId: ${facilityId}, date: ${bookingDate}, time: ${startTime}-${endTime}`);
+      
+      try {
+        // Normalize times
+        const normalizedStartTime = normalizeTime(startTime);
+        const normalizedEndTime = normalizeTime(endTime);
 
-      if (!normalizedStartTime) {
+        if (!normalizedStartTime) {
+          return {
+            content: [
+              {
+                type: "text" as const,
+                text: JSON.stringify({
+                  error: `Invalid start time format: "${startTime}". Please use a format like "HH:MM", "HH:MM AM/PM".`,
+                }),
+              },
+            ],
+          };
+        }
+        if (!normalizedEndTime) {
+          return {
+            content: [
+              {
+                type: "text" as const,
+                text: JSON.stringify({
+                  error: `Invalid end time format: "${endTime}". Please use a format like "HH:MM", "HH:MM AM/PM".`,
+                }),
+              },
+            ],
+          };
+        }
+
+        // Construct full timestamp strings
+        const startDateTime = `${bookingDate}T${normalizedStartTime}`;
+        const endDateTime = `${bookingDate}T${normalizedEndTime}`;
+
+        // Validate that end time is after start time
+        if (startDateTime >= endDateTime) {
+          return {
+            content: [
+              {
+                type: "text" as const,
+                text: JSON.stringify({
+                  error: "End time must be strictly after start time.",
+                }),
+              },
+            ],
+          };
+        }
+
+        // Check for overlapping bookings
+        const { data: conflicts, error: conflictError } = await supabase
+          .from("facility_bookings")
+          .select("*")
+          .eq("facility_id", facilityId)
+          .eq("booking_date", bookingDate)
+          .neq("status", "cancelled")
+          .lt("start_time", endDateTime)
+          .gt("end_time", startDateTime);
+
+        if (conflictError) {
+          console.error(`❌ [Tool Error] book_facility conflict check failed: ${conflictError.message}`);
+          return {
+            content: [
+              {
+                type: "text" as const,
+                text: JSON.stringify({
+                  error: `Error checking conflicts: ${conflictError.message}`,
+                }),
+              },
+            ],
+          };
+        }
+
+        if (conflicts && conflicts.length > 0) {
+          return {
+            content: [
+              {
+                type: "text" as const,
+                text: JSON.stringify({
+                  error: "Facility is already booked for this time slot.",
+                }),
+              },
+            ],
+          };
+        }
+
+        const { data, error } = await supabase
+          .from("facility_bookings")
+          .insert({
+            student_id: studentId,
+            facility_id: facilityId,
+            booking_date: bookingDate,
+            start_time: startDateTime,
+            end_time: endDateTime,
+            purpose: purpose || null,
+            status: "pending",
+          })
+          .select()
+          .single();
+
+        if (error) {
+          console.error(`❌ [Tool Error] book_facility failed: ${error.message}`);
+          return {
+            content: [
+              {
+                type: "text" as const,
+                text: JSON.stringify({
+                  error: `Error booking facility: ${error.message}`,
+                }),
+              },
+            ],
+          };
+        }
+
         return {
           content: [
             {
               type: "text" as const,
               text: JSON.stringify({
-                error: `Invalid start time format: "${startTime}". Please use a format like "HH:MM", "HH:MM AM/PM".`,
+                booking: data,
+                message: "Successfully booked facility",
               }),
             },
           ],
         };
+      } catch (err) {
+        const errorMsg = err instanceof Error ? err.message : String(err);
+        console.error(`❌ [Tool Exception] book_facility exception: ${errorMsg}`);
+        throw err;
       }
-      if (!normalizedEndTime) {
-        return {
-          content: [
-            {
-              type: "text" as const,
-              text: JSON.stringify({
-                error: `Invalid end time format: "${endTime}". Please use a format like "HH:MM", "HH:MM AM/PM".`,
-              }),
-            },
-          ],
-        };
-      }
-
-      // Construct full timestamp strings
-      const startDateTime = `${bookingDate}T${normalizedStartTime}`;
-      const endDateTime = `${bookingDate}T${normalizedEndTime}`;
-
-      // Validate that end time is after start time
-      if (startDateTime >= endDateTime) {
-        return {
-          content: [
-            {
-              type: "text" as const,
-              text: JSON.stringify({
-                error: "End time must be strictly after start time.",
-              }),
-            },
-          ],
-        };
-      }
-
-      // Check for overlapping bookings
-      const { data: conflicts, error: conflictError } = await supabase
-        .from("facility_bookings")
-        .select("*")
-        .eq("facility_id", facilityId)
-        .eq("booking_date", bookingDate)
-        .neq("status", "cancelled")
-        .lt("start_time", endDateTime)
-        .gt("end_time", startDateTime);
-
-      if (conflictError) {
-        return {
-          content: [
-            {
-              type: "text" as const,
-              text: JSON.stringify({
-                error: `Error checking conflicts: ${conflictError.message}`,
-              }),
-            },
-          ],
-        };
-      }
-
-      if (conflicts && conflicts.length > 0) {
-        return {
-          content: [
-            {
-              type: "text" as const,
-              text: JSON.stringify({
-                error: "Facility is already booked for this time slot.",
-              }),
-            },
-          ],
-        };
-      }
-
-      const { data, error } = await supabase
-        .from("facility_bookings")
-        .insert({
-          student_id: studentId,
-          facility_id: facilityId,
-          booking_date: bookingDate,
-          start_time: startDateTime,
-          end_time: endDateTime,
-          purpose: purpose || null,
-          status: "pending",
-        })
-        .select()
-        .single();
-
-      if (error) {
-        return {
-          content: [
-            {
-              type: "text" as const,
-              text: JSON.stringify({
-                error: `Error booking facility: ${error.message}`,
-              }),
-            },
-          ],
-        };
-      }
-
-      return {
-        content: [
-          {
-            type: "text" as const,
-            text: JSON.stringify({
-              booking: data,
-              message: "Successfully booked facility",
-            }),
-          },
-        ],
-      };
     }
   );
 
@@ -239,43 +258,52 @@ export function registerFacilityTools(server: McpServer) {
       studentId: z.string().describe("The UUID of the student"),
     },
     async ({ studentId }) => {
-      const { data, error } = await supabase
-        .from("facility_bookings")
-        .select(
+      console.log(`🔧 [Tool] get_student_bookings called with studentId: ${studentId}`);
+      
+      try {
+        const { data, error } = await supabase
+          .from("facility_bookings")
+          .select(
+            `
+            *,
+            facilities (
+              name,
+              building,
+              room_number
+            )
           `
-          *,
-          facilities (
-            name,
-            building,
-            room_number
           )
-        `
-        )
-        .eq("student_id", studentId)
-        .order("booking_date", { ascending: false })
-        .order("start_time", { ascending: false });
+          .eq("student_id", studentId)
+          .order("booking_date", { ascending: false })
+          .order("start_time", { ascending: false });
 
-      if (error) {
+        if (error) {
+          console.error(`❌ [Tool Error] get_student_bookings failed: ${error.message}`);
+          return {
+            content: [
+              {
+                type: "text" as const,
+                text: JSON.stringify({
+                  error: `Error fetching bookings: ${error.message}`,
+                }),
+              },
+            ],
+          };
+        }
+
         return {
           content: [
             {
               type: "text" as const,
-              text: JSON.stringify({
-                error: `Error fetching bookings: ${error.message}`,
-              }),
+              text: JSON.stringify({ bookings: data }),
             },
           ],
         };
+      } catch (err) {
+        const errorMsg = err instanceof Error ? err.message : String(err);
+        console.error(`❌ [Tool Exception] get_student_bookings exception: ${errorMsg}`);
+        throw err;
       }
-
-      return {
-        content: [
-          {
-            type: "text" as const,
-            text: JSON.stringify({ bookings: data }),
-          },
-        ],
-      };
     }
   );
 
@@ -288,69 +316,78 @@ export function registerFacilityTools(server: McpServer) {
       studentId: z.string().describe("The UUID of the student"),
     },
     async ({ bookingId, studentId }) => {
-      // Check if booking exists and belongs to student
-      const { data: existing, error: checkError } = await supabase
-        .from("facility_bookings")
-        .select("*")
-        .eq("id", bookingId)
-        .eq("student_id", studentId)
-        .single();
+      console.log(`🔧 [Tool] cancel_booking called with bookingId: ${bookingId}`);
+      
+      try {
+        // Check if booking exists and belongs to student
+        const { data: existing, error: checkError } = await supabase
+          .from("facility_bookings")
+          .select("*")
+          .eq("id", bookingId)
+          .eq("student_id", studentId)
+          .single();
 
-      if (checkError || !existing) {
+        if (checkError || !existing) {
+          return {
+            content: [
+              {
+                type: "text" as const,
+                text: JSON.stringify({
+                  error: "Booking not found or does not belong to this student.",
+                }),
+              },
+            ],
+          };
+        }
+
+        if (existing.status === "cancelled") {
+          return {
+            content: [
+              {
+                type: "text" as const,
+                text: JSON.stringify({ message: "Booking is already cancelled." }),
+              },
+            ],
+          };
+        }
+
+        const { data, error } = await supabase
+          .from("facility_bookings")
+          .update({ status: "cancelled" })
+          .eq("id", bookingId)
+          .select()
+          .single();
+
+        if (error) {
+          console.error(`❌ [Tool Error] cancel_booking failed: ${error.message}`);
+          return {
+            content: [
+              {
+                type: "text" as const,
+                text: JSON.stringify({
+                  error: `Error cancelling booking: ${error.message}`,
+                }),
+              },
+            ],
+          };
+        }
+
         return {
           content: [
             {
               type: "text" as const,
               text: JSON.stringify({
-                error: "Booking not found or does not belong to this student.",
+                booking: data,
+                message: "Successfully cancelled booking",
               }),
             },
           ],
         };
+      } catch (err) {
+        const errorMsg = err instanceof Error ? err.message : String(err);
+        console.error(`❌ [Tool Exception] cancel_booking exception: ${errorMsg}`);
+        throw err;
       }
-
-      if (existing.status === "cancelled") {
-        return {
-          content: [
-            {
-              type: "text" as const,
-              text: JSON.stringify({ message: "Booking is already cancelled." }),
-            },
-          ],
-        };
-      }
-
-      const { data, error } = await supabase
-        .from("facility_bookings")
-        .update({ status: "cancelled" })
-        .eq("id", bookingId)
-        .select()
-        .single();
-
-      if (error) {
-        return {
-          content: [
-            {
-              type: "text" as const,
-              text: JSON.stringify({
-                error: `Error cancelling booking: ${error.message}`,
-              }),
-            },
-          ],
-        };
-      }
-
-      return {
-        content: [
-          {
-            type: "text" as const,
-            text: JSON.stringify({
-              booking: data,
-              message: "Successfully cancelled booking",
-            }),
-          },
-        ],
-      };
     }
   );
 }
