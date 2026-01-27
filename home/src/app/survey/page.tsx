@@ -74,7 +74,7 @@ export default async function SurveyPage() {
     ? supabase
         .from("task_survey_questions")
         .select(
-          "id, survey_id, question_text, scale_type, min_value, max_value, order_index, created_at",
+          "id, survey_id, question_text, scale_type, min_value, max_value, order_index, created_at, construct",
         )
         .in("survey_id", surveyIds)
         .order("order_index", { ascending: true })
