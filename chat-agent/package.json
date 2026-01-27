@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@ai-sdk/google": "^3.0.1",
+    "@ai-sdk/mcp": "^1.0.14",
     "@ai-sdk/react": "^3.0.3",
     "@bprogress/next": "^3.2.12",
     "@hookform/resolvers": "^5.2.2",
