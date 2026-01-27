@@ -57,11 +57,13 @@ export default function CourseDetailClient({
   };
 
   return (
-    <SectionList
-      sections={sections}
-      onRegister={handleRegister}
-      registeredSectionIds={registeredIds}
-      isLoading={isLoading}
-    />
+    <div className='space-y-4'>
+      <SectionList
+        sections={sections}
+        onRegister={handleRegister}
+        registeredSectionIds={registeredIds}
+        isLoading={isLoading}
+      />
+    </div>
   );
 }

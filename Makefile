@@ -1,4 +1,4 @@
-.PHONY: all dev install chat-agent uni-booking uni-registration
+.PHONY: all dev install chat-agent uni-booking uni-registration home mcp-server
 
 # Default target
 all: dev
@@ -8,11 +8,13 @@ install:
 	cd chat-agent && pnpm install
 	cd uni-booking && pnpm install
 	cd uni-registration && pnpm install
+	cd home && pnpm install
+	cd mcp-server && pnpm install
 
 # Run all projects in parallel
 dev:
 	@echo "Starting all projects..."
-	$(MAKE) -j3 chat-agent uni-booking uni-registration
+	$(MAKE) -j5 chat-agent uni-booking uni-registration home mcp-server
 
 # Individual project targets
 chat-agent:
@@ -23,6 +25,12 @@ uni-booking:
 
 uni-registration:
 	cd uni-registration && pnpm run dev
+
+home:
+	cd home && pnpm run dev
+
+mcp-server:
+	cd mcp-server && pnpm run dev
 
 # Database commands
 db-reset:

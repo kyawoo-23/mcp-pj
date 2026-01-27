@@ -37,27 +37,29 @@ export default function RegistrationsClient({
   };
 
   return (
-    <Tabs defaultValue="list" className="w-full">
-      <TabsList>
-        <TabsTrigger value="list">List View</TabsTrigger>
-        <TabsTrigger value="schedule">Schedule View</TabsTrigger>
-      </TabsList>
-      <TabsContent value="list" className="mt-6">
-        <div className="grid gap-4 md:grid-cols-2">
-          {registrations.map((registration) => (
-            <RegistrationCard
-              key={registration.id}
-              registration={registration}
-              onDrop={handleDrop}
-              isLoading={isLoading}
-            />
-          ))}
-        </div>
-      </TabsContent>
-      <TabsContent value="schedule" className="mt-6">
-        <ScheduleView registrations={registrations} />
-      </TabsContent>
-    </Tabs>
+    <div className="space-y-4">
+      <Tabs defaultValue="list" className="w-full">
+        <TabsList>
+          <TabsTrigger value="list">List View</TabsTrigger>
+          <TabsTrigger value="schedule">Schedule View</TabsTrigger>
+        </TabsList>
+        <TabsContent value="list" className="mt-6">
+          <div className="grid gap-4 md:grid-cols-2">
+            {registrations.map((registration) => (
+              <RegistrationCard
+                key={registration.id}
+                registration={registration}
+                onDrop={handleDrop}
+                isLoading={isLoading}
+              />
+            ))}
+          </div>
+        </TabsContent>
+        <TabsContent value="schedule" className="mt-6">
+          <ScheduleView registrations={registrations} />
+        </TabsContent>
+      </Tabs>
+    </div>
   );
 }
 

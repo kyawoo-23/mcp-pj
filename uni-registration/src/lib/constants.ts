@@ -15,3 +15,16 @@ export const Routes = {
 export const APIRoutes = {
   passwordRecovery: "/api/reset-password",
 };
+
+export function getSurveyUrl(): string {
+  const isDevMode = process.env.NEXT_PUBLIC_DEV_MODE === "true";
+  const isVercel = typeof window !== "undefined" && window.location.hostname.includes("vercel");
+
+  if (isDevMode) {
+    return "http://localhost:4003/survey";
+  }
+
+  return isVercel
+    ? "https://mcp-pj.vercel.app/survey"
+    : "https://mcp-project.app/survey";
+}

@@ -10,9 +10,14 @@ import { createMessage } from "@/lib/db/messages";
 import { MessagePart } from "@/lib/types";
 import { revalidatePath } from "next/cache";
 import { AVAILABLE_TOOLS } from "@/lib/tool-definitions";
+import { getTaskSessionByUser, recordTaskEvent } from "@/lib/task-mode-server";
+import { createMCPClient, type MCPClient } from "@ai-sdk/mcp";
 
 // Allow streaming responses up to 30 seconds
 export const maxDuration = 30;
+
+// Feature flag for MCP mode
+const USE_MCP = process.env.USE_MCP === "true";
 
 export async function POST(req: Request) {
   const { messages, conversationId } = (await req.json()) as {
@@ -30,8 +35,42 @@ export async function POST(req: Request) {
     return new Response("Unauthorized", { status: 401 });
   }
 
-  // Initialize tools with authenticated client
-  const allTools = createTools(supabase);
+  // Initialize tools - either from MCP server or direct implementation
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  let allTools: Record<string, any>;
+  let mcpClient: MCPClient | null = null;
+
+  if (USE_MCP && process.env.MCP_SERVER_URL) {
+    try {
+      mcpClient = await createMCPClient({
+        transport: {
+          type: "http",
+          url: process.env.MCP_SERVER_URL,
+          headers: process.env.MCP_AUTH_TOKEN
+            ? { Authorization: `Bearer ${process.env.MCP_AUTH_TOKEN}` }
+            : undefined,
+        },
+      });
+      allTools = await mcpClient.tools();
+      console.log("✅ Using MCP tools from:", process.env.MCP_SERVER_URL);
+    } catch (error) {
+      console.error("❌ MCP connection failed, falling back to direct tools:", error);
+      allTools = createTools(supabase);
+    }
+  } else {
+    allTools = createTools(supabase);
+  }
+
+  // Close MCP client when response is done
+  const closeMcpClient = async () => {
+    if (mcpClient) {
+      try {
+        await mcpClient.close();
+      } catch (e) {
+        console.error("Error closing MCP client:", e);
+      }
+    }
+  };
 
   // Ensure user profile exists before creating conversation
   let { data: profile } = await supabase
@@ -80,8 +119,29 @@ export async function POST(req: Request) {
     currentConversationId = conversationId;
   }
 
-  // Save the last user message to database
+  // Log task mode turn if active
+  const taskSession = await getTaskSessionByUser(
+    supabase,
+    user.id,
+    "chat_agent"
+  );
   const lastMessage = messages[messages.length - 1];
+  if (
+    taskSession &&
+    taskSession.status === "in_progress" &&
+    lastMessage?.role === "user"
+  ) {
+    const textParts = (lastMessage.parts || []).filter(
+      (p): p is { type: "text"; text: string } => p.type === "text"
+    );
+    const content = textParts.map((p) => p.text).join("\n");
+    await recordTaskEvent(supabase, taskSession.id, "turn", "user_message", {
+      conversation_id: conversationId ?? null,
+      message_length: content.length,
+    });
+  }
+
+  // Save the last user message to database
   if (lastMessage && lastMessage.role === "user") {
     const textParts = (lastMessage.parts || []).filter(
       (p): p is { type: "text"; text: string } => p.type === "text"
@@ -248,6 +308,9 @@ export async function POST(req: Request) {
         }
       } catch (error) {
         console.error("Failed to save assistant message:", error);
+      } finally {
+        // Clean up MCP client connection
+        await closeMcpClient();
       }
     },
   });

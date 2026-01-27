@@ -3,6 +3,7 @@ import { tool } from "ai";
 import { TOOL_DEFINITIONS } from "@/lib/tool-definitions";
 import { SupabaseClient } from "@supabase/supabase-js";
 import { Database } from "../../../supabase/types/database.types";
+import { recordTaskCompletion } from "@/lib/task-mode-server";
 
 /**
  * AI SDK Tool Definitions Factory
@@ -111,6 +112,16 @@ export const createTools = (supabase: SupabaseClient<Database>) => {
         return { error: `Error registering course: ${error.message}` };
       }
 
+      await recordTaskCompletion(supabase, {
+        userId: params.studentId,
+        systemType: "chat_agent",
+        taskCode: "register_course",
+        successPayload: {
+          registration_id: data?.id ?? null,
+          section_id: params.sectionId,
+        },
+      });
+
       return {
         registration: data,
         message: "Successfully registered for course",
@@ -180,6 +191,16 @@ export const createTools = (supabase: SupabaseClient<Database>) => {
       if (error) {
         return { error: `Error dropping course: ${error.message}` };
       }
+
+      await recordTaskCompletion(supabase, {
+        userId: params.studentId,
+        systemType: "chat_agent",
+        taskCode: "drop_course",
+        successPayload: {
+          registration_id: data?.id ?? null,
+          section_id: params.sectionId,
+        },
+      });
 
       return {
         registration: data,
@@ -325,6 +346,17 @@ export const createTools = (supabase: SupabaseClient<Database>) => {
         return { error: `Error booking facility: ${error.message}` };
       }
 
+      await recordTaskCompletion(supabase, {
+        userId: params.studentId,
+        systemType: "chat_agent",
+        taskCode: "book_room",
+        successPayload: {
+          booking_id: data?.id ?? null,
+          facility_id: params.facilityId,
+          booking_date: params.bookingDate,
+        },
+      });
+
       return { booking: data, message: "Successfully booked facility" };
     },
   });
@@ -394,6 +426,16 @@ export const createTools = (supabase: SupabaseClient<Database>) => {
       if (error) {
         return { error: `Error cancelling booking: ${error.message}` };
       }
+
+      await recordTaskCompletion(supabase, {
+        userId: params.studentId,
+        systemType: "chat_agent",
+        taskCode: "cancel_booking",
+        successPayload: {
+          booking_id: data?.id ?? null,
+          facility_id: data?.facility_id ?? null,
+        },
+      });
 
       return {
         booking: data,

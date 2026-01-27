@@ -18,7 +18,7 @@ export function RegistrationCard({
   onDrop,
   isLoading = false,
 }: RegistrationCardProps) {
-  const section = registration.course_sections as any;
+  const section = registration.course_sections;
   const course = section?.courses;
 
   if (!section || !course) {
