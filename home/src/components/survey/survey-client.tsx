@@ -22,6 +22,16 @@ import { DemographicsForm } from "@/components/survey/demographics-form";
 import { useSurveyData } from "@/hooks/use-survey-data";
 import { SurveyNavbar } from "@/components/survey/survey-navbar";
 import { toast } from "sonner";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 interface SurveyPageClientProps {
   profile: Pick<ProfileRow, "id" | "age_range" | "gender"> | null;
@@ -188,6 +198,29 @@ export function SurveyPageClient({
     return "All sections completed. Thank you for participating!";
   };
 
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+  const [pendingSection, setPendingSection] = useState<SectionKey | null>(null);
+
+  const handleSectionChange = (section: SectionKey | null) => {
+    if (activeSection === section) {
+      setActiveSection(null);
+      return;
+    }
+
+    if (hasUnsavedChanges) {
+      setPendingSection(section);
+      return;
+    }
+
+    setActiveSection(section);
+  };
+
+  const confirmSectionChange = () => {
+    setHasUnsavedChanges(false);
+    setActiveSection(pendingSection);
+    setPendingSection(null);
+  };
+
   if (requiresDemographics) {
     return (
       <div className='min-h-screen bg-background'>
@@ -218,9 +251,7 @@ export function SurveyPageClient({
             isOpen={activeSection === "intro"}
             isLocked={false}
             isCompleted={isStarted}
-            onOpen={() =>
-              setActiveSection(activeSection === "intro" ? null : "intro")
-            }
+            onOpen={() => handleSectionChange("intro")}
           >
             <div className='space-y-4 pt-2'>
               <p className='text-sm text-muted-foreground'>
@@ -259,13 +290,7 @@ export function SurveyPageClient({
             isOpen={activeSection === "traditional_tasks"}
             isLocked={isTraditionalTasksLocked}
             isCompleted={traditionalTasksCompleted}
-            onOpen={() =>
-              setActiveSection(
-                activeSection === "traditional_tasks"
-                  ? null
-                  : "traditional_tasks",
-              )
-            }
+            onOpen={() => handleSectionChange("traditional_tasks")}
           >
             <TaskList
               systemType='traditional'
@@ -285,13 +310,7 @@ export function SurveyPageClient({
             isOpen={activeSection === "traditional_survey"}
             isLocked={isTraditionalSurveyLocked}
             isCompleted={traditionalSurveyCompleted}
-            onOpen={() =>
-              setActiveSection(
-                activeSection === "traditional_survey"
-                  ? null
-                  : "traditional_survey",
-              )
-            }
+            onOpen={() => handleSectionChange("traditional_survey")}
           >
             <TraditionalSurvey
               session={traditionalSession}
@@ -302,6 +321,7 @@ export function SurveyPageClient({
                 traditionalSurveyAvailable && !traditionalSurveyCompleted
               }
               onSubmitted={refreshTaskData}
+              onDirtyStateChange={setHasUnsavedChanges}
             />
           </SurveySection>
 
@@ -312,11 +332,7 @@ export function SurveyPageClient({
             isOpen={activeSection === "chat_tasks"}
             isLocked={isChatTasksLocked}
             isCompleted={chatTasksCompleted}
-            onOpen={() =>
-              setActiveSection(
-                activeSection === "chat_tasks" ? null : "chat_tasks",
-              )
-            }
+            onOpen={() => handleSectionChange("chat_tasks")}
           >
             <TaskList
               systemType='chat_agent'
@@ -336,11 +352,7 @@ export function SurveyPageClient({
             isOpen={activeSection === "chat_survey"}
             isLocked={isChatSurveyLocked}
             isCompleted={chatSurveyCompleted}
-            onOpen={() =>
-              setActiveSection(
-                activeSection === "chat_survey" ? null : "chat_survey",
-              )
-            }
+            onOpen={() => handleSectionChange("chat_survey")}
           >
             <ChatAgentSurvey
               session={chatSession}
@@ -349,6 +361,7 @@ export function SurveyPageClient({
               surveyResponses={surveyResponsesState}
               enabled={chatSurveyAvailable && !chatSurveyCompleted}
               onSubmitted={refreshTaskData}
+              onDirtyStateChange={setHasUnsavedChanges}
             />
           </SurveySection>
 
@@ -359,21 +372,40 @@ export function SurveyPageClient({
             isOpen={activeSection === "interview"}
             isLocked={isInterviewLocked}
             isCompleted={interviewCompleted}
-            onOpen={() =>
-              setActiveSection(
-                activeSection === "interview" ? null : "interview",
-              )
-            }
+            onOpen={() => handleSectionChange("interview")}
           >
             <InterviewForm
               interviewQuestions={interviewQuestions}
               interviewResponses={interviewResponsesState}
               enabled={interviewAvailable && !interviewCompleted}
               onSubmitted={refreshTaskData}
+              onDirtyStateChange={setHasUnsavedChanges}
             />
           </SurveySection>
         </div>
       </div>
+
+      <AlertDialog
+        open={pendingSection !== null}
+        onOpenChange={(open) => !open && setPendingSection(null)}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Unsaved Changes</AlertDialogTitle>
+            <AlertDialogDescription>
+              You have unsaved changes in the current section. If you switch
+              now, your progress in this section will be lost. Do you want to
+              proceed?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Stay Here</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmSectionChange}>
+              Proceed & Lose Changes
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

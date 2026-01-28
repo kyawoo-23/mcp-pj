@@ -41,7 +41,7 @@ export default async function SurveyPage() {
 
   const interviewQuestionsPromise = supabase
     .from("task_interview_questions")
-    .select("id, question_text, order_index, created_at")
+    .select("id, question_text, order_index, options, created_at")
     .order("order_index", { ascending: true });
 
   const [

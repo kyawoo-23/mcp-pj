@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { cn } from "@/lib/utils";
 import { createClient } from "@/lib/supabase/client";
 import type {
   SurveyQuestionRow,
@@ -11,13 +12,7 @@ import type {
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { LikertScale } from "@/components/survey/likert-scale";
 import { toast } from "sonner";
 import {
   Card,
@@ -27,6 +22,18 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { TlxScale } from "@/components/survey/tlx-scale";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import { useWarnIfUnsavedChanges } from "@/hooks/use-warn-if-unsaved-changes";
 
 const SURVEY_CONFIG: Record<string, { title: string; description: string }> = {
   SUS: {
@@ -39,7 +46,8 @@ const SURVEY_CONFIG: Record<string, { title: string; description: string }> = {
   },
   SDT: {
     title: "User Experience",
-    description: "Please evaluate your sense of control and competence while using the system.",
+    description:
+      "Please evaluate your sense of control and competence while using the system.",
   },
 };
 
@@ -50,6 +58,7 @@ interface ChatAgentSurveyProps {
   surveyResponses: SurveyResponseRow[];
   enabled: boolean;
   onSubmitted: () => Promise<void> | void;
+  onDirtyStateChange?: (isDirty: boolean) => void;
 }
 
 export function ChatAgentSurvey({
@@ -59,9 +68,11 @@ export function ChatAgentSurvey({
   surveyResponses,
   enabled,
   onSubmitted,
+  onDirtyStateChange,
 }: ChatAgentSurveyProps) {
   const supabase = createClient();
   const [saving, setSaving] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
 
   const sessionResponses = useMemo(() => {
     if (!session) return [];
@@ -70,7 +81,23 @@ export function ChatAgentSurvey({
     );
   }, [surveyResponses, session]);
 
+  const initialResponses = useMemo(() => {
+    const initial: Record<string, string> = {};
+    sessionResponses.forEach((response) => {
+      if (response.response_text !== null) {
+        initial[response.question_id] = response.response_text;
+        return;
+      }
+      if (response.response_value !== null) {
+        initial[response.question_id] = String(response.response_value);
+      }
+    });
+    return initial;
+  }, [sessionResponses]);
+
   const [responses, setResponses] = useState<Record<string, string>>({});
+  const hasUnsavedChanges = Object.keys(responses).length > 0 && enabled;
+  useWarnIfUnsavedChanges(hasUnsavedChanges);
 
   useEffect(() => {
     const initial: Record<string, string> = {};
@@ -86,12 +113,19 @@ export function ChatAgentSurvey({
     setResponses(initial);
   }, [sessionResponses]);
 
+  useEffect(() => {
+    const isDirty =
+      Object.keys(responses).length > 0 &&
+      JSON.stringify(responses) !== JSON.stringify(initialResponses);
+    onDirtyStateChange?.(isDirty && enabled);
+  }, [responses, initialResponses, enabled, onDirtyStateChange]);
+
   const surveyGroups = useMemo(() => {
     const groups = new Map<string, SurveyQuestionRow[]>();
-    
+
     // Sort questions by order_index first
     const sortedQuestions = [...surveyQuestions].sort(
-      (a, b) => a.order_index - b.order_index
+      (a, b) => a.order_index - b.order_index,
     );
 
     sortedQuestions.forEach((q) => {
@@ -110,9 +144,9 @@ export function ChatAgentSurvey({
     return map;
   }, [surveys]);
 
-  const handleSubmit = async () => {
+  const handlePreSubmit = () => {
     if (!session || !enabled || saving) return;
-    
+
     const unanswered = surveyQuestions.filter(
       (question) =>
         !responses[question.id] || responses[question.id].trim() === "",
@@ -124,6 +158,13 @@ export function ChatAgentSurvey({
       );
       return;
     }
+
+    setShowConfirm(true);
+  };
+
+  const handleSubmit = async () => {
+    setShowConfirm(false);
+    if (!session || !enabled || saving) return;
 
     setSaving(true);
     try {
@@ -180,67 +221,57 @@ export function ChatAgentSurvey({
           <Card key={surveyId} className='border-primary/10'>
             <CardHeader className='pb-4'>
               <CardTitle className='text-lg font-medium'>{title}</CardTitle>
-              {description && (
-                <CardDescription>{description}</CardDescription>
-              )}
+              {description && <CardDescription>{description}</CardDescription>}
             </CardHeader>
             <CardContent className='space-y-6'>
-              {questions.map((question) => {
+              {questions.map((question, index) => {
                 const value = responses[question.id] ?? "";
                 return (
-                  <div key={question.id} className='space-y-3'>
+                  <div
+                    key={question.id}
+                    className={cn(
+                      "space-y-3 rounded-lg p-4 transition-colors",
+                      index % 2 === 0 ? "bg-muted/50" : "bg-transparent",
+                    )}
+                  >
                     <Label className='text-sm font-normal leading-relaxed'>
                       <span className='mr-2 font-medium text-muted-foreground'>
                         {question.order_index}.
                       </span>
                       {question.question_text}
                     </Label>
-                    <div className='pl-6'>
+                    <div className='md:pl-6'>
                       {question.scale_type === "likert_5" && (
-                        <Select
-                          value={value}
-                          onValueChange={(val) =>
-                            setResponses((prev) => ({
-                              ...prev,
-                              [question.id]: val,
-                            }))
-                          }
-                          disabled={!enabled}
-                        >
-                          <SelectTrigger className='w-full sm:w-[200px]'>
-                            <SelectValue placeholder='Select 1-5' />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {[1, 2, 3, 4, 5].map((option) => (
-                              <SelectItem key={option} value={String(option)}>
-                                {option}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
+                        <div className='py-2'>
+                          <LikertScale
+                            value={value}
+                            onChange={(val) =>
+                              setResponses((prev) => ({
+                                ...prev,
+                                [question.id]: val,
+                              }))
+                            }
+                            min={1}
+                            max={5}
+                            disabled={!enabled}
+                          />
+                        </div>
                       )}
                       {question.scale_type === "likert_7" && (
-                        <Select
-                          value={value}
-                          onValueChange={(val) =>
-                            setResponses((prev) => ({
-                              ...prev,
-                              [question.id]: val,
-                            }))
-                          }
-                          disabled={!enabled}
-                        >
-                          <SelectTrigger className='w-full sm:w-[200px]'>
-                            <SelectValue placeholder='Select 1-7' />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {[1, 2, 3, 4, 5, 6, 7].map((option) => (
-                              <SelectItem key={option} value={String(option)}>
-                                {option}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
+                        <div className='py-2'>
+                          <LikertScale
+                            value={value}
+                            onChange={(val) =>
+                              setResponses((prev) => ({
+                                ...prev,
+                                [question.id]: val,
+                              }))
+                            }
+                            min={1}
+                            max={7}
+                            disabled={!enabled}
+                          />
+                        </div>
                       )}
                       {question.scale_type === "numeric_0_100" && (
                         <TlxScale
@@ -279,14 +310,31 @@ export function ChatAgentSurvey({
       })}
 
       <div className='flex justify-end pt-4'>
-        <Button
-          className='w-full sm:w-fit'
-          disabled={!enabled || saving}
-          onClick={handleSubmit}
-          size='lg'
-        >
-          {saving ? "Submitting..." : "Submit Chat Agent Survey"}
-        </Button>
+        <AlertDialog open={showConfirm} onOpenChange={setShowConfirm}>
+          <Button
+            className='w-full sm:w-fit'
+            disabled={!enabled || saving}
+            onClick={handlePreSubmit}
+            size='lg'
+          >
+            {saving ? "Submitting..." : "Submit Chat Agent Survey"}
+          </Button>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Ready to submit?</AlertDialogTitle>
+              <AlertDialogDescription>
+                You’ve completed all sections. Are you sure you want to submit
+                your responses? This action cannot be undone.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogAction onClick={handleSubmit} disabled={saving}>
+                {saving ? "Submitting..." : "Submit Survey"}
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </div>
     </div>
   );

@@ -28,7 +28,10 @@ interface TaskListProps {
     task: TaskDefinitionRow,
     session: TaskSessionRow,
   ) => void | Promise<void>;
-  onResetTask: (task: TaskDefinitionRow, session: TaskSessionRow) => void;
+  onResetTask: (
+    task: TaskDefinitionRow,
+    session: TaskSessionRow,
+  ) => void | Promise<void>;
 }
 
 const statusVariantMap: Record<
@@ -49,6 +52,7 @@ export function TaskList({
   onResetTask,
 }: TaskListProps) {
   const [openingTaskId, setOpeningTaskId] = useState<string | null>(null);
+  const [isResetting, setIsResetting] = useState(false);
   const [taskToReset, setTaskToReset] = useState<{
     task: TaskDefinitionRow;
     session: TaskSessionRow;
@@ -135,14 +139,20 @@ export function TaskList({
             </Button>
             <Button
               variant='destructive'
-              onClick={() => {
+              disabled={isResetting}
+              onClick={async () => {
                 if (taskToReset) {
-                  onResetTask(taskToReset.task, taskToReset.session);
-                  setTaskToReset(null);
+                  setIsResetting(true);
+                  try {
+                    await onResetTask(taskToReset.task, taskToReset.session);
+                    setTaskToReset(null);
+                  } finally {
+                    setIsResetting(false);
+                  }
                 }
               }}
             >
-              Reset Task
+              {isResetting ? "Resetting..." : "Reset Task"}
             </Button>
           </DialogFooter>
         </DialogContent>

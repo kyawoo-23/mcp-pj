@@ -36,7 +36,7 @@ export function SurveySection({
     >
       <div
         className={cn(
-          "flex items-center justify-between p-6 cursor-pointer",
+          "flex items-center justify-between p-4 md:p-6 cursor-pointer",
           isLocked && "cursor-not-allowed",
         )}
         onClick={() => !isLocked && onOpen?.()}
@@ -52,7 +52,7 @@ export function SurveySection({
             )}
           </div>
           <div className='space-y-1'>
-            <h3 className='font-semibold leading-none tracking-tight flex items-center gap-2'>
+            <h3 className='font-semibold tracking-tight flex items-center gap-2'>
               {title}
               {isCompleted && (
                 <Badge variant='success' className='ml-2'>

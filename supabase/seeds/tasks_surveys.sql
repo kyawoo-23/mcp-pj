@@ -92,11 +92,13 @@ CROSS JOIN (
 WHERE task_surveys.survey_name = 'SDT' AND task_surveys.version = '1';
 
 -- Interview questions
-INSERT INTO task_interview_questions (question_text, order_index)
+INSERT INTO task_interview_questions (question_text, options, order_index)
 VALUES
-  ('Which system felt more in control?', 1),
-  ('Where did you hesitate?', 2),
-  ('At any point, did you feel unsure what the system was doing on your behalf?', 3),
-  ('Did the AI behave as expected?', 4),
-  ('Which system would you prefer for real use, and why?', 5)
-ON CONFLICT (order_index) DO NOTHING;
+  ('Which system made you feel more in control of task execution?', '["Chat-based system", "Traditional UI", "Both equally", "Neither"]'::jsonb, 1),
+  ('In which system was it clearer what actions were being performed on your behalf?', '["Chat-based system", "Traditional UI", "Both equally", "Neither"]'::jsonb, 2),
+  ('Which system behaved more predictably during task completion?', '["Chat-based system", "Traditional UI", "Both equally", "Neither"]'::jsonb, 3),
+  ('Which system would you trust more to complete similar tasks without close supervision?', '["Chat-based system", "Traditional UI", "Both equally", "Neither"]'::jsonb, 4),
+  ('Which system would you prefer depending on the task?', '["Chat-based system for most tasks", "Traditional UI for most tasks", "Chat for simple tasks, UI for complex tasks", "No clear preference"]'::jsonb, 5)
+ON CONFLICT (order_index) DO UPDATE SET
+  question_text = EXCLUDED.question_text,
+  options = EXCLUDED.options;

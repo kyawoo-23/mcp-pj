@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { LogOut, Settings, RefreshCw } from "lucide-react";
+import { LogOut, Settings, RefreshCw, Info } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -37,6 +37,7 @@ export function SurveyNavbar({ onRefresh, isRefreshing }: SurveyNavbarProps) {
   const [user, setUser] = useState<User | null>(null);
   const [fullName, setFullName] = useState<string | null>(null);
   const [showLogoutDialog, setShowLogoutDialog] = useState(false);
+  const [showInfoDialog, setShowInfoDialog] = useState(false);
 
   useEffect(() => {
     async function getUserAndProfile() {
@@ -107,13 +108,24 @@ export function SurveyNavbar({ onRefresh, isRefreshing }: SurveyNavbarProps) {
         </div>
 
         <div className='flex items-center gap-2'>
+          <Button
+            variant='ghost'
+            size='default'
+            onClick={() => setShowInfoDialog(true)}
+            className='text-muted-foreground hover:text-foreground'
+            title='Instructions'
+          >
+            <Info className='h-4 w-4' />
+            <span className='hidden sm:block ml-2'>Instructions</span>
+          </Button>
+
           {onRefresh && (
             <Button
               variant='ghost'
               size='default'
               onClick={onRefresh}
               disabled={isRefreshing}
-              className='mr-1 text-muted-foreground hover:text-foreground'
+              className='text-muted-foreground hover:text-foreground'
               title='Refresh Status'
             >
               <RefreshCw
@@ -190,6 +202,84 @@ export function SurveyNavbar({ onRefresh, isRefreshing }: SurveyNavbarProps) {
                     </Button>
                     <Button variant='destructive' onClick={handleLogout}>
                       Logout
+                    </Button>
+                  </DialogFooter>
+                </DialogContent>
+              </Dialog>
+
+              <Dialog open={showInfoDialog} onOpenChange={setShowInfoDialog}>
+                <DialogContent className='sm:max-w-[480px] md:max-w-2xl max-h-[90vh] flex flex-col p-0'>
+                  <DialogHeader className='px-6 pt-6 pb-4 border-b shrink-0'>
+                    <DialogTitle className='flex items-center gap-2'>
+                      <Info className='h-5 w-5 text-primary' />
+                      Research Task Instructions
+                    </DialogTitle>
+                    <DialogDescription className='text-left'>
+                      Please read the following instructions to understand how
+                      to complete the research study.
+                    </DialogDescription>
+                  </DialogHeader>
+                  <div className='flex-1 overflow-y-auto px-6 py-4'>
+                    <div className='grid gap-4'>
+                      <section className='space-y-2'>
+                        <h4 className='font-semibold text-sm'>
+                          1. Study Overview
+                        </h4>
+                        <p className='text-sm text-muted-foreground'>
+                          This study compares your experience using a
+                          traditional university portal versus an AI-powered
+                          chat agent. You will perform similar tasks in both
+                          systems and share your feedback.
+                        </p>
+                      </section>
+
+                      <section className='space-y-2'>
+                        <h4 className='font-semibold text-sm'>
+                          2. Completing Tasks
+                        </h4>
+                        <ul className='list-disc pl-4 text-sm text-muted-foreground space-y-1'>
+                          <li>
+                            <strong>Opening Tasks:</strong> Click &quot;Open
+                            Task&quot; to launch the portal or chat agent in a
+                            new tab.
+                          </li>
+                          <li>
+                            <strong>Performing Work:</strong> Follow the
+                            specific instructions provided for each task within
+                            the target system.
+                          </li>
+                          <li>
+                            <strong>Marking Done:</strong> Once you finish a
+                            task, it will automatically update to
+                            &quot;Completed&quot; on this dashboard (you may
+                            need to click &quot;Refresh Status&quot; if it
+                            doesn&apos;t update immediately).
+                          </li>
+                        </ul>
+                      </section>
+
+                      <section className='space-y-2'>
+                        <h4 className='font-semibold text-sm'>
+                          3. Survey Sections
+                        </h4>
+                        <p className='text-sm text-muted-foreground'>
+                          After completing all tasks in a section (Traditional
+                          or Chat Agent), you will be asked to fill out a short
+                          survey about that specific experience.
+                        </p>
+                      </section>
+
+                      <section className='space-y-2 text-primary font-medium bg-primary/5 p-3 rounded-md'>
+                        <p className='text-sm'>
+                          Tip: You can always come back to this instruction
+                          panel if you get stuck!
+                        </p>
+                      </section>
+                    </div>
+                  </div>
+                  <DialogFooter className='px-6 py-4 border-t shrink-0'>
+                    <Button onClick={() => setShowInfoDialog(false)}>
+                      Got it!
                     </Button>
                   </DialogFooter>
                 </DialogContent>

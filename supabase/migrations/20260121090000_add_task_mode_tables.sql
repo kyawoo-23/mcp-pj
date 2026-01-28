@@ -133,6 +133,7 @@ CREATE TABLE task_survey_responses (
 CREATE TABLE task_interview_questions (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   question_text text NOT NULL,
+  options jsonb,
   order_index integer NOT NULL,
   created_at timestamptz NOT NULL DEFAULT now(),
   UNIQUE (order_index)
