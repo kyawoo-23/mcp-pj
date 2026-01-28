@@ -76,13 +76,13 @@ export default function HomePage() {
   return (
     <main>
       <HeroSection />
-      <SurveyCTA />
       <ResearchTarget />
       <TraditionalPortals />
       <MCPChatAgent />
       <ComparisonTable />
       <WorkflowDiagram />
       <TechStack />
+      <SurveyCTA />
       <ExpectedOutcomes />
       <Footer />
     </main>

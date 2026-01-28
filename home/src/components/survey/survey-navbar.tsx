@@ -2,10 +2,9 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { LogOut, Settings, GraduationCap, RefreshCw } from "lucide-react";
+import { LogOut, Settings, RefreshCw } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -25,6 +24,7 @@ import {
 } from "@/components/ui/dialog";
 import { createClient } from "@/lib/supabase/client";
 import { User } from "@supabase/supabase-js";
+import Image from "next/image";
 
 export interface SurveyNavbarProps {
   onRefresh?: () => void;
@@ -82,11 +82,15 @@ export function SurveyNavbar({ onRefresh, isRefreshing }: SurveyNavbarProps) {
             href='/'
             className='flex items-center gap-2.5 transition-opacity hover:opacity-80'
           >
-            <div className='flex h-9 w-9 items-center justify-center rounded-xl bg-foreground text-background'>
-              <GraduationCap className='h-5 w-5' />
-            </div>
+            <Image
+              src='/logo.svg'
+              alt='Logo'
+              width={40}
+              height={40}
+              className='h-10 w-10'
+            />
             <span className='text-xl font-bold tracking-tighter'>
-              UniPortal
+              Survey Research
             </span>
           </Link>
 

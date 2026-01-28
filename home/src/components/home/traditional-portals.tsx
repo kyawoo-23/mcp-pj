@@ -38,7 +38,7 @@ const portals = [
 
 export function TraditionalPortals() {
   return (
-    <section className='py-24 px-6 bg-muted/30'>
+    <section className='py-24 px-6 bg-indigo-500/5'>
       <div className='max-w-6xl mx-auto'>
         <div className='text-center mb-16'>
           <div className='inline-flex items-center gap-3 px-6 py-3 bg-indigo-500/10 border-2 border-indigo-500/30 rounded-full mb-6'>

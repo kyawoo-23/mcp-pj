@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { getSurveyUrl } from "@/lib/constants";
+import Link from "next/link";
 
 const taskLabels: Record<string, string> = {
   register_course: "Register for a course",
@@ -154,7 +155,7 @@ export function TaskIndicator() {
           <div className='text-sm'>{activeTask.title}</div>
           <div className='flex flex-col gap-2'>
             <Button variant='outline' size='sm' asChild>
-              <a href={surveyLink}>Return to survey</a>
+              <Link href={surveyLink}>Return to survey</Link>
             </Button>
           </div>
         </CardContent>

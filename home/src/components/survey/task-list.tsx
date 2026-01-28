@@ -84,7 +84,11 @@ export function TaskList({
               <Button
                 variant='outline'
                 size='sm'
-                disabled={!canOpen || openingTaskId === task.id}
+                disabled={
+                  !canOpen ||
+                  status === "completed" ||
+                  openingTaskId === task.id
+                }
                 onClick={async () => {
                   if (!session) return;
                   setOpeningTaskId(task.id);
@@ -100,10 +104,10 @@ export function TaskList({
               <Button
                 variant='ghost'
                 size='sm'
-                disabled={!session || status === "not_started" || status === "completed"}
-                onClick={() =>
-                  session && setTaskToReset({ task, session })
+                disabled={
+                  !session || status === "not_started" || status === "completed"
                 }
+                onClick={() => session && setTaskToReset({ task, session })}
               >
                 Reset task
               </Button>
@@ -126,10 +130,7 @@ export function TaskList({
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
-            <Button
-              variant='outline'
-              onClick={() => setTaskToReset(null)}
-            >
+            <Button variant='outline' onClick={() => setTaskToReset(null)}>
               Cancel
             </Button>
             <Button

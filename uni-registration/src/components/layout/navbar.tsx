@@ -79,7 +79,7 @@ export function Navbar() {
             alt='Uni Registration'
             width={40}
             height={40}
-            className='h-5 w-5 sm:h-6 sm:w-6 md:h-10 md:w-10'
+            className='h-10 w-10'
           />
           <span className='text-lg sm:text-xl font-bold'>Uni Registration</span>
         </Link>
