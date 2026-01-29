@@ -91,7 +91,7 @@ export function SurveyNavbar({ onRefresh, isRefreshing }: SurveyNavbarProps) {
               className='h-10 w-10'
             />
             <span className='text-xl font-bold tracking-tighter'>
-              Survey Research
+              Website Design Study
             </span>
           </Link>
 

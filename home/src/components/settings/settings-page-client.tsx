@@ -167,13 +167,11 @@ export function SettingsPageClient() {
 
   if (isLoading) {
     return (
-      <div className='flex items-center justify-center h-screen'>
-        <Spinner
-          variant='circle'
-          size='lg'
-          className='text-muted-foreground'
-          aria-label='Loading settings'
-        />
+      <div className='h-screen flex items-center justify-center py-12'>
+        <div className='flex flex-col items-center gap-4'>
+          <Spinner size='lg' />
+          <p className='text-sm text-muted-foreground'>Loading...</p>
+        </div>
       </div>
     );
   }

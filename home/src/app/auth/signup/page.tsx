@@ -61,6 +61,7 @@ export default function SignupPage() {
         email: data.email,
         password: data.password,
         options: {
+          emailRedirectTo: `${window.location.origin}/api/auth/confirm?next=/survey`,
           data: {
             full_name: data.full_name,
             student_id: data.student_id.trim(),

@@ -45,7 +45,7 @@ export const metadata: Metadata = {
     type: "website",
     images: [
       {
-        url: "/og-image.png",
+        url: "/og-image.jpg",
         width: 1200,
         height: 630,
         alt: "Research - Traditional Web Portals vs AI Chat Assistants",
@@ -57,7 +57,7 @@ export const metadata: Metadata = {
     title: "Research | Traditional Web Portals vs AI Chat Assistants",
     description:
       "Participate in our user experience research study comparing traditional web portals with AI chat assistants.",
-    images: ["/og-image.png"],
+    images: ["/og-image.jpg"],
   },
   robots: {
     index: true,

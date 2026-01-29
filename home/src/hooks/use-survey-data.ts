@@ -13,6 +13,13 @@ import type {
 } from "@/lib/types";
 import { toast } from "sonner";
 import { TASK_ORDER, getTaskUrl } from "../utils/constants";
+import {
+  ensureProgressAction,
+  openTaskAction,
+  resetTaskAction,
+  saveDemographicsAction,
+  startSurveyAction,
+} from "@/app/actions/survey";
 
 interface UseSurveyDataProps {
   profile: Pick<ProfileRow, "id" | "age_range" | "gender"> | null;
@@ -180,43 +187,32 @@ export function useSurveyData({
       });
 
       if (!missing.length) return;
-      await supabase.from("task_progress").insert(missing);
-      await refreshTaskData();
+      
+      try {
+        await ensureProgressAction(missing);
+        await refreshTaskData();
+      } catch (error) {
+        console.error("Failed to ensure progress:", error);
+      }
     };
 
     ensureProgress();
-  }, [sessionsState, taskDefinitions, taskProgressState, tasksBySystem, supabase, refreshTaskData]);
+  }, [sessionsState, taskDefinitions, taskProgressState, tasksBySystem, refreshTaskData]);
 
   // Actions
   const saveDemographics = async (ageRange: ProfileRow["age_range"], gender: ProfileRow["gender"]) => {
     if (!profileState || !ageRange || !gender) return;
     setSavingDemographics(true);
     try {
-      const { error } = await supabase
-        .from("profiles")
-        .update({ age_range: ageRange, gender, updated_at: new Date().toISOString() })
-        .eq("id", profileState.id);
-
-      if (error) {
-        toast.error("Failed to save demographics", { description: error.message });
-        return;
-      }
-
-      const now = new Date().toISOString();
-      const { data: upserted } = await supabase
-        .from("task_sessions")
-        .upsert(
-          [
-            { user_id: profileState.id, system_type: "traditional", status: "not_started", updated_at: now },
-          ],
-          { onConflict: "user_id,system_type" },
-        )
-        .select();
-
+      const upserted = await saveDemographicsAction(profileState.id, ageRange, gender);
+      
       setProfileState({ ...profileState, age_range: ageRange, gender });
-      setSessionsState(upserted || []);
+      setSessionsState([upserted]); // Since we return single upserted
       toast.success("Demographics saved");
       await refreshTaskData();
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "An error occurred";
+      toast.error("Failed to save demographics", { description: message });
     } finally {
       setSavingDemographics(false);
     }
@@ -226,56 +222,39 @@ export function useSurveyData({
     if (!profileState) return;
     setStartingSurvey(true);
     try {
-      const now = new Date().toISOString();
-      // Start only traditional session first; chat session stays not_started
-      await supabase
-        .from("task_sessions")
-        .upsert(
-          [
-            { user_id: profileState.id, system_type: "traditional", status: "in_progress", started_at: now, updated_at: now },
-          ],
-          { onConflict: "user_id,system_type" },
-        )
-        .select();
-
+      await startSurveyAction(profileState.id);
       await refreshTaskData();
       return true;
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "An error occurred";
+      toast.error("Failed to start survey", { description: message });
+      return false;
     } finally {
       setStartingSurvey(false);
     }
   };
 
   const openTask = async (task: TaskDefinitionRow, session: TaskSessionRow) => {
-    const now = new Date().toISOString();
-    if (sessionIds.length) {
-      await supabase
-        .from("task_progress")
-        .update({ status: "not_started", updated_at: now })
-        .in("session_id", sessionIds)
-        .eq("status", "in_progress");
+    try {
+      await openTaskAction(session.id, task.id, sessionIds);
+      await refreshTaskData();
+      const url = getTaskUrl(task.system_type, task.task_code);
+      window.open(url, "_blank");
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "An error occurred";
+      toast.error("Failed to open task", { description: message });
     }
-
-    await supabase
-      .from("task_progress")
-      .update({ status: "in_progress", started_at: now, updated_at: now })
-      .eq("session_id", session.id)
-      .eq("task_definition_id", task.id);
-
-    await refreshTaskData();
-    const url = getTaskUrl(task.system_type, task.task_code);
-    window.open(url, "_blank");
   };
 
   const resetTask = async (task: TaskDefinitionRow, session: TaskSessionRow) => {
-    const now = new Date().toISOString();
-    await supabase.from("task_progress").delete().eq("session_id", session.id).eq("task_definition_id", task.id);
-    await supabase.from("task_events").delete().eq("session_id", session.id).eq("metadata->>task_code", task.task_code);
-    await supabase.from("task_survey_responses").delete().eq("session_id", session.id);
-    await supabase.from("task_sessions").update({ status: "in_progress", completed_at: null, updated_at: now }).eq("id", session.id);
-    await supabase.from("task_interview_responses").delete().eq("user_id", session.user_id);
-
-    toast.success("Task reset");
-    await refreshTaskData();
+    try {
+      await resetTaskAction(session.id, task.id, task.task_code, session.user_id);
+      toast.success("Task reset");
+      await refreshTaskData();
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "An error occurred";
+      toast.error("Failed to reset task", { description: message });
+    }
   };
 
   return {

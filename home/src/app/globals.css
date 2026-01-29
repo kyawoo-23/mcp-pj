@@ -74,6 +74,38 @@
   --sidebar-ring: oklch(0.7 0.15 350 / 0.5);
 }
 
+@keyframes ring-pulse {
+  0% {
+    box-shadow: 0 0 0 0 oklch(0.7 0.15 350 / 0.5);
+  }
+  70% {
+    box-shadow: 0 0 0 20px oklch(0.7 0.15 350 / 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 oklch(0.7 0.15 350 / 0);
+  }
+}
+
+.animate-ring-pulse {
+  animation: ring-pulse 2s cubic-bezier(0, 0, 0.2, 1) infinite;
+}
+
+@keyframes scroll-line {
+  0% {
+    height: 0;
+  }
+  50% {
+    height: 100%;
+  }
+  100% {
+    height: 0;
+  }
+}
+
+.animate-scroll-line {
+  animation: scroll-line 2.5s cubic-bezier(0.65, 0, 0.35, 1) infinite;
+}
+
 @theme inline {
   --font-sans: "Geist", "Geist Fallback";
   --font-mono: "Geist Mono", "Geist Mono Fallback";

@@ -62,7 +62,7 @@ export function WelcomeMessage({ onPromptSelect }: WelcomeMessageProps) {
             <div className='flex flex-col items-start gap-1 text-left'>
               <span className='font-medium'>{chip.label}</span>
               <span className='text-xs text-muted-foreground font-normal line-clamp-1'>
-                "{chip.prompt}"
+                &quot;{chip.prompt}&quot;
               </span>
             </div>
           </Button>

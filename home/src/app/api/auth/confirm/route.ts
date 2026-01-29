@@ -9,16 +9,18 @@ export async function GET(req: Request) {
   const token_hash = url.searchParams.get("token_hash");
   const type = url.searchParams.get("type");
   const code = url.searchParams.get("code");
+  const next = url.searchParams.get("next") ?? Routes.home;
+
+  const origin = url.origin;
 
   if (code) {
     const { error } = await supabase.auth.exchangeCodeForSession(code);
     if (!error) {
-      const origin = url.origin;
-      return NextResponse.redirect(`${origin}${Routes.passwordReset}`);
+      return NextResponse.redirect(`${origin}${next}`);
     }
   }
 
-  if (!token_hash || type !== "email") {
+  if (!token_hash || !type) {
     return NextResponse.json({ error: "Invalid request" }, { status: 400 });
   }
 
@@ -31,6 +33,5 @@ export async function GET(req: Request) {
     return NextResponse.json({ error: error.message }, { status: 400 });
   }
 
-  const origin = url.origin;
-  return NextResponse.redirect(`${origin}${Routes.passwordReset}`);
+  return NextResponse.redirect(`${origin}${next}`);
 }

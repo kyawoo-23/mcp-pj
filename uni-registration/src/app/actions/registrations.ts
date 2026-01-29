@@ -159,9 +159,3 @@ export async function dropRegistration(registrationId: string) {
   return { success: true, message: "Successfully dropped course" };
 }
 
-export async function getSectionAvailability(sectionId: string) {
-  return {
-    available: true,
-  };
-}
-
