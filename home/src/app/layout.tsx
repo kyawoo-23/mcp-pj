@@ -15,26 +15,44 @@ const _geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL("https://mcp-project.app"),
   title: "MCP Research | Traditional Web Portals vs Chat Interfaces",
   description:
     "Research comparing traditional web portals with MCP-powered conversational interfaces for university facility booking and course registration",
-  generator: "v0.app",
   icons: {
     icon: [
       {
-        url: "/icon-light-32x32.png",
-        media: "(prefers-color-scheme: light)",
-      },
-      {
-        url: "/icon-dark-32x32.png",
-        media: "(prefers-color-scheme: dark)",
-      },
-      {
-        url: "/icon.svg",
+        url: "/logo.svg",
         type: "image/svg+xml",
       },
     ],
-    apple: "/apple-icon.png",
+  },
+  openGraph: {
+    title: "MCP Research | Traditional Web Portals vs Chat Interfaces",
+    description:
+      "Research comparing traditional web portals with MCP-powered conversational interfaces for university facility booking and course registration",
+    url: "/",
+    siteName: "MCP Research",
+    locale: "en_US",
+    type: "website",
+    images: [
+      {
+        url: "/og-image.jpg",
+        width: 1200,
+        height: 630,
+        alt: "MCP Research",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "MCP Research | Traditional Web Portals vs Chat Interfaces",
+    description:
+      "Research comparing traditional web portals with MCP-powered conversational interfaces for university facility booking and course registration",
+    images: ["/og-image.jpg"],
+  },
+  alternates: {
+    canonical: "/",
   },
 };
 
