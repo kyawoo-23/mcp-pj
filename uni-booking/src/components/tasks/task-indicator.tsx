@@ -100,13 +100,11 @@ export function TaskIndicator() {
       await refreshActiveTask();
     })();
 
-    // Listen for auth state changes to refresh task when user logs in
+    // Listen for auth state changes to refresh task
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((event) => {
-      if (event === "SIGNED_IN") {
-        refreshActiveTask();
-      }
+    } = supabase.auth.onAuthStateChange(() => {
+      refreshActiveTask();
     });
 
     return () => {
