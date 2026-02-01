@@ -1,13 +1,13 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Inter, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { AuthProvider } from "@/components/auth/auth-provider";
 import { Navbar } from "@/components/layout/navbar";
 import { TaskIndicator } from "@/components/tasks/task-indicator";
 import { Toaster } from "@/components/ui/sonner";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+const inter = Inter({
+  variable: "--font-inter",
   subsets: ["latin"],
 });
 
@@ -28,9 +28,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang='en'>
-      <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
-      >
+      <body className={`${inter.variable} ${geistMono.variable} antialiased`}>
         <AuthProvider>
           <div className='flex min-h-screen flex-col'>
             <Navbar />

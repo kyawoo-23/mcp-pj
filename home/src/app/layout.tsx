@@ -1,6 +1,6 @@
 import React from "react";
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Outfit, Geist_Mono } from "next/font/google";
 import { Analytics } from "@vercel/analytics/next";
 import Providers from "@/components/providers";
 import { Toaster } from "@/components/ui/sonner";
@@ -8,7 +8,7 @@ import { ThemeProvider } from "@/components/theme-provider";
 import { cn } from "@/lib/utils";
 import "./globals.css";
 
-const _geist = Geist({ variable: "--font-geist-sans", subsets: ["latin"] });
+const outfit = Outfit({ variable: "--font-outfit", subsets: ["latin"] });
 const _geistMono = Geist_Mono({
   variable: "--font-geist-mono",
   subsets: ["latin"],
@@ -48,7 +48,7 @@ export default function RootLayout({
       <body
         className={cn(
           "min-h-screen bg-background font-sans antialiased",
-          _geist.variable,
+          outfit.variable,
           _geistMono.variable,
         )}
       >

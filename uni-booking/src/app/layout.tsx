@@ -1,13 +1,13 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Inter, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { AuthProvider } from "@/components/auth/auth-provider";
 import { Navbar } from "@/components/layout/navbar";
 import { TaskIndicator } from "@/components/tasks/task-indicator";
 import { Toaster } from "@/components/ui/sonner";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+const inter = Inter({
+  variable: "--font-inter",
   subsets: ["latin"],
 });
 
@@ -27,14 +27,12 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
-      <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
-      >
+    <html lang='en'>
+      <body className={`${inter.variable} ${geistMono.variable} antialiased`}>
         <AuthProvider>
-          <div className="flex min-h-screen flex-col">
+          <div className='flex min-h-screen flex-col'>
             <Navbar />
-            <main className="flex-1">{children}</main>
+            <main className='flex-1'>{children}</main>
             <TaskIndicator />
           </div>
           <Toaster />
