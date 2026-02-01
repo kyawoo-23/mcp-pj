@@ -95,7 +95,20 @@ export function TaskIndicator() {
     (async () => {
       await refreshActiveTask();
     })();
-  }, [refreshActiveTask]);
+
+    // Listen for auth state changes to refresh task when user logs in
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((event) => {
+      if (event === "SIGNED_IN") {
+        refreshActiveTask();
+      }
+    });
+
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, [refreshActiveTask, supabase]);
 
   // Realtime subscription for immediate updates
   useEffect(() => {
