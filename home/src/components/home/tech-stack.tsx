@@ -78,22 +78,6 @@ export function TechStack() {
               </div>
             </div>
           </div>
-
-          {/* Connection Lines (visual representation) */}
-          <div className='hidden md:flex justify-center items-center gap-4 mt-8 pt-8 border-t-2 border-border'>
-            <div className='flex items-center gap-2'>
-              <div className='w-4 h-4 rounded-full bg-foreground/40' />
-              <span className='text-base font-medium text-foreground/80'>
-                Data Flow
-              </span>
-            </div>
-            <div className='flex items-center gap-2'>
-              <div className='w-4 h-4 rounded-full bg-accent' />
-              <span className='text-base font-medium text-foreground/80'>
-                Shared Resource
-              </span>
-            </div>
-          </div>
         </div>
 
         {/* Key Points */}
