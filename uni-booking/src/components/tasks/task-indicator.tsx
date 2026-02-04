@@ -150,7 +150,7 @@ export function TaskIndicator() {
   const isCompleted = activeTask.status === "completed";
 
   return (
-    <div className='fixed top-20 right-4 z-50 hidden w-72 sm:block'>
+    <div className='fixed top-20 right-4 z-50 w-72'>
       <Card
         className={`shadow-md transition-all duration-500 ${isCompleted ? "border-green-500 ring-1 ring-green-500" : ""}`}
       >

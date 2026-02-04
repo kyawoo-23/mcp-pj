@@ -77,30 +77,34 @@ export default function BookingsClient({ bookings }: BookingsClientProps) {
   }, [bookings]);
 
   return (
-    <div className="space-y-4">
+    <div className='space-y-4'>
       {error && (
-        <Alert variant="destructive">
+        <Alert variant='destructive'>
           <AlertDescription>{error}</AlertDescription>
         </Alert>
       )}
 
       <Tabs value={selectedStatus} onValueChange={setSelectedStatus}>
-        <TabsList>
-          <TabsTrigger value="all">All ({bookingsByStatus.all})</TabsTrigger>
-          <TabsTrigger value="pending">Pending ({bookingsByStatus.pending})</TabsTrigger>
-          <TabsTrigger value="confirmed">
+        <TabsList className='h-auto flex-wrap gap-1 sm:gap-0 sm:flex-nowrap'>
+          <TabsTrigger value='all' className='text-xs sm:text-sm'>
+            All ({bookingsByStatus.all})
+          </TabsTrigger>
+          <TabsTrigger value='pending' className='text-xs sm:text-sm'>
+            Pending ({bookingsByStatus.pending})
+          </TabsTrigger>
+          <TabsTrigger value='confirmed' className='text-xs sm:text-sm'>
             Confirmed ({bookingsByStatus.confirmed})
           </TabsTrigger>
-          <TabsTrigger value="cancelled">
+          <TabsTrigger value='cancelled' className='text-xs sm:text-sm'>
             Cancelled ({bookingsByStatus.cancelled})
           </TabsTrigger>
-          <TabsTrigger value="completed">
+          <TabsTrigger value='completed' className='text-xs sm:text-sm'>
             Completed ({bookingsByStatus.completed})
           </TabsTrigger>
         </TabsList>
 
-        <TabsContent value={selectedStatus} className="mt-6">
-          <div className="grid gap-4 md:grid-cols-2">
+        <TabsContent value={selectedStatus} className='mt-6'>
+          <div className='grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-3'>
             {filteredBookings.map((booking) => (
               <BookingCard
                 key={booking.id}
@@ -110,31 +114,35 @@ export default function BookingsClient({ bookings }: BookingsClientProps) {
             ))}
           </div>
           {filteredBookings.length === 0 && (
-            <div className="py-10 text-center text-muted-foreground">
+            <div className='py-10 text-center text-muted-foreground'>
               No bookings found for this status.
             </div>
           )}
         </TabsContent>
       </Tabs>
 
-      <Dialog open={!!bookingToCancel} onOpenChange={(open) => !open && setBookingToCancel(null)}>
+      <Dialog
+        open={!!bookingToCancel}
+        onOpenChange={(open) => !open && setBookingToCancel(null)}
+      >
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Cancel Booking</DialogTitle>
             <DialogDescription>
-              Are you sure you want to cancel this booking? This action cannot be undone.
+              Are you sure you want to cancel this booking? This action cannot
+              be undone.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
             <Button
-              variant="outline"
+              variant='outline'
               onClick={() => setBookingToCancel(null)}
               disabled={isCancelling}
             >
               Keep Booking
             </Button>
             <Button
-              variant="destructive"
+              variant='destructive'
               onClick={confirmCancel}
               disabled={isCancelling}
             >
@@ -146,4 +154,3 @@ export default function BookingsClient({ bookings }: BookingsClientProps) {
     </div>
   );
 }
-
