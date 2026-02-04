@@ -12,7 +12,7 @@ export function HeroSection() {
         <h1 className='text-4xl md:text-6xl lg:text-7xl font-medium tracking-tight leading-tight text-balance mb-8'>
           Traditional Websites vs. AI Chat Assistants
         </h1>
-        <p className='text-lg md:text-xl text-primary-foreground/90 max-w-2xl mx-auto leading-relaxed mb-12'>
+        <p className='text-lg text-balance md:text-xl text-primary-foreground/90 max-w-2xl mx-auto leading-relaxed mb-12'>
           We&apos;re comparing two ways to interact with websites: clicking
           through pages and forms, versus simply chatting with an AI assistant.
           Which feels better to you?
