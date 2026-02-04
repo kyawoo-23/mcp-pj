@@ -57,7 +57,7 @@ export function registerFacilityTools(server: McpServer) {
       try {
         let dbQuery = supabase
           .from("facilities")
-          .select("*")
+          .select("id, name, facility_type, capacity, location")
           .eq("is_active", true);
 
         if (query) {
@@ -168,9 +168,9 @@ export function registerFacilityTools(server: McpServer) {
         }
 
         // Check for overlapping bookings
-        const { data: conflicts, error: conflictError } = await supabase
+        const { count, error: conflictError } = await supabase
           .from("facility_bookings")
-          .select("*")
+          .select("id", { count: "exact", head: true })
           .eq("facility_id", facilityId)
           .eq("booking_date", bookingDate)
           .neq("status", "cancelled")
@@ -191,7 +191,7 @@ export function registerFacilityTools(server: McpServer) {
           };
         }
 
-        if (conflicts && conflicts.length > 0) {
+        if (count !== null && count > 0) {
           return {
             content: [
               {

@@ -64,7 +64,7 @@ export function ChatPageClient({
   const taskPrompt = taskCode ? taskPrompts[taskCode] : undefined;
 
   const activeConversation = conversations.find(
-    (c) => c.id === activeConversationId
+    (c) => c.id === activeConversationId,
   );
 
   const {
@@ -116,7 +116,7 @@ export function ChatPageClient({
           id: m.id,
           role: m.role as MessageRole,
           parts: [{ type: "text" as const, text: m.content }],
-        }))
+        })),
       );
     }
   }, []); // Only run on mount
@@ -130,7 +130,7 @@ export function ChatPageClient({
   const sendMessage = React.useCallback(
     async (
       message: Parameters<typeof originalSendMessage>[0],
-      options?: { conversationId?: string }
+      options?: { conversationId?: string },
     ) => {
       // Store original fetch
       const originalFetch = globalThis.fetch;
@@ -139,7 +139,7 @@ export function ChatPageClient({
       // Override fetch temporarily to add conversationId and capture response
       globalThis.fetch = async (
         input: RequestInfo | URL,
-        init?: RequestInit
+        init?: RequestInit,
       ) => {
         if (
           typeof input === "string" &&
@@ -178,7 +178,7 @@ export function ChatPageClient({
         globalThis.fetch = originalFetch;
       }
     },
-    [originalSendMessage, activeConversationId, router]
+    [originalSendMessage, activeConversationId, router],
   );
 
   // Load messages when conversation changes
@@ -200,9 +200,8 @@ export function ChatPageClient({
     const loadConversation = async () => {
       try {
         // Use server action to fetch conversation with messages
-        const { data, error } = await getConversationWithMessagesAction(
-          activeConversationId
-        );
+        const { data, error } =
+          await getConversationWithMessagesAction(activeConversationId);
         if (error || !data) {
           setMessages([]);
           return;
@@ -212,7 +211,7 @@ export function ChatPageClient({
             id: m.id,
             role: m.role as MessageRole,
             parts: [{ type: "text" as const, text: m.content }],
-          }))
+          })),
         );
       } catch (error) {
         console.error("Failed to load conversation:", error);
@@ -229,7 +228,7 @@ export function ChatPageClient({
         role: "user",
         parts: [{ type: "text", text: content }],
       },
-      { conversationId: activeConversationId || undefined }
+      { conversationId: activeConversationId || undefined },
     );
   };
 
@@ -238,7 +237,7 @@ export function ChatPageClient({
     // If so, just close the sidebar and stay on current conversation
     // Also check if ANY conversation in the history is empty
     const hasEmpty = conversations.some(
-      (c) => c.messages && c.messages[0] && c.messages[0].count === 0
+      (c) => c.messages && c.messages[0] && c.messages[0].count === 0,
     );
 
     if (messages.length === 0 || hasEmpty) {
@@ -247,7 +246,7 @@ export function ChatPageClient({
       // If we are not in an empty chat but one exists, find it and switch
       if (messages.length > 0 && hasEmpty) {
         const emptyConv = conversations.find(
-          (c) => c.messages && c.messages[0] && c.messages[0].count === 0
+          (c) => c.messages && c.messages[0] && c.messages[0].count === 0,
         );
         if (emptyConv) {
           router.push(`/c/${emptyConv.id}`);
@@ -325,7 +324,7 @@ export function ChatPageClient({
   // Check if ANY conversation has 0 messages
   // Supabase returns count as an array of objects e.g. [{count: 0}]
   const hasEmptyConversation = conversations.some(
-    (c) => c.messages && c.messages[0] && c.messages[0].count === 0
+    (c) => c.messages && c.messages[0] && c.messages[0].count === 0,
   );
 
   return (
@@ -360,6 +359,7 @@ export function ChatPageClient({
             chatInputRef.current?.focus();
           }}
           isLoading={isLoading}
+          status={status}
         />
 
         <ChatInput

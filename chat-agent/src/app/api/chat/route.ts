@@ -169,8 +169,7 @@ export async function POST(req: Request) {
 
   // Convert UIMessage format (with parts) to CoreMessage format (with content)
   const coreMessages = await convertToModelMessages(messages);
-
-    const systemPrompt = `
+  const systemPrompt = `
     Current Date and Time: ${new Date().toLocaleString('en-US', { timeZone: 'Asia/Bangkok', weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' })}.
     
     You are the Uni-Chat Agent, a friendly and helpful virtual assistant for university students.
@@ -215,15 +214,20 @@ export async function POST(req: Request) {
        - User gives Name -> Call \`search_facilities\` to get UUID.
        - Then ask for Date/Time if missing.
        - confirm details -> call \`book_facility\`.
+
+    OPTIMIZATION INSTRUCTION:
+    - BE CONCISE AND DIRECT.
+    - Do not over-explain if the user asks a simple question.
+    - Think efficiently.
   `;
 
   const result = streamText({
-    model: google(`models/${process.env.GOOGLE_GENERATIVE_MODEL_ID || "gemini-2.5-flash"}`),
+    model: google(`models/${process.env.NEXT_PUBLIC_GOOGLE_GENERATIVE_MODEL_ID || "gemini-2.5-flash"}`),
     providerOptions: {
       google: {
         thinkingConfig: {
           includeThoughts: true,
-          thinkingBudget: 8192,
+          thinkingBudget: 2048,
         },
       } satisfies GoogleGenerativeAIProviderOptions,
     },

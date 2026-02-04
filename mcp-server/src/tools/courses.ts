@@ -25,7 +25,7 @@ export function registerCourseTools(server: McpServer) {
       console.log(`🔧 [Tool] search_courses called with query: ${query || "(all courses)"}`);
       
       try {
-        let baseQuery = supabase.from("courses").select("*");
+        let baseQuery = supabase.from("courses").select("id, code, title, credits, description");
 
         if (query) {
           baseQuery = baseQuery.or(
@@ -168,11 +168,10 @@ export function registerCourseTools(server: McpServer) {
         // First check if already registered
         const { data: existing } = await supabase
           .from("student_registrations")
-          .select("*")
+          .select("id", { count: "exact", head: true })
           .eq("student_id", studentId)
           .eq("section_id", sectionId)
-          .eq("status", "active")
-          .single();
+          .eq("status", "active");
 
         if (existing) {
           return {
@@ -255,7 +254,7 @@ export function registerCourseTools(server: McpServer) {
             *,
             course_sections (
               *,
-              courses (*)
+              courses (id, code, title, credits)
             )
           `
           )

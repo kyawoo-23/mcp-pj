@@ -12,6 +12,7 @@ import type {
 interface ChatMessageProps {
   message: ChatMessageData;
   showTimestamp?: boolean;
+  isStreaming?: boolean;
 }
 
 function ToolInvocation({ part }: { part: ToolInvocationPart }) {
@@ -212,6 +213,7 @@ function ToolResultDisplay({
 export function ChatMessage({
   message,
   showTimestamp = false,
+  isStreaming = false,
 }: ChatMessageProps) {
   const isUser = message.role === "user";
   const isSystem = message.role === "system";
@@ -234,10 +236,10 @@ export function ChatMessage({
 
   // Separate text parts and tool parts
   const textParts = message.parts.filter(
-    (p): p is TextPart => p.type === "text"
+    (p): p is TextPart => p.type === "text",
   );
   const toolParts = message.parts.filter(
-    (p): p is ToolInvocationPart => p.type === "tool-invocation"
+    (p): p is ToolInvocationPart => p.type === "tool-invocation",
   );
   const textContent = textParts.map((p) => p.text).join("");
 
@@ -245,7 +247,7 @@ export function ChatMessage({
     <div
       className={cn(
         "flex w-full gap-4 py-4 px-2 md:px-4",
-        isUser ? "flex-row-reverse" : "flex-row"
+        isUser ? "flex-row-reverse" : "flex-row",
       )}
     >
       {/* Avatar */}
@@ -257,7 +259,7 @@ export function ChatMessage({
       <div
         className={cn(
           "flex max-w-[80%] flex-col gap-1",
-          isUser ? "items-end" : "items-start"
+          isUser ? "items-end" : "items-start",
         )}
       >
         {/* Tool Invocations (for assistant messages) */}
@@ -276,15 +278,27 @@ export function ChatMessage({
               "rounded-2xl px-4 py-3 text-sm shadow-sm",
               isUser
                 ? "bg-primary text-primary-foreground rounded-tr-sm"
-                : "bg-muted/60 text-foreground border border-border/50 rounded-tl-sm"
+                : "bg-muted/60 text-foreground border border-border/50 rounded-tl-sm",
             )}
           >
             <div className='prose prose-sm dark:prose-invert max-w-none whitespace-pre-wrap leading-relaxed'>
               <ReactMarkdown>{textContent}</ReactMarkdown>
             </div>
+            {isStreaming && (
+              <span className='animate-pulse inline-block h-4 w-1.5 align-middle bg-foreground/50 ml-1' />
+            )}
           </div>
         )}
-
+        {/* Streaming Cursor for empty message */}
+        {isStreaming && !textContent && (
+          <div
+            className={cn(
+              "rounded-2xl px-4 py-3 text-sm shadow-sm bg-muted/60 text-foreground border border-border/50 rounded-tl-sm",
+            )}
+          >
+            <span className='animate-pulse inline-block h-4 w-1.5 align-middle bg-foreground/50' />
+          </div>
+        )}
         {/* Optional Timestamp */}
         {showTimestamp && message.timestamp && (
           <span className='px-1 text-xs text-muted-foreground'>

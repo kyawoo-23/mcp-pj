@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { ChevronDown, ChevronUp } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -22,6 +23,7 @@ export function TaskIndicator() {
   const { activeTask, setActiveTask } = useTaskStore();
   const [loading, setLoading] = useState(true);
   const [isVisible, setIsVisible] = useState(true);
+  const [isExpanded, setIsExpanded] = useState(true);
 
   const refreshActiveTask = useCallback(async () => {
     setLoading(true);
@@ -154,23 +156,41 @@ export function TaskIndicator() {
   return (
     <div className='fixed top-16 right-4 z-50 w-72'>
       <Card
-        className={`shadow-md transition-all duration-500 ${isCompleted ? "border-green-500 ring-1 ring-green-500" : ""}`}
+        className={`shadow-md transition-all duration-500 bg-background/60 backdrop-blur-xl backdrop-saturate-150 border-white/20 ${isCompleted ? "border-green-500 ring-1 ring-green-500" : ""}`}
       >
         <CardContent className='space-y-3 p-4'>
           <div className='flex items-center justify-between'>
             <div className='text-sm font-semibold'>
               {isCompleted ? "Task Completed" : "Task in progress"}
             </div>
-            <Badge variant={isCompleted ? "success" : "warning"}>
-              {isCompleted ? "Completed" : "Active"}
-            </Badge>
+            <div className='flex items-center gap-1'>
+              <Badge variant={isCompleted ? "success" : "warning"}>
+                {isCompleted ? "Completed" : "Active"}
+              </Badge>
+              <Button
+                variant='ghost'
+                size='icon'
+                className='h-6 w-6'
+                onClick={() => setIsExpanded((prev) => !prev)}
+              >
+                {isExpanded ? (
+                  <ChevronUp className='h-4 w-4' />
+                ) : (
+                  <ChevronDown className='h-4 w-4' />
+                )}
+              </Button>
+            </div>
           </div>
-          <div className='text-sm'>{activeTask.title}</div>
-          <div className='flex flex-col gap-2'>
-            <Button variant='outline' size='sm' asChild>
-              <Link href={surveyLink}>Return to survey</Link>
-            </Button>
-          </div>
+          {isExpanded && (
+            <>
+              <div className='text-sm'>{activeTask.title}</div>
+              <div className='flex flex-col gap-2'>
+                <Button variant='outline' size='sm' asChild>
+                  <Link href={surveyLink}>Return to survey</Link>
+                </Button>
+              </div>
+            </>
+          )}
         </CardContent>
       </Card>
     </div>

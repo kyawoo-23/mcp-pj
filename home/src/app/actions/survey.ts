@@ -130,6 +130,22 @@ export async function resetTaskAction(
   const supabase = await createClient();
   const now = new Date().toISOString();
 
+  // 0. Check if task is completed
+  const { data: progress, error: fetchError } = await supabase
+    .from("task_progress")
+    .select("status")
+    .eq("session_id", sessionId)
+    .eq("task_definition_id", taskDefinitionId)
+    .single();
+
+  if (fetchError) {
+    console.error("Failed to fetch task progress:", fetchError);
+  }
+
+  if (progress?.status === "completed") {
+    throw new Error("Cannot reset a completed task.");
+  }
+
   // 1. Delete progress
   const { error: progressError } = await supabase
     .from("task_progress")

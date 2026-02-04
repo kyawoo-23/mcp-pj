@@ -2,7 +2,7 @@ import * as React from "react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { ChatMessage } from "./chat-message";
 import { WelcomeMessage } from "./welcome-message";
-import type { ChatMessageData } from "@/lib/types";
+import type { ChatMessageData, ChatStatus } from "@/lib/types";
 import { AssistantAvatar } from "./icons/message-icons";
 import { Skeleton } from "@/components/ui/skeleton";
 
@@ -10,12 +10,14 @@ interface ChatMessageListProps {
   messages: ChatMessageData[];
   onPromptSelect: (prompt: string) => void;
   isLoading?: boolean;
+  status: ChatStatus;
 }
 
 export function ChatMessageList({
   messages,
   onPromptSelect,
   isLoading,
+  status = "ready",
 }: ChatMessageListProps) {
   const bottomRef = React.useRef<HTMLDivElement>(null);
 
@@ -37,8 +39,14 @@ export function ChatMessageList({
     <div className='flex-1 min-h-0 w-full overflow-hidden'>
       <ScrollArea className='h-full w-full'>
         <div className='flex flex-col gap-2 p-4 pb-8 max-w-4xl mx-auto w-full'>
-          {messages.map((message) => (
-            <ChatMessage key={message.id} message={message} />
+          {messages.map((message, index) => (
+            <ChatMessage
+              key={message.id}
+              message={message}
+              isStreaming={
+                status === "streaming" && index === messages.length - 1
+              }
+            />
           ))}
 
           {isWaitingForResponse && (

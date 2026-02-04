@@ -49,18 +49,20 @@ export async function recordTaskCompletion(
     successPayload?: Json;
   }
 ) {
-  const session = await getTaskSessionByUser(supabase, userId, systemType);
+  const [session, { data: taskDefinition }] = await Promise.all([
+    getTaskSessionByUser(supabase, userId, systemType),
+    supabase
+      .from("task_definitions")
+      .select("id")
+      .eq("system_type", systemType)
+      .eq("task_code", taskCode)
+      .single(),
+  ]);
+
   if (!session) {
     console.log(`📋 [TaskMode] No session found for user ${userId}, skipping task completion`);
     return { skipped: true, reason: "no_session" };
   }
-
-  const { data: taskDefinition } = await supabase
-    .from("task_definitions")
-    .select("id")
-    .eq("system_type", systemType)
-    .eq("task_code", taskCode)
-    .single();
 
   if (!taskDefinition) {
     console.log(`📋 [TaskMode] No task definition found for ${taskCode}, skipping`);
