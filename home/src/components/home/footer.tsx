@@ -24,7 +24,7 @@ export function Footer() {
             </p>
           </div>
 
-          <div className='flex flex-col sm:flex-row gap-6'>
+          <div className='flex flex-col sm:flex-row gap-6 md:gap-12'>
             <div>
               <p className='text-xs md:text-sm uppercase tracking-wide text-primary-foreground/80 mb-3 font-semibold'>
                 Projects
@@ -43,7 +43,6 @@ export function Footer() {
                 ))}
               </div>
             </div>
-
             <div>
               <p className='text-xs md:text-sm uppercase tracking-wide text-primary-foreground/80 mb-3 font-semibold'>
                 Participate
@@ -62,22 +61,30 @@ export function Footer() {
                 Resources
               </p>
               <div className='flex flex-col gap-2'>
-                <a
+                <Link
+                  href='https://ai-sdk.dev/'
+                  target='_blank'
+                  rel='noopener noreferrer'
+                  className='text-base text-primary-foreground/85 hover:text-primary-foreground transition-colors font-medium'
+                >
+                  AI SDK
+                </Link>
+                <Link
                   href='https://modelcontextprotocol.io'
                   target='_blank'
                   rel='noopener noreferrer'
                   className='text-base text-primary-foreground/85 hover:text-primary-foreground transition-colors font-medium'
                 >
                   MCP Documentation
-                </a>
-                <a
+                </Link>
+                <Link
                   href='https://supabase.com'
                   target='_blank'
                   rel='noopener noreferrer'
                   className='text-base text-primary-foreground/85 hover:text-primary-foreground transition-colors font-medium'
                 >
                   Supabase
-                </a>
+                </Link>
               </div>
             </div>
           </div>
