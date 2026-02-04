@@ -93,6 +93,18 @@ export async function openTaskAction(
   const supabase = await createClient();
   const now = new Date().toISOString();
 
+  // 0. Check if task is already in_progress or completed
+  const { data: existingProgress } = await supabase
+    .from("task_progress")
+    .select("status")
+    .eq("session_id", sessionId)
+    .eq("task_definition_id", taskDefinitionId)
+    .single();
+
+  if (existingProgress?.status === "in_progress" || existingProgress?.status === "completed") {
+    throw new Error("Task is already opened or completed.");
+  }
+
   // 1. Reset other in_progress tasks to not_started
   if (allSessionIds.length > 0) {
     const { error: resetError } = await supabase
