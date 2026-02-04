@@ -224,6 +224,7 @@ export async function POST(req: Request) {
         thinkingConfig: {
           thinkingBudget: 8192,
           includeThoughts: true,
+          thinkingLevel: 'minimal',
         },
       } satisfies GoogleGenerativeAIProviderOptions,
     },
