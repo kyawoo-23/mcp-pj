@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { getSupabase } from "../lib/supabase.js";
+import { recordTaskCompletion } from "../lib/task-mode.js";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 
 /**
@@ -206,6 +207,17 @@ export function registerCourseTools(server: McpServer) {
           };
         }
 
+        // Record task completion for task mode
+        await recordTaskCompletion(supabase, {
+          userId: studentId,
+          systemType: "chat_agent",
+          taskCode: "register_course",
+          successPayload: {
+            registration_id: data?.id ?? null,
+            section_id: sectionId,
+          },
+        });
+
         return {
           content: [
             {
@@ -333,6 +345,17 @@ export function registerCourseTools(server: McpServer) {
             ],
           };
         }
+
+        // Record task completion for task mode
+        await recordTaskCompletion(supabase, {
+          userId: studentId,
+          systemType: "chat_agent",
+          taskCode: "drop_course",
+          successPayload: {
+            registration_id: data?.id ?? null,
+            section_id: sectionId,
+          },
+        });
 
         return {
           content: [
