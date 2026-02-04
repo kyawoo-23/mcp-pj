@@ -239,9 +239,15 @@ export function SurveyNavbar({ onRefresh, isRefreshing }: SurveyNavbarProps) {
                         </h4>
                         <ul className='list-disc pl-4 text-sm text-muted-foreground space-y-1'>
                           <li>
-                            <strong>Opening Tasks:</strong> Click &quot;Open
-                            Task&quot; to launch the portal or chat agent in a
-                            new tab.
+                            <strong>Opening Tasks:</strong> It is important to
+                            click &quot;Open Task&quot; to start recording the
+                            task progress for each task. This will launch the
+                            portal or chat agent in a new tab.
+                          </li>
+                          <li>
+                            <strong>Resetting Tasks:</strong> Pressing
+                            &quot;Reset Task&quot; will delete that task&apos;s
+                            progress if you need to start over.
                           </li>
                           <li>
                             <strong>Performing Work:</strong> Follow the
