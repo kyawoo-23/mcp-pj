@@ -61,7 +61,7 @@ export function BookingForm({
   const router = useRouter();
   const [selectedDate, setSelectedDate] = useState<Date>();
   const [availableBookings, setAvailableBookings] = useState<FacilityBooking[]>(
-    []
+    [],
   );
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -77,6 +77,8 @@ export function BookingForm({
     resolver: zodResolver(bookingSchema),
     defaultValues: {
       facility_id: preSelectedFacilityId || "",
+      start_time: "",
+      end_time: "",
     },
   });
 
@@ -123,13 +125,13 @@ export function BookingForm({
   const handleStartTimeChange = createStartTimeHandler(
     setValue,
     setError,
-    endTime
+    endTime,
   );
 
   const handleEndTimeChange = createEndTimeHandler(
     setValue,
     setError,
-    startTime
+    startTime,
   );
 
   const onSubmit = async (data: BookingFormData) => {
@@ -165,7 +167,8 @@ export function BookingForm({
         router.refresh();
       }
     } catch (err: unknown) {
-      const errorMessage = err instanceof Error ? err.message : "Failed to create booking";
+      const errorMessage =
+        err instanceof Error ? err.message : "Failed to create booking";
       setError(errorMessage);
       toast.error("Failed to create booking", {
         description: errorMessage,
@@ -277,7 +280,7 @@ export function BookingForm({
                       <SelectItem key={option.value} value={option.value}>
                         {option.label}
                       </SelectItem>
-                    )
+                    ),
                   )}
                 </SelectContent>
               </Select>
