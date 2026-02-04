@@ -222,7 +222,6 @@ export async function POST(req: Request) {
     providerOptions: {
       google: {
         thinkingConfig: {
-          thinkingBudget: 8192,
           includeThoughts: true,
           thinkingLevel: 'minimal',
         },
