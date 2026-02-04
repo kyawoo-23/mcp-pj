@@ -9,24 +9,24 @@ import { HeroButtons } from "@/components/home/hero-buttons";
 
 export default function Home() {
   return (
-    <div className="container mx-auto px-4 py-16">
-      <div className="mx-auto max-w-4xl text-center">
-        <h1 className="text-4xl font-bold tracking-tight sm:text-5xl md:text-6xl">
+    <div className='container mx-auto px-4 py-16'>
+      <div className='mx-auto max-w-4xl text-center'>
+        <h1 className='text-4xl font-bold tracking-tight sm:text-5xl md:text-6xl'>
           University Course Registration
         </h1>
-        <p className="mt-6 text-lg leading-8 text-muted-foreground">
+        <p className='mt-6 text-lg text-balance leading-8 text-muted-foreground'>
           Easily browse, register, and manage your university courses. Find the
           perfect courses for your academic journey.
         </p>
-        <div className="mt-8">
+        <div className='mt-8'>
           <HeroButtons />
         </div>
       </div>
 
-      <div className="mt-20 grid gap-8 md:grid-cols-2 lg:grid-cols-4">
+      <div className='mt-20 grid gap-8 md:grid-cols-2 lg:grid-cols-4'>
         <Card>
           <CardHeader>
-            <BookOpen className="mb-2 h-8 w-8 text-primary" />
+            <BookOpen className='mb-2 h-8 w-8 text-primary' />
             <CardTitle>Browse Courses</CardTitle>
             <CardDescription>
               Explore available courses by department, search by code or title
@@ -36,7 +36,7 @@ export default function Home() {
 
         <Card>
           <CardHeader>
-            <Search className="mb-2 h-8 w-8 text-primary" />
+            <Search className='mb-2 h-8 w-8 text-primary' />
             <CardTitle>Search & Filter</CardTitle>
             <CardDescription>
               Find courses by department, code, or search keywords
@@ -46,7 +46,7 @@ export default function Home() {
 
         <Card>
           <CardHeader>
-            <Calendar className="mb-2 h-8 w-8 text-primary" />
+            <Calendar className='mb-2 h-8 w-8 text-primary' />
             <CardTitle>Easy Registration</CardTitle>
             <CardDescription>
               Register for course sections with real-time availability checking
@@ -56,7 +56,7 @@ export default function Home() {
 
         <Card>
           <CardHeader>
-            <Clock className="mb-2 h-8 w-8 text-primary" />
+            <Clock className='mb-2 h-8 w-8 text-primary' />
             <CardTitle>Manage Schedule</CardTitle>
             <CardDescription>
               View your course schedule and manage your registrations
@@ -67,4 +67,3 @@ export default function Home() {
     </div>
   );
 }
-

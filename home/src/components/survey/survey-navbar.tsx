@@ -275,6 +275,20 @@ export function SurveyNavbar({ onRefresh, isRefreshing }: SurveyNavbarProps) {
                         </p>
                       </section>
 
+                      <section className='space-y-2'>
+                        <h4 className='font-semibold text-sm'>4. Need Help?</h4>
+                        <p className='text-sm text-muted-foreground'>
+                          If you have any questions or encounter any issues,
+                          please contact the researcher at:{" "}
+                          <a
+                            href='mailto:6878035423@student.chula.ac.th'
+                            className='text-primary hover:underline font-medium'
+                          >
+                            6878035423@student.chula.ac.th
+                          </a>
+                        </p>
+                      </section>
+
                       <section className='space-y-2 text-primary font-medium bg-primary/5 p-3 rounded-md'>
                         <p className='text-sm'>
                           Tip: You can always come back to this instruction

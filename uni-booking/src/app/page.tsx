@@ -14,7 +14,7 @@ export default function Home() {
         <h1 className='text-4xl font-bold tracking-tight sm:text-5xl md:text-6xl'>
           University Facility Booking
         </h1>
-        <p className='mt-6 text-lg leading-8 text-muted-foreground'>
+        <p className='mt-6 text-lg text-balance leading-8 text-muted-foreground'>
           Easily browse, book, and manage university facilities. Find the
           perfect space for your study sessions, meetings, or events.
         </p>

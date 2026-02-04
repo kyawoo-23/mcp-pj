@@ -57,7 +57,7 @@ export function registerFacilityTools(server: McpServer) {
       try {
         let dbQuery = supabase
           .from("facilities")
-          .select("id, name, facility_type, capacity, location")
+          .select("id, name, facility_type, building, room_number, description")
           .eq("is_active", true);
 
         if (query) {

@@ -87,6 +87,19 @@ export function Footer() {
                 </Link>
               </div>
             </div>
+            <div>
+              <p className='text-xs md:text-sm uppercase tracking-wide text-primary-foreground/80 mb-3 font-semibold'>
+                Contact
+              </p>
+              <div className='flex flex-col gap-2'>
+                <a
+                  href='mailto:6878035423@student.chula.ac.th'
+                  className='text-base text-primary-foreground/85 hover:text-primary-foreground transition-colors font-medium'
+                >
+                  6878035423@student.chula.ac.th
+                </a>
+              </div>
+            </div>
           </div>
         </div>
 
