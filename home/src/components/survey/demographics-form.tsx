@@ -18,21 +18,32 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { AGE_OPTIONS, GENDER_OPTIONS } from "../../utils/constants";
+import {
+  AGE_OPTIONS,
+  GENDER_OPTIONS,
+  TECHNICAL_PROFICIENCY_OPTIONS,
+  AI_TOOL_FREQUENCY_OPTIONS,
+} from "../../utils/constants";
 
 interface DemographicsFormProps {
   initialAgeRange: ProfileRow["age_range"] | null;
   initialGender: ProfileRow["gender"] | null;
+  initialTechnicalProficiency: ProfileRow["technical_proficiency"] | null;
+  initialAiToolFrequency: ProfileRow["ai_tool_frequency"] | null;
   saving: boolean;
   onSave: (
     ageRange: ProfileRow["age_range"],
     gender: ProfileRow["gender"],
+    technicalProficiency: ProfileRow["technical_proficiency"],
+    aiToolFrequency: ProfileRow["ai_tool_frequency"],
   ) => Promise<void>;
 }
 
 export function DemographicsForm({
   initialAgeRange,
   initialGender,
+  initialTechnicalProficiency,
+  initialAiToolFrequency,
   saving,
   onSave,
 }: DemographicsFormProps) {
@@ -42,12 +53,21 @@ export function DemographicsForm({
   const [gender, setGender] = useState<ProfileRow["gender"] | null>(
     initialGender,
   );
+  const [technicalProficiency, setTechnicalProficiency] = useState<
+    ProfileRow["technical_proficiency"] | null
+  >(initialTechnicalProficiency);
+  const [aiToolFrequency, setAiToolFrequency] = useState<
+    ProfileRow["ai_tool_frequency"] | null
+  >(initialAiToolFrequency);
 
   const handleSubmit = () => {
-    if (ageRange && gender) {
-      onSave(ageRange, gender);
+    if (ageRange && gender && technicalProficiency && aiToolFrequency) {
+      onSave(ageRange, gender, technicalProficiency, aiToolFrequency);
     }
   };
+
+  const isFormComplete =
+    ageRange && gender && technicalProficiency && aiToolFrequency;
 
   return (
     <div className='flex min-h-screen items-center justify-center bg-background p-6 pb-32'>
@@ -99,9 +119,51 @@ export function DemographicsForm({
               </SelectContent>
             </Select>
           </div>
+          <div className='space-y-2'>
+            <Label>Technical proficiency</Label>
+            <Select
+              value={technicalProficiency ?? undefined}
+              onValueChange={(value) =>
+                setTechnicalProficiency(
+                  value as ProfileRow["technical_proficiency"],
+                )
+              }
+            >
+              <SelectTrigger>
+                <SelectValue placeholder='Select your technical proficiency' />
+              </SelectTrigger>
+              <SelectContent>
+                {TECHNICAL_PROFICIENCY_OPTIONS.map((option) => (
+                  <SelectItem key={option.value} value={option.value || ""}>
+                    {option.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className='space-y-2'>
+            <Label>How often do you use AI-powered tools or chatbots?</Label>
+            <Select
+              value={aiToolFrequency ?? undefined}
+              onValueChange={(value) =>
+                setAiToolFrequency(value as ProfileRow["ai_tool_frequency"])
+              }
+            >
+              <SelectTrigger>
+                <SelectValue placeholder='Select your usage frequency' />
+              </SelectTrigger>
+              <SelectContent>
+                {AI_TOOL_FREQUENCY_OPTIONS.map((option) => (
+                  <SelectItem key={option.value} value={option.value || ""}>
+                    {option.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
           <Button
             className='w-full'
-            disabled={!ageRange || !gender || saving}
+            disabled={!isFormComplete || saving}
             onClick={handleSubmit}
           >
             {saving ? "Saving..." : "Save demographics"}

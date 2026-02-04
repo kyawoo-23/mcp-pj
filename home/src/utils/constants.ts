@@ -16,6 +16,21 @@ export const GENDER_OPTIONS: Array<{ value: ProfileRow["gender"]; label: string 
   { value: "prefer_not_say", label: "Prefer not to say" },
 ];
 
+export const TECHNICAL_PROFICIENCY_OPTIONS: Array<{ value: ProfileRow["technical_proficiency"]; label: string }> = [
+  { value: "none", label: "None" },
+  { value: "limited", label: "Limited" },
+  { value: "moderate", label: "Moderate" },
+  { value: "advanced", label: "Advanced" },
+];
+
+export const AI_TOOL_FREQUENCY_OPTIONS: Array<{ value: ProfileRow["ai_tool_frequency"]; label: string }> = [
+  { value: "daily", label: "Daily" },
+  { value: "weekly", label: "Weekly" },
+  { value: "monthly", label: "Monthly" },
+  { value: "rarely", label: "Rarely" },
+  { value: "never", label: "Never" },
+];
+
 export const TASK_ORDER: Record<string, number> = {
   register_course: 1,
   drop_course: 2,

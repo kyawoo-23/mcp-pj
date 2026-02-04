@@ -22,7 +22,7 @@ import {
 } from "@/app/actions/survey";
 
 interface UseSurveyDataProps {
-  profile: Pick<ProfileRow, "id" | "age_range" | "gender"> | null;
+  profile: Pick<ProfileRow, "id" | "age_range" | "gender" | "technical_proficiency" | "ai_tool_frequency"> | null;
   sessions: TaskSessionRow[];
   taskDefinitions: TaskDefinitionRow[];
   taskProgress: TaskProgressRow[];
@@ -118,7 +118,7 @@ export function useSurveyData({
   const isChatSurveyLocked = !chatSurveyAvailable;
   const isInterviewLocked = !interviewAvailable;
 
-  const requiresDemographics = !profileState?.age_range || !profileState?.gender;
+  const requiresDemographics = !profileState?.age_range || !profileState?.gender || !profileState?.technical_proficiency || !profileState?.ai_tool_frequency;
 
   // Refresh data
   const refreshTaskData = useCallback(async () => {
@@ -200,13 +200,18 @@ export function useSurveyData({
   }, [sessionsState, taskDefinitions, taskProgressState, tasksBySystem, refreshTaskData]);
 
   // Actions
-  const saveDemographics = async (ageRange: ProfileRow["age_range"], gender: ProfileRow["gender"]) => {
-    if (!profileState || !ageRange || !gender) return;
+  const saveDemographics = async (
+    ageRange: ProfileRow["age_range"],
+    gender: ProfileRow["gender"],
+    technicalProficiency: ProfileRow["technical_proficiency"],
+    aiToolFrequency: ProfileRow["ai_tool_frequency"]
+  ) => {
+    if (!profileState || !ageRange || !gender || !technicalProficiency || !aiToolFrequency) return;
     setSavingDemographics(true);
     try {
-      const upserted = await saveDemographicsAction(profileState.id, ageRange, gender);
+      const upserted = await saveDemographicsAction(profileState.id, ageRange, gender, technicalProficiency, aiToolFrequency);
       
-      setProfileState({ ...profileState, age_range: ageRange, gender });
+      setProfileState({ ...profileState, age_range: ageRange, gender, technical_proficiency: technicalProficiency, ai_tool_frequency: aiToolFrequency });
       setSessionsState([upserted]); // Since we return single upserted
       toast.success("Demographics saved");
       await refreshTaskData();

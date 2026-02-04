@@ -23,6 +23,23 @@ CREATE TYPE gender_identity AS ENUM (
   'prefer_not_say'
 );
 
+-- Technical Proficiency
+CREATE TYPE technical_proficiency AS ENUM (
+  'none',
+  'limited',
+  'moderate',
+  'advanced'
+);
+
+-- AI Tool Usage Frequency
+CREATE TYPE ai_tool_frequency AS ENUM (
+  'daily',
+  'weekly',
+  'monthly',
+  'rarely',
+  'never'
+);
+
 -- Task mode
 CREATE TYPE system_type AS ENUM ('chat_agent', 'traditional');
 CREATE TYPE task_session_status AS ENUM ('not_started', 'in_progress', 'completed');
@@ -48,7 +65,9 @@ CREATE TYPE survey_construct AS ENUM (
 
 ALTER TABLE profiles
   ADD COLUMN age_range age_range,
-  ADD COLUMN gender gender_identity;
+  ADD COLUMN gender gender_identity,
+  ADD COLUMN technical_proficiency technical_proficiency,
+  ADD COLUMN ai_tool_frequency ai_tool_frequency;
 
 -- ----------------------------------------------------------------------------
 -- 3. CREATE TASK MODE TABLES

@@ -283,6 +283,9 @@ export type Database = {
       profiles: {
         Row: {
           age_range: Database["public"]["Enums"]["age_range"] | null
+          ai_tool_frequency:
+            | Database["public"]["Enums"]["ai_tool_frequency"]
+            | null
           created_at: string
           email: string | null
           full_name: string | null
@@ -290,10 +293,16 @@ export type Database = {
           id: string
           role: Database["public"]["Enums"]["user_role"]
           student_id: string | null
+          technical_proficiency:
+            | Database["public"]["Enums"]["technical_proficiency"]
+            | null
           updated_at: string
         }
         Insert: {
           age_range?: Database["public"]["Enums"]["age_range"] | null
+          ai_tool_frequency?:
+            | Database["public"]["Enums"]["ai_tool_frequency"]
+            | null
           created_at?: string
           email?: string | null
           full_name?: string | null
@@ -301,10 +310,16 @@ export type Database = {
           id: string
           role?: Database["public"]["Enums"]["user_role"]
           student_id?: string | null
+          technical_proficiency?:
+            | Database["public"]["Enums"]["technical_proficiency"]
+            | null
           updated_at?: string
         }
         Update: {
           age_range?: Database["public"]["Enums"]["age_range"] | null
+          ai_tool_frequency?:
+            | Database["public"]["Enums"]["ai_tool_frequency"]
+            | null
           created_at?: string
           email?: string | null
           full_name?: string | null
@@ -312,6 +327,9 @@ export type Database = {
           id?: string
           role?: Database["public"]["Enums"]["user_role"]
           student_id?: string | null
+          technical_proficiency?:
+            | Database["public"]["Enums"]["technical_proficiency"]
+            | null
           updated_at?: string
         }
         Relationships: []
@@ -715,6 +733,7 @@ export type Database = {
         | "45_54"
         | "55_plus"
         | "prefer_not_say"
+      ai_tool_frequency: "daily" | "weekly" | "monthly" | "rarely" | "never"
       booking_status: "pending" | "confirmed" | "cancelled" | "completed"
       facility_type:
         | "study_room"
@@ -739,6 +758,7 @@ export type Database = {
       task_event_type: "step" | "turn" | "survey" | "interview" | "system"
       task_progress_status: "not_started" | "in_progress" | "completed"
       task_session_status: "not_started" | "in_progress" | "completed"
+      technical_proficiency: "none" | "limited" | "moderate" | "advanced"
       user_role: "student" | "admin"
     }
     CompositeTypes: {
@@ -879,6 +899,7 @@ export const Constants = {
         "55_plus",
         "prefer_not_say",
       ],
+      ai_tool_frequency: ["daily", "weekly", "monthly", "rarely", "never"],
       booking_status: ["pending", "confirmed", "cancelled", "completed"],
       facility_type: [
         "study_room",
@@ -905,6 +926,7 @@ export const Constants = {
       task_event_type: ["step", "turn", "survey", "interview", "system"],
       task_progress_status: ["not_started", "in_progress", "completed"],
       task_session_status: ["not_started", "in_progress", "completed"],
+      technical_proficiency: ["none", "limited", "moderate", "advanced"],
       user_role: ["student", "admin"],
     },
   },

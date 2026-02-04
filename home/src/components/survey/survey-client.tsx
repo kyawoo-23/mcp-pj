@@ -34,7 +34,14 @@ import {
 } from "@/components/ui/alert-dialog";
 
 interface SurveyPageClientProps {
-  profile: Pick<ProfileRow, "id" | "age_range" | "gender"> | null;
+  profile: Pick<
+    ProfileRow,
+    | "id"
+    | "age_range"
+    | "gender"
+    | "technical_proficiency"
+    | "ai_tool_frequency"
+  > | null;
   sessions: TaskSessionRow[];
   taskDefinitions: TaskDefinitionRow[];
   taskProgress: TaskProgressRow[];
@@ -230,6 +237,10 @@ export function SurveyPageClient({
             <DemographicsForm
               initialAgeRange={profileState?.age_range ?? null}
               initialGender={profileState?.gender ?? null}
+              initialTechnicalProficiency={
+                profileState?.technical_proficiency ?? null
+              }
+              initialAiToolFrequency={profileState?.ai_tool_frequency ?? null}
               saving={savingDemographics}
               onSave={saveDemographics}
             />

@@ -8,6 +8,12 @@ import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { HelpCircle } from "lucide-react";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import {
   Card,
   CardContent,
@@ -138,7 +144,24 @@ export default function SignupPage() {
             </div>
 
             <div className='space-y-2'>
-              <Label htmlFor='student_id'>Student ID</Label>
+              <div className='flex items-center gap-2'>
+                <Label htmlFor='student_id'>Student ID</Label>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <button
+                      type='button'
+                      className='text-muted-foreground hover:text-foreground'
+                    >
+                      <HelpCircle className='h-4 w-4' />
+                      <span className='sr-only'>Student ID info</span>
+                    </button>
+                  </PopoverTrigger>
+                  <PopoverContent className='ml-10 w-80 text-sm'>
+                    If you are not a student, you may enter any identification
+                    number to proceed.
+                  </PopoverContent>
+                </Popover>
+              </div>
               <Input
                 id='student_id'
                 type='text'

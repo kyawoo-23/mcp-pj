@@ -7,7 +7,9 @@ import { revalidatePath } from "next/cache";
 export async function saveDemographicsAction(
   userId: string,
   ageRange: ProfileRow["age_range"],
-  gender: ProfileRow["gender"]
+  gender: ProfileRow["gender"],
+  technicalProficiency: ProfileRow["technical_proficiency"],
+  aiToolFrequency: ProfileRow["ai_tool_frequency"]
 ) {
   const supabase = await createClient();
   const now = new Date().toISOString();
@@ -15,7 +17,13 @@ export async function saveDemographicsAction(
   // 1. Update profile
   const { error: profileError } = await supabase
     .from("profiles")
-    .update({ age_range: ageRange, gender, updated_at: now })
+    .update({
+      age_range: ageRange,
+      gender,
+      technical_proficiency: technicalProficiency,
+      ai_tool_frequency: aiToolFrequency,
+      updated_at: now,
+    })
     .eq("id", userId);
 
   if (profileError) {
