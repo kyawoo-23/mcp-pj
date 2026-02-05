@@ -187,9 +187,13 @@ export function useSurveyData({
       });
 
       if (!missing.length) return;
-      
+
       try {
-        await ensureProgressAction(missing);
+        const result = await ensureProgressAction(missing);
+        if (!result.ok) {
+          console.error("Failed to ensure progress:", result.error);
+          return;
+        }
         await refreshTaskData();
       } catch (error) {
         console.error("Failed to ensure progress:", error);
@@ -209,9 +213,28 @@ export function useSurveyData({
     if (!profileState || !ageRange || !gender || !technicalProficiency || !aiToolFrequency) return;
     setSavingDemographics(true);
     try {
-      const upserted = await saveDemographicsAction(profileState.id, ageRange, gender, technicalProficiency, aiToolFrequency);
-      
-      setProfileState({ ...profileState, age_range: ageRange, gender, technical_proficiency: technicalProficiency, ai_tool_frequency: aiToolFrequency });
+      const result = await saveDemographicsAction(
+        profileState.id,
+        ageRange,
+        gender,
+        technicalProficiency,
+        aiToolFrequency,
+      );
+
+      if (!result.ok) {
+        toast.error("Failed to save demographics", { description: result.error });
+        return;
+      }
+
+      const upserted = result.data;
+
+      setProfileState({
+        ...profileState,
+        age_range: ageRange,
+        gender,
+        technical_proficiency: technicalProficiency,
+        ai_tool_frequency: aiToolFrequency,
+      });
       setSessionsState([upserted]); // Since we return single upserted
       toast.success("Demographics saved");
       await refreshTaskData();
@@ -227,12 +250,20 @@ export function useSurveyData({
     if (!profileState) return;
     setStartingSurvey(true);
     try {
-      await startSurveyAction(profileState.id);
+      const result = await startSurveyAction(profileState.id);
+
+      if (!result.ok) {
+        toast.error("Failed to start survey", { description: result.error });
+        return false;
+      }
+
       await refreshTaskData();
       return true;
     } catch (error) {
-      const message = error instanceof Error ? error.message : "An error occurred";
-      toast.error("Failed to start survey", { description: message });
+      console.error("Unexpected error while starting survey:", error);
+      toast.error("Failed to start survey", {
+        description: "An unexpected error occurred. Please try again.",
+      });
       return false;
     } finally {
       setStartingSurvey(false);
@@ -241,24 +272,54 @@ export function useSurveyData({
 
   const openTask = async (task: TaskDefinitionRow, session: TaskSessionRow) => {
     try {
-      await openTaskAction(session.id, task.id, sessionIds);
+      const result = await openTaskAction(session.id, task.id, sessionIds);
+
+      if (!result.ok) {
+        toast.error("Failed to open task", { description: result.error });
+        return;
+      }
+
       await refreshTaskData();
       const url = getTaskUrl(task.system_type, task.task_code);
-      window.open(url, "_blank");
+
+      if (typeof window !== "undefined") {
+        const isLargerThanMedium = window.innerWidth > 768;
+
+        if (isLargerThanMedium) {
+          window.open(url, "_blank");
+        } else {
+          window.location.href = url;
+        }
+      }
     } catch (error) {
-      const message = error instanceof Error ? error.message : "An error occurred";
-      toast.error("Failed to open task", { description: message });
+      console.error("Unexpected error while opening task:", error);
+      toast.error("Failed to open task", {
+        description: "An unexpected error occurred. Please try again.",
+      });
     }
   };
 
   const resetTask = async (task: TaskDefinitionRow, session: TaskSessionRow) => {
     try {
-      await resetTaskAction(session.id, task.id, task.task_code, session.user_id);
+      const result = await resetTaskAction(
+        session.id,
+        task.id,
+        task.task_code,
+        session.user_id,
+      );
+
+      if (!result.ok) {
+        toast.error("Failed to reset task", { description: result.error });
+        return;
+      }
+
       toast.success("Task reset");
       await refreshTaskData();
     } catch (error) {
-      const message = error instanceof Error ? error.message : "An error occurred";
-      toast.error("Failed to reset task", { description: message });
+      console.error("Unexpected error while resetting task:", error);
+      toast.error("Failed to reset task", {
+        description: "An unexpected error occurred. Please try again.",
+      });
     }
   };
 

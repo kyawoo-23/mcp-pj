@@ -152,23 +152,26 @@ export function TaskIndicator() {
   const isCompleted = activeTask.status === "completed";
 
   return (
-    <div className='fixed top-20 right-4 z-50 w-72'>
+    <div className='fixed top-20 right-2 z-50 w-60 md:right-4 md:w-72'>
       <Card
-        className={`shadow-md transition-all duration-500 bg-background/60 backdrop-blur-xl backdrop-saturate-150 border-white/20 ${isCompleted ? "border-green-500 ring-1 ring-green-500" : ""}`}
+        className={`shadow-md transition-all duration-500 bg-background/60 backdrop-blur-xl backdrop-saturate-150 border-white/20 py-2 md:py-4 ${isCompleted ? "border-green-500 ring-1 ring-green-500" : ""}`}
       >
-        <CardContent className='space-y-3 p-4'>
+        <CardContent className='space-y-2 p-2 md:space-y-3 md:p-4'>
           <div className='flex items-center justify-between'>
-            <div className='text-sm font-semibold'>
+            <div className='text-xs font-semibold md:text-sm'>
               {isCompleted ? "Task Completed" : "Task in progress"}
             </div>
             <div className='flex items-center gap-1'>
-              <Badge variant={isCompleted ? "success" : "warning"}>
+              <Badge
+                variant={isCompleted ? "success" : "warning"}
+                className='px-1.5 py-0.5 text-[10px] md:px-2 md:py-0.5 md:text-xs'
+              >
                 {isCompleted ? "Completed" : "Active"}
               </Badge>
               <Button
                 variant='ghost'
                 size='icon'
-                className='h-6 w-6'
+                className='h-5 w-5 md:h-6 md:w-6'
                 onClick={() => setIsExpanded((prev) => !prev)}
               >
                 {isExpanded ? (

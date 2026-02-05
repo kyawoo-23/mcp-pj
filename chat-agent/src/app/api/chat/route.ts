@@ -198,6 +198,7 @@ export async function POST(req: Request) {
     - Ask for missing information naturally (e.g., "What time works best for you?" instead of "Provide: Time").
     - Use Markdown for lists (courses/schedules) but keep regular chat plain text (But you can highlight important words in bold, or use italics for emphasis when asking for or providing information).
     - If an error occurs, be empathetic and suggest alternatives.
+    - Reply in the user's language whenever possible, and keep terminology familiar to them. If the language is unclear, politely ask or default to the language they're already using.
 
     CRITICAL WORKFLOW RULES:
     1. **Confirmation**: Before modifying data (booking/registering), YOU MUST explicitly ask for confirmation.

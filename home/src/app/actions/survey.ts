@@ -1,8 +1,12 @@
 "use server";
 
 import { createClient } from "@/lib/supabase/server";
-import { ProfileRow } from "@/lib/types";
+import type { ProfileRow, TaskSessionRow } from "@/lib/types";
 import { revalidatePath } from "next/cache";
+
+type SuccessResult<T> = { ok: true; data: T };
+type ErrorResult = { ok: false; error: string };
+export type ActionResult<T = void> = SuccessResult<T> | ErrorResult;
 
 export async function saveDemographicsAction(
   userId: string,
@@ -10,7 +14,7 @@ export async function saveDemographicsAction(
   gender: ProfileRow["gender"],
   technicalProficiency: ProfileRow["technical_proficiency"],
   aiToolFrequency: ProfileRow["ai_tool_frequency"]
-) {
+): Promise<ActionResult<TaskSessionRow>> {
   const supabase = await createClient();
   const now = new Date().toISOString();
 
@@ -27,7 +31,11 @@ export async function saveDemographicsAction(
     .eq("id", userId);
 
   if (profileError) {
-    throw new Error(`Failed to update profile: ${profileError.message}`);
+    console.error("Failed to update profile:", profileError);
+    return {
+      ok: false,
+      error: "Failed to update your profile. Please try again.",
+    };
   }
 
   // 2. Upsert task session (init traditional session)
@@ -47,20 +55,24 @@ export async function saveDemographicsAction(
     .select()
     .single();
 
-  if (sessionError) {
-    throw new Error(`Failed to create session: ${sessionError.message}`);
+  if (sessionError || !upserted) {
+    console.error("Failed to create session:", sessionError);
+    return {
+      ok: false,
+      error: "Failed to create your session. Please try again.",
+    };
   }
 
   revalidatePath("/survey");
-  return upserted;
+  return { ok: true, data: upserted };
 }
 
-export async function startSurveyAction(userId: string) {
+export async function startSurveyAction(userId: string): Promise<ActionResult<void>> {
   const supabase = await createClient();
   const now = new Date().toISOString();
 
   // Start only traditional session first
-  const { data: session, error } = await supabase
+  const { error } = await supabase
     .from("task_sessions")
     .upsert(
       [
@@ -78,22 +90,26 @@ export async function startSurveyAction(userId: string) {
     .single();
 
   if (error) {
-    throw new Error(`Failed to start survey: ${error.message}`);
+    console.error("Failed to start survey:", error);
+    return {
+      ok: false,
+      error: "Failed to start survey. Please try again.",
+    };
   }
 
   revalidatePath("/survey");
-  return session;
+  return { ok: true, data: undefined };
 }
 
 export async function openTaskAction(
   sessionId: string,
   taskDefinitionId: string,
   allSessionIds: string[]
-) {
+): Promise<ActionResult<void>> {
   const supabase = await createClient();
   const now = new Date().toISOString();
 
-  // 0. Check if task is already in_progress or completed
+  // 0. Check if task is already completed
   const { data: existingProgress } = await supabase
     .from("task_progress")
     .select("status")
@@ -101,8 +117,19 @@ export async function openTaskAction(
     .eq("task_definition_id", taskDefinitionId)
     .single();
 
-  if (existingProgress?.status === "in_progress" || existingProgress?.status === "completed") {
-    throw new Error("Task is already opened or completed.");
+  if (existingProgress?.status === "in_progress") {
+    // Task is already open and in progress; no need to update status again.
+    // Let the client handle redirecting the user to the task.
+    return { ok: true, data: undefined };
+  }
+
+  if (
+    existingProgress?.status === "completed"
+  ) {
+    return {
+      ok: false,
+      error: "Task is already completed.",
+    };
   }
 
   // 1. Reset other in_progress tasks to not_started
@@ -127,10 +154,15 @@ export async function openTaskAction(
     .eq("task_definition_id", taskDefinitionId);
 
   if (updateError) {
-    throw new Error(`Failed to open task: ${updateError.message}`);
+    console.error("Failed to open task:", updateError);
+    return {
+      ok: false,
+      error: "Failed to open task. Please try again.",
+    };
   }
 
   revalidatePath("/survey");
+  return { ok: true, data: undefined };
 }
 
 export async function resetTaskAction(
@@ -138,7 +170,7 @@ export async function resetTaskAction(
   taskDefinitionId: string,
   taskCode: string,
   userId: string
-) {
+): Promise<ActionResult<void>> {
   const supabase = await createClient();
   const now = new Date().toISOString();
 
@@ -155,7 +187,10 @@ export async function resetTaskAction(
   }
 
   if (progress?.status === "completed") {
-    throw new Error("Cannot reset a completed task.");
+    return {
+      ok: false,
+      error: "Cannot reset a completed task.",
+    };
   }
 
   // 1. Delete progress
@@ -165,7 +200,13 @@ export async function resetTaskAction(
     .eq("session_id", sessionId)
     .eq("task_definition_id", taskDefinitionId);
 
-  if (progressError) throw new Error(`Failed to delete progress: ${progressError.message}`);
+  if (progressError) {
+    console.error("Failed to delete progress:", progressError);
+    return {
+      ok: false,
+      error: "Failed to reset task progress. Please try again.",
+    };
+  }
 
   // 2. Delete events
   const { error: eventsError } = await supabase
@@ -173,8 +214,14 @@ export async function resetTaskAction(
     .delete()
     .eq("session_id", sessionId)
     .eq("metadata->>task_code", taskCode);
-  
-  if (eventsError) throw new Error(`Failed to delete events: ${eventsError.message}`);
+
+  if (eventsError) {
+    console.error("Failed to delete events:", eventsError);
+    return {
+      ok: false,
+      error: "Failed to clear task events. Please try again.",
+    };
+  }
 
   // 3. Delete survey responses
   const { error: surveyError } = await supabase
@@ -182,7 +229,13 @@ export async function resetTaskAction(
     .delete()
     .eq("session_id", sessionId);
 
-  if (surveyError) throw new Error(`Failed to delete survey responses: ${surveyError.message}`);
+  if (surveyError) {
+    console.error("Failed to delete survey responses:", surveyError);
+    return {
+      ok: false,
+      error: "Failed to clear survey responses. Please try again.",
+    };
+  }
 
   // 4. Update session status
   const { error: sessionError } = await supabase
@@ -190,7 +243,13 @@ export async function resetTaskAction(
     .update({ status: "in_progress", completed_at: null, updated_at: now })
     .eq("id", sessionId);
 
-  if (sessionError) throw new Error(`Failed to update session: ${sessionError.message}`);
+  if (sessionError) {
+    console.error("Failed to update session:", sessionError);
+    return {
+      ok: false,
+      error: "Failed to update session status. Please try again.",
+    };
+  }
 
   // 5. Delete interview responses
   const { error: interviewError } = await supabase
@@ -198,26 +257,45 @@ export async function resetTaskAction(
     .delete()
     .eq("user_id", userId);
 
-  if (interviewError) throw new Error(`Failed to delete interview responses: ${interviewError.message}`);
-
-  revalidatePath("/survey");
-}
-
-export async function ensureProgressAction(
-  items: { 
-    session_id: string; 
-    task_definition_id: string; 
-    status: "not_started" | "in_progress" | "completed";
-  }[]
-) {
-  if (items.length === 0) return;
-  
-  const supabase = await createClient();
-  const { error } = await supabase.from("task_progress").insert(items);
-
-  if (error) {
-    throw new Error(`Failed to ensure progress: ${error.message}`);
+  if (interviewError) {
+    console.error("Failed to delete interview responses:", interviewError);
+    return {
+      ok: false,
+      error: "Failed to clear interview responses. Please try again.",
+    };
   }
 
   revalidatePath("/survey");
+  return { ok: true, data: undefined };
+}
+
+export async function ensureProgressAction(
+  items: {
+    session_id: string;
+    task_definition_id: string;
+    status: "not_started" | "in_progress" | "completed";
+  }[]
+): Promise<ActionResult<void>> {
+  if (items.length === 0) {
+    return { ok: true, data: undefined };
+  }
+
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from("task_progress")
+    .upsert(items, {
+      onConflict: "session_id,task_definition_id",
+      ignoreDuplicates: true,
+    });
+
+  if (error) {
+    console.error("Failed to ensure progress:", error);
+    return {
+      ok: false,
+      error: "Failed to ensure task progress. Please try again.",
+    };
+  }
+
+  revalidatePath("/survey");
+  return { ok: true, data: undefined };
 }
