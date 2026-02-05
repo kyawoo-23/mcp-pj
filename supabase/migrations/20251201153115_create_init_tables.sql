@@ -42,7 +42,7 @@ CREATE TABLE profiles (
   email text,
   full_name text,
   role user_role NOT NULL DEFAULT 'student',
-  student_id text UNIQUE, -- Optional: for students
+  student_id text, -- Optional: for students
   created_at timestamptz NOT NULL DEFAULT now(),
   updated_at timestamptz NOT NULL DEFAULT now(),
   CONSTRAINT valid_student_id CHECK (
