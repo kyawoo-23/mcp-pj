@@ -265,11 +265,18 @@ export function SurveyPageClient({
             onOpen={() => handleSectionChange("intro")}
           >
             <div className='space-y-4 pt-2'>
-              <p className='text-sm text-muted-foreground'>
-                This research compares traditional university portals with a
-                chat agent interface. Please follow the task prompts and answer
-                the surveys honestly.
-              </p>
+              <div className='space-y-2'>
+                <p className='text-sm text-muted-foreground'>
+                  This research compares traditional university portals with a
+                  chat agent interface. Please follow the task prompts and
+                  answer the surveys honestly.
+                </p>
+                <p className='text-sm text-muted-foreground font-bold'>
+                  To begin, please imagine yourself as a university student who
+                  is trying to register for courses and book a facility on
+                  campus.
+                </p>
+              </div>
               {!isStarted && (
                 <div className='flex flex-col gap-3'>
                   <p className='text-sm font-medium'>
