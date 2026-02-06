@@ -68,7 +68,8 @@ export function registerFacilityTools(server: McpServer) {
           dbQuery = dbQuery.eq("facility_type", type);
         }
 
-        const { data, error } = await dbQuery.limit(50);
+        // Stable ordering helps pagination/caching and tends to use indexes well.
+        const { data, error } = await dbQuery.order("name", { ascending: true }).limit(50);
 
         if (error) {
           console.error(`❌ [Tool Error] search_facilities failed: ${error.message}`);
@@ -213,14 +214,17 @@ export function registerFacilityTools(server: McpServer) {
         }
 
         // Check for overlapping bookings
-        const { count, error: conflictError } = await supabase
+        // Prefer an existence check over COUNT(*) for speed (stops at first match).
+        const { data: conflict, error: conflictError } = await supabase
           .from("facility_bookings")
-          .select("id", { count: "exact", head: true })
+          .select("id")
           .eq("facility_id", facilityId)
           .eq("booking_date", bookingDate)
           .neq("status", "cancelled")
           .lt("start_time", endDateTime)
-          .gt("end_time", startDateTime);
+          .gt("end_time", startDateTime)
+          .limit(1)
+          .maybeSingle();
 
         if (conflictError) {
           console.error(`❌ [Tool Error] book_facility conflict check failed: ${conflictError.message}`);
@@ -238,7 +242,7 @@ export function registerFacilityTools(server: McpServer) {
           };
         }
 
-        if (count !== null && count > 0) {
+        if (conflict) {
           return {
             content: [
               {
@@ -386,7 +390,7 @@ export function registerFacilityTools(server: McpServer) {
         // Check if booking exists and belongs to student
         const { data: existing, error: checkError } = await supabase
           .from("facility_bookings")
-          .select("*")
+          .select("id, student_id, facility_id, status")
           .eq("id", bookingId)
           .eq("student_id", studentId)
           .single();

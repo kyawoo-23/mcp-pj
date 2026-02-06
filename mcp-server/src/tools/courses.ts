@@ -25,7 +25,9 @@ export function registerCourseTools(server: McpServer) {
       console.log(`🔧 [Tool] search_courses called with query: ${query || "(all courses)"}`);
       
       try {
-        let baseQuery = supabase.from("courses").select("id, code, title, credits, description");
+        let baseQuery = supabase
+          .from("courses")
+          .select("id, code, title, credits, description");
 
         if (query) {
           baseQuery = baseQuery.or(
@@ -33,7 +35,8 @@ export function registerCourseTools(server: McpServer) {
           );
         }
 
-        const { data, error } = await baseQuery.limit(50);
+        // Stable ordering helps pagination/caching and tends to use indexes well.
+        const { data, error } = await baseQuery.order("code", { ascending: true }).limit(50);
 
         if (error) {
           console.error(`❌ [Tool Error] search_courses failed: ${error.message}`);
@@ -76,7 +79,7 @@ export function registerCourseTools(server: McpServer) {
       try {
         const { data, error } = await supabase
           .from("courses")
-          .select("*")
+          .select("id, code, title, credits, description")
           .eq("id", courseId)
           .single();
 
@@ -121,7 +124,9 @@ export function registerCourseTools(server: McpServer) {
       try {
         const { data, error } = await supabase
           .from("course_sections")
-          .select("*")
+          .select(
+            "id, course_id, section_number, instructor, semester, year, schedule_days, start_time, end_time, room_location"
+          )
           .eq("course_id", courseId)
           .order("section_number", { ascending: true });
 
@@ -271,9 +276,23 @@ export function registerCourseTools(server: McpServer) {
           .from("student_registrations")
           .select(
             `
-            *,
+            id,
+            student_id,
+            section_id,
+            status,
+            registered_at,
+            dropped_at,
             course_sections (
-              *,
+              id,
+              course_id,
+              section_number,
+              instructor,
+              semester,
+              year,
+              schedule_days,
+              start_time,
+              end_time,
+              room_location,
               courses (id, code, title, credits)
             )
           `
@@ -324,7 +343,7 @@ export function registerCourseTools(server: McpServer) {
         // Check if registration exists and is active
         const { data: existing, error: checkError } = await supabase
           .from("student_registrations")
-          .select("*")
+          .select("id, status")
           .eq("student_id", studentId)
           .eq("section_id", sectionId)
           .eq("status", "active")
