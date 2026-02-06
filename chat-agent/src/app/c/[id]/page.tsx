@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import { redirect, notFound } from "next/navigation";
 import { cookies } from "next/headers";
 import { createClient } from "@/lib/supabase/server";
@@ -6,7 +7,18 @@ import {
   getConversationWithMessages,
 } from "@/lib/db/conversations";
 import { ChatPageClient } from "@/components/chat/chat-page-client";
+import { Spinner } from "@/components/ui/spinner";
 import type { MessageRow } from "@/lib/types";
+
+// Loading fallback for Suspense boundary
+function ChatPageLoading() {
+  return (
+    <div className='flex h-screen flex-col items-center justify-center gap-2'>
+      <Spinner size='lg' />
+      <p className='text-sm text-muted-foreground'>Loading...</p>
+    </div>
+  );
+}
 
 interface ChatPageProps {
   params: Promise<{
@@ -53,7 +65,7 @@ export default async function ChatPage({ params }: ChatPageProps) {
     // Check if the ID looks like a UUID to avoid DB errors
     const isUuid =
       /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(
-        id
+        id,
       );
 
     if (!isUuid) {
@@ -76,16 +88,18 @@ export default async function ChatPage({ params }: ChatPageProps) {
   }
 
   return (
-    <ChatPageClient
-      initialConversations={conversations}
-      initialActiveConversationId={activeConversationId}
-      initialMessages={initialMessages}
-      defaultCollapsed={defaultCollapsed}
-      userProfile={
-        profile
-          ? { full_name: profile.full_name || "", email: profile.email || "" }
-          : undefined
-      }
-    />
+    <Suspense fallback={<ChatPageLoading />}>
+      <ChatPageClient
+        initialConversations={conversations}
+        initialActiveConversationId={activeConversationId}
+        initialMessages={initialMessages}
+        defaultCollapsed={defaultCollapsed}
+        userProfile={
+          profile
+            ? { full_name: profile.full_name || "", email: profile.email || "" }
+            : undefined
+        }
+      />
+    </Suspense>
   );
 }
