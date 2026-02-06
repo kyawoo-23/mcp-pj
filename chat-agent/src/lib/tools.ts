@@ -48,10 +48,14 @@ export const createTools = (supabase: SupabaseClient<Database>) => {
         .from("courses")
         .select("*")
         .eq("id", params.courseId)
-        .single();
+        .maybeSingle();
 
       if (error) {
         return { error: `Error getting course details: ${error.message}` };
+      }
+
+      if (!data) {
+        return { error: "Course not found." };
       }
 
       return { course: data };

@@ -81,7 +81,7 @@ export function registerCourseTools(server: McpServer) {
           .from("courses")
           .select("id, code, title, credits, description")
           .eq("id", courseId)
-          .single();
+          .maybeSingle();
 
         if (error) {
           console.error(`❌ [Tool Error] get_course_details failed: ${error.message}`);
@@ -90,6 +90,17 @@ export function registerCourseTools(server: McpServer) {
               {
                 type: "text" as const,
                 text: JSON.stringify({ error: `Error getting course details: ${error.message}` }),
+              },
+            ],
+          };
+        }
+
+        if (!data) {
+          return {
+            content: [
+              {
+                type: "text" as const,
+                text: JSON.stringify({ error: "Course not found." }),
               },
             ],
           };
