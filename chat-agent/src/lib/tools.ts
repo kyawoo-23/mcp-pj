@@ -41,7 +41,7 @@ export const createTools = (supabase: SupabaseClient<Database>) => {
   const getCourseDetails = tool({
     description: TOOL_DEFINITIONS.get_course_details.description,
     inputSchema: z.object({
-      courseId: z.string().describe("The UUID of the course"),
+      courseId: z.string().uuid().describe("The UUID of the course"),
     }),
     execute: async (params) => {
       const { data, error } = await supabase
@@ -65,7 +65,7 @@ export const createTools = (supabase: SupabaseClient<Database>) => {
   const getCourseSections = tool({
     description: TOOL_DEFINITIONS.get_course_sections.description,
     inputSchema: z.object({
-      courseId: z.string().describe("The UUID of the course"),
+      courseId: z.string().uuid().describe("The UUID of the course"),
     }),
     execute: async (params) => {
       const { data, error } = await supabase
@@ -85,8 +85,8 @@ export const createTools = (supabase: SupabaseClient<Database>) => {
   const registerCourse = tool({
     description: TOOL_DEFINITIONS.register_course.description,
     inputSchema: z.object({
-      studentId: z.string().describe("The UUID of the student"),
-      sectionId: z.string().describe("The UUID of the course section"),
+      studentId: z.string().uuid().describe("The UUID of the student"),
+      sectionId: z.string().uuid().describe("The UUID of the course section"),
     }),
     execute: async (params) => {
       // First check if already registered
@@ -154,7 +154,7 @@ export const createTools = (supabase: SupabaseClient<Database>) => {
   const getStudentRegistrations = tool({
     description: TOOL_DEFINITIONS.get_student_registrations.description,
     inputSchema: z.object({
-      studentId: z.string().describe("The UUID of the student"),
+      studentId: z.string().uuid().describe("The UUID of the student"),
     }),
     execute: async (params) => {
       const { data, error } = await supabase
@@ -182,8 +182,8 @@ export const createTools = (supabase: SupabaseClient<Database>) => {
   const dropCourse = tool({
     description: TOOL_DEFINITIONS.drop_course.description,
     inputSchema: z.object({
-      studentId: z.string().describe("The UUID of the student"),
-      sectionId: z.string().describe("The UUID of the course section"),
+      studentId: z.string().uuid().describe("The UUID of the student"),
+      sectionId: z.string().uuid().describe("The UUID of the course section"),
     }),
     execute: async (params) => {
       // Check if registration exists and is active
@@ -303,8 +303,8 @@ export const createTools = (supabase: SupabaseClient<Database>) => {
   const bookFacility = tool({
     description: TOOL_DEFINITIONS.book_facility.description,
     inputSchema: z.object({
-      studentId: z.string().describe("The UUID of the student"),
-      facilityId: z.string().describe("The UUID of the facility"),
+      studentId: z.string().uuid().describe("The UUID of the student"),
+      facilityId: z.string().uuid().describe("The UUID of the facility"),
       bookingDate: z.string().describe("Date of booking (YYYY-MM-DD)"),
       startTime: z.string().describe("Start time (e.g., '14:00', '2:00 PM', '14:00:00')"),
       endTime: z.string().describe("End time (e.g., '15:00', '3:00 PM', '15:00:00')"),
@@ -434,7 +434,7 @@ export const createTools = (supabase: SupabaseClient<Database>) => {
   const getStudentBookings = tool({
     description: TOOL_DEFINITIONS.get_student_bookings.description,
     inputSchema: z.object({
-      studentId: z.string().describe("The UUID of the student"),
+      studentId: z.string().uuid().describe("The UUID of the student"),
     }),
     execute: async (params) => {
       const { data, error } = await supabase
@@ -464,8 +464,8 @@ export const createTools = (supabase: SupabaseClient<Database>) => {
   const cancelBooking = tool({
     description: TOOL_DEFINITIONS.cancel_booking.description,
     inputSchema: z.object({
-      bookingId: z.string().describe("The UUID of the booking"),
-      studentId: z.string().describe("The UUID of the student"),
+      bookingId: z.string().uuid().describe("The UUID of the booking"),
+      studentId: z.string().uuid().describe("The UUID of the student"),
     }),
     execute: async (params) => {
       // Check if booking exists and belongs to student

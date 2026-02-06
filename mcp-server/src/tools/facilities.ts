@@ -106,8 +106,8 @@ export function registerFacilityTools(server: McpServer) {
     "book_facility",
     "Book a facility for a specific time slot",
     {
-      studentId: z.string().describe("The UUID of the student"),
-      facilityId: z.string().describe("The UUID of the facility"),
+      studentId: z.string().uuid().describe("The UUID of the student"),
+      facilityId: z.string().uuid().describe("The UUID of the facility"),
       bookingDate: z.string().describe("Date of booking (YYYY-MM-DD)"),
       startTime: z
         .string()

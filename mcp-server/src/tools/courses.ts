@@ -71,7 +71,7 @@ export function registerCourseTools(server: McpServer) {
     "get_course_details",
     "Get details of a specific course by ID",
     {
-      courseId: z.string().describe("The UUID of the course"),
+      courseId: z.string().uuid().describe("The UUID of the course"),
     },
     async ({ courseId }) => {
       console.log(`🔧 [Tool] get_course_details called with courseId: ${courseId}`);
@@ -127,7 +127,7 @@ export function registerCourseTools(server: McpServer) {
     "get_course_sections",
     "Get all available sections for a specific course",
     {
-      courseId: z.string().describe("The UUID of the course"),
+      courseId: z.string().uuid().describe("The UUID of the course"),
     },
     async ({ courseId }) => {
       console.log(`🔧 [Tool] get_course_sections called with courseId: ${courseId}`);
@@ -174,8 +174,8 @@ export function registerCourseTools(server: McpServer) {
     "register_course",
     "Register a student for a course section",
     {
-      studentId: z.string().describe("The UUID of the student"),
-      sectionId: z.string().describe("The UUID of the course section"),
+      studentId: z.string().uuid().describe("The UUID of the student"),
+      sectionId: z.string().uuid().describe("The UUID of the course section"),
     },
     async ({ studentId, sectionId }) => {
       console.log(`🔧 [Tool] register_course called with studentId: ${studentId}, sectionId: ${sectionId}`);
@@ -277,7 +277,7 @@ export function registerCourseTools(server: McpServer) {
     "get_student_registrations",
     "Get active course registrations for a student",
     {
-      studentId: z.string().describe("The UUID of the student"),
+      studentId: z.string().uuid().describe("The UUID of the student"),
     },
     async ({ studentId }) => {
       console.log(`🔧 [Tool] get_student_registrations called with studentId: ${studentId}`);
@@ -344,8 +344,8 @@ export function registerCourseTools(server: McpServer) {
     "drop_course",
     "Drop a course section for a student",
     {
-      studentId: z.string().describe("The UUID of the student"),
-      sectionId: z.string().describe("The UUID of the course section"),
+      studentId: z.string().uuid().describe("The UUID of the student"),
+      sectionId: z.string().uuid().describe("The UUID of the course section"),
     },
     async ({ studentId, sectionId }) => {
       console.log(`🔧 [Tool] drop_course called with studentId: ${studentId}, sectionId: ${sectionId}`);
