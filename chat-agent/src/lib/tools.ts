@@ -95,7 +95,11 @@ export const createTools = (supabase: SupabaseClient<Database>) => {
         .single();
 
       if (existing) {
-        return { error: "Student is already registered for this section." };
+        return {
+          errorCode: "ALREADY_REGISTERED",
+          error: "Already registered for this section.",
+          confirmed: true,
+        };
       }
 
       const { data, error } = await supabase
@@ -109,7 +113,21 @@ export const createTools = (supabase: SupabaseClient<Database>) => {
         .single();
 
       if (error) {
-        return { error: `Error registering course: ${error.message}` };
+        const alreadyRegistered =
+          error.code === "23505" || /unique|duplicate/i.test(error.message ?? "");
+        return {
+          ...(alreadyRegistered
+            ? {
+                errorCode: "ALREADY_REGISTERED",
+                error: "Already registered for this section.",
+                confirmed: true,
+              }
+            : {
+                errorCode: "REGISTER_FAILED",
+                error: `Error registering course: ${error.message}`,
+                confirmed: false,
+              }),
+        };
       }
 
       await recordTaskCompletion(supabase, {
@@ -273,7 +291,7 @@ export const createTools = (supabase: SupabaseClient<Database>) => {
       const seconds = date.getSeconds().toString().padStart(2, '0');
       
       return `${hours}:${minutes}:${seconds}`;
-    } catch (e) {
+    } catch {
       return null;
     }
   };
@@ -294,10 +312,18 @@ export const createTools = (supabase: SupabaseClient<Database>) => {
       const normalizedEndTime = normalizeTime(params.endTime);
 
       if (!normalizedStartTime) {
-        return { error: `Invalid start time format: "${params.startTime}". Please use a format like "HH:MM", "HH:MM AM/PM".` };
+        return {
+          errorCode: "INVALID_TIME",
+          error: `Invalid start time format: "${params.startTime}". Please use a format like "HH:MM", "HH:MM AM/PM".`,
+          confirmed: true,
+        };
       }
       if (!normalizedEndTime) {
-        return { error: `Invalid end time format: "${params.endTime}". Please use a format like "HH:MM", "HH:MM AM/PM".` };
+        return {
+          errorCode: "INVALID_TIME",
+          error: `Invalid end time format: "${params.endTime}". Please use a format like "HH:MM", "HH:MM AM/PM".`,
+          confirmed: true,
+        };
       }
 
       // Construct full timestamp strings
@@ -307,7 +333,35 @@ export const createTools = (supabase: SupabaseClient<Database>) => {
       // Validate that end time is after start time
       // Since we are on the same day, we can just compare the strings or date objects
       if (startDateTime >= endDateTime) {
-         return { error: "End time must be strictly after start time." };
+         return {
+          errorCode: "INVALID_TIME_RANGE",
+          error: "End time must be strictly after start time.",
+          confirmed: true,
+        };
+      }
+
+      // Verify facility exists and is bookable (avoids FK violation + clear error)
+      const { data: facility, error: facilityError } = await supabase
+        .from("facilities")
+        .select("id")
+        .eq("id", params.facilityId)
+        .eq("is_active", true)
+        .maybeSingle();
+
+      if (facilityError) {
+        return {
+          errorCode: "FACILITY_CHECK_FAILED",
+          error: `Error checking facility: ${facilityError.message}`,
+          confirmed: false,
+        };
+      }
+      if (!facility) {
+        return {
+          errorCode: "FACILITY_NOT_FOUND",
+          error:
+            "Facility not found or not available for booking. Use the exact facility id from search_facilities (the 'id' field), not the name.",
+          confirmed: true,
+        };
       }
 
       // Check for overlapping bookings
@@ -321,11 +375,19 @@ export const createTools = (supabase: SupabaseClient<Database>) => {
         .gt("end_time", startDateTime); // Use full timestamp
 
       if (conflictError) {
-        return { error: `Error checking conflicts: ${conflictError.message}` };
+        return {
+          errorCode: "CONFLICT_CHECK_FAILED",
+          error: `Error checking conflicts: ${conflictError.message}`,
+          confirmed: false,
+        };
       }
 
       if (conflicts && conflicts.length > 0) {
-        return { error: "Facility is already booked for this time slot." };
+        return {
+          errorCode: "TIME_SLOT_UNAVAILABLE",
+          error: "Facility is already booked for this time slot.",
+          confirmed: true,
+        };
       }
 
       const { data, error } = await supabase
@@ -343,7 +405,11 @@ export const createTools = (supabase: SupabaseClient<Database>) => {
         .single();
 
       if (error) {
-        return { error: `Error booking facility: ${error.message}` };
+        return {
+          errorCode: "BOOKING_FAILED",
+          error: `Error booking facility: ${error.message}`,
+          confirmed: false,
+        };
       }
 
       await recordTaskCompletion(supabase, {

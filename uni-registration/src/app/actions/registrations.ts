@@ -62,7 +62,8 @@ export async function registerForSection(sectionId: string) {
   if (existingRegistration) {
     return {
       success: false,
-      error: "You are already registered for this section",
+      errorCode: "ALREADY_REGISTERED",
+      error: "You're already registered for this section.",
     };
   }
 

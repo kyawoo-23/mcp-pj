@@ -165,20 +165,25 @@ export function registerCourseTools(server: McpServer) {
       console.log(`🔧 [Tool] register_course called with studentId: ${studentId}, sectionId: ${sectionId}`);
       
       try {
-        // First check if already registered
+        // First check if already registered (avoid unique constraint violation)
         const { data: existing } = await supabase
           .from("student_registrations")
-          .select("id", { count: "exact", head: true })
+          .select("id")
           .eq("student_id", studentId)
           .eq("section_id", sectionId)
-          .eq("status", "active");
+          .eq("status", "active")
+          .maybeSingle();
 
         if (existing) {
           return {
             content: [
               {
                 type: "text" as const,
-                text: JSON.stringify({ error: "Student is already registered for this section." }),
+                text: JSON.stringify({
+                  errorCode: "ALREADY_REGISTERED",
+                  error: "Already registered for this section.",
+                  confirmed: true,
+                }),
               },
             ],
           };
@@ -196,11 +201,26 @@ export function registerCourseTools(server: McpServer) {
 
         if (error) {
           console.error(`❌ [Tool Error] register_course failed: ${error.message}`);
+          const alreadyRegistered =
+            error.code === "23505" ||
+            /unique|duplicate/i.test(error.message);
           return {
             content: [
               {
                 type: "text" as const,
-                text: JSON.stringify({ error: `Error registering course: ${error.message}` }),
+                text: JSON.stringify({
+                  ...(alreadyRegistered
+                    ? {
+                        errorCode: "ALREADY_REGISTERED",
+                        error: "Already registered for this section.",
+                        confirmed: true,
+                      }
+                    : {
+                        errorCode: "REGISTER_FAILED",
+                        error: `Error registering course: ${error.message}`,
+                        confirmed: false,
+                      }),
+                }),
               },
             ],
           };

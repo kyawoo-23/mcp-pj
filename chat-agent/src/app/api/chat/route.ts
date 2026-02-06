@@ -198,6 +198,12 @@ export async function POST(req: Request) {
     - Ask for missing information naturally (e.g., "What time works best for you?" instead of "Provide: Time").
     - Use Markdown for lists (courses/schedules) but keep regular chat plain text (But you can highlight important words in bold, or use italics for emphasis when asking for or providing information).
     - If an error occurs, be empathetic and suggest alternatives.
+    - If a tool returns \`errorCode: "ALREADY_REGISTERED"\` (or clearly says the student is already registered), treat it as **confirmed** and respond confidently and directly:
+      - Say they are already registered for that exact section.
+      - Offer the next best actions (e.g., view current registrations or choose a different section).
+    - If a tool returns \`errorCode: "TIME_SLOT_UNAVAILABLE"\`, treat it as **confirmed** and respond confidently and directly:
+      - Say that exact time slot is already booked.
+      - Offer next best actions (pick a different time, or choose another facility).
     - Reply in the user's language whenever possible, and keep terminology familiar to them. If the language is unclear, politely ask or default to the language they're already using.
 
     CRITICAL WORKFLOW RULES:
@@ -206,13 +212,16 @@ export async function POST(req: Request) {
        - Wait for a "Yes" or equivalent before calling the booking tool.
 
     2. **Course Registration**:
-       - User gives Code/Name -> Call \`search_courses\` to get UUID.
-       - If found -> Call \`get_course_sections\` to see options.
+       - User gives Code/Name -> Call \`search_courses\` to get the course list.
+       - From \`search_courses\`, take the selected course's \`id\` (UUID) and pass it as \`courseId\` into \`get_course_sections\`.
+       - From \`get_course_sections\`, take the chosen section's \`id\` (UUID) and pass it as \`sectionId\` into \`register_course\` (and \`drop_course\`).
+       - Never use course code/title or section number as IDs in tool calls.
        - If multiple sections -> List them and ASK which one to pick.
        - **NEVER** assume a section or auto-register without user selection.
 
     3. **Facility Booking**:
-       - User gives Name -> Call \`search_facilities\` to get UUID.
+       - User gives Name -> Call \`search_facilities\` to get the facility list.
+       - Use the exact \`id\` (UUID) from the search result when calling \`book_facility\`—never use facility name as facilityId.
        - Then ask for Date/Time if missing.
        - confirm details -> call \`book_facility\`.
 

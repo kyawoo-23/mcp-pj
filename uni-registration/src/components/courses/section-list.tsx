@@ -8,6 +8,7 @@ interface SectionListProps {
   onRegister?: (sectionId: string) => void;
   registeredSectionIds?: string[];
   isLoading?: boolean;
+  registeringSectionId?: string | null;
 }
 
 export function SectionList({
@@ -15,6 +16,7 @@ export function SectionList({
   onRegister,
   registeredSectionIds = [],
   isLoading = false,
+  registeringSectionId = null,
 }: SectionListProps) {
   if (sections.length === 0) {
     return (
@@ -33,6 +35,7 @@ export function SectionList({
           onRegister={onRegister}
           isRegistered={registeredSectionIds.includes(section.id)}
           isLoading={isLoading}
+          isRegistering={registeringSectionId === section.id}
         />
       ))}
     </div>

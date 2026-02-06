@@ -130,7 +130,9 @@ export function registerFacilityTools(server: McpServer) {
               {
                 type: "text" as const,
                 text: JSON.stringify({
+                  errorCode: "INVALID_TIME",
                   error: `Invalid start time format: "${startTime}". Please use a format like "HH:MM", "HH:MM AM/PM".`,
+                  confirmed: true,
                 }),
               },
             ],
@@ -142,7 +144,9 @@ export function registerFacilityTools(server: McpServer) {
               {
                 type: "text" as const,
                 text: JSON.stringify({
+                  errorCode: "INVALID_TIME",
                   error: `Invalid end time format: "${endTime}". Please use a format like "HH:MM", "HH:MM AM/PM".`,
+                  confirmed: true,
                 }),
               },
             ],
@@ -160,7 +164,48 @@ export function registerFacilityTools(server: McpServer) {
               {
                 type: "text" as const,
                 text: JSON.stringify({
+                  errorCode: "INVALID_TIME_RANGE",
                   error: "End time must be strictly after start time.",
+                  confirmed: true,
+                }),
+              },
+            ],
+          };
+        }
+
+        // Verify facility exists and is bookable (avoids FK violation + clear error)
+        const { data: facility, error: facilityError } = await supabase
+          .from("facilities")
+          .select("id")
+          .eq("id", facilityId)
+          .eq("is_active", true)
+          .maybeSingle();
+
+        if (facilityError) {
+          console.error(`❌ [Tool Error] book_facility facility check failed: ${facilityError.message}`);
+          return {
+            content: [
+              {
+                type: "text" as const,
+                text: JSON.stringify({
+                  errorCode: "FACILITY_CHECK_FAILED",
+                  error: `Error checking facility: ${facilityError.message}`,
+                  confirmed: false,
+                }),
+              },
+            ],
+          };
+        }
+        if (!facility) {
+          return {
+            content: [
+              {
+                type: "text" as const,
+                text: JSON.stringify({
+                  errorCode: "FACILITY_NOT_FOUND",
+                  error:
+                    "Facility not found or not available for booking. Use the exact facility id from search_facilities (the 'id' field), not the name.",
+                  confirmed: true,
                 }),
               },
             ],
@@ -184,7 +229,9 @@ export function registerFacilityTools(server: McpServer) {
               {
                 type: "text" as const,
                 text: JSON.stringify({
+                  errorCode: "CONFLICT_CHECK_FAILED",
                   error: `Error checking conflicts: ${conflictError.message}`,
+                  confirmed: false,
                 }),
               },
             ],
@@ -197,7 +244,9 @@ export function registerFacilityTools(server: McpServer) {
               {
                 type: "text" as const,
                 text: JSON.stringify({
+                  errorCode: "TIME_SLOT_UNAVAILABLE",
                   error: "Facility is already booked for this time slot.",
+                  confirmed: true,
                 }),
               },
             ],
@@ -225,7 +274,9 @@ export function registerFacilityTools(server: McpServer) {
               {
                 type: "text" as const,
                 text: JSON.stringify({
+                  errorCode: "BOOKING_FAILED",
                   error: `Error booking facility: ${error.message}`,
+                  confirmed: false,
                 }),
               },
             ],

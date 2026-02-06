@@ -11,6 +11,7 @@ interface SectionCardProps {
   onRegister?: (sectionId: string) => void;
   isRegistered?: boolean;
   isLoading?: boolean;
+  isRegistering?: boolean;
 }
 
 export function SectionCard({
@@ -18,6 +19,7 @@ export function SectionCard({
   onRegister,
   isRegistered = false,
   isLoading = false,
+  isRegistering = false,
 }: SectionCardProps) {
   const formatTime = (time: string | null) => {
     if (!time) return "TBA";
@@ -80,10 +82,12 @@ export function SectionCard({
             className='w-full text-sm sm:text-base h-9 sm:h-10'
             variant={isRegistered ? "secondary" : "default"}
           >
-            {isLoading
-              ? "Registering..."
-              : isRegistered
-                ? "Registered"
+            {isRegistered
+              ? "Registered"
+              : isLoading
+                ? isRegistering
+                  ? "Registering..."
+                  : "Loading..."
                 : "Register"}
           </Button>
         )}

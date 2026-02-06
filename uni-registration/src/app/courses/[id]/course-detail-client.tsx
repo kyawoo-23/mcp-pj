@@ -18,6 +18,9 @@ export default function CourseDetailClient({
   registeredSectionIds,
 }: CourseDetailClientProps) {
   const [isLoading, setIsLoading] = useState(false);
+  const [registeringSectionId, setRegisteringSectionId] = useState<
+    string | null
+  >(null);
   const [registeredIds, setRegisteredIds] = useState(registeredSectionIds);
   const router = useRouter();
   const { user } = useAuth();
@@ -32,6 +35,7 @@ export default function CourseDetailClient({
     }
 
     setIsLoading(true);
+    setRegisteringSectionId(sectionId);
     try {
       const result = await registerForSection(sectionId);
       if (result.success) {
@@ -45,6 +49,8 @@ export default function CourseDetailClient({
           router.push(
             `/auth/login?redirect=${encodeURIComponent(currentPath)}`
           );
+        } else if (result.errorCode === "ALREADY_REGISTERED") {
+          toast.info("You're already registered for this section.");
         } else {
           toast.error(result.error || "Failed to register for section");
         }
@@ -53,6 +59,7 @@ export default function CourseDetailClient({
       toast.error("An error occurred while registering");
     } finally {
       setIsLoading(false);
+      setRegisteringSectionId(null);
     }
   };
 
@@ -63,6 +70,7 @@ export default function CourseDetailClient({
         onRegister={handleRegister}
         registeredSectionIds={registeredIds}
         isLoading={isLoading}
+        registeringSectionId={registeringSectionId}
       />
     </div>
   );
