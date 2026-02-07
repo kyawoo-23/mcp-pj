@@ -32,9 +32,7 @@ export default function AnalysisPage() {
         <RefreshButton />
       </div>
 
-      <Suspense fallback={<AnalysisSkeleton />}>
-        <AnalysisData />
-      </Suspense>
+      <AnalysisData />
     </div>
   );
 }

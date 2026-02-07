@@ -2,7 +2,6 @@
 
 import { useMemo, useTransition } from "react";
 import { useRouter, useSearchParams, usePathname } from "next/navigation";
-import { revalidateAnalysisAction } from "@/app/actions/analysis";
 import type { AnalysisPayload } from "@/lib/types";
 import {
   calculateDemographics,
@@ -124,9 +123,12 @@ export function AnalysisClient({
         </CardHeader>
         <CardContent>
           <Button
-            onClick={async () => {
-              await revalidateAnalysisAction();
-              router.refresh();
+            onClick={() => {
+              // Trigger refresh by updating query param
+              // Read searchParams on demand instead of subscribing (best practice 5.1)
+              const params = new URLSearchParams(window.location.search);
+              params.set("refresh", Date.now().toString());
+              router.push(`${pathname}?${params.toString()}`, { scroll: false });
             }}
             variant='outline'
           >

@@ -33,12 +33,27 @@ Deno.serve(async (req) => {
       )
     }
 
-    // Create client - Supabase automatically injects auth context (sb.auth_user, sb.jwt.authorization)
-    // when invoked from an authenticated context via functions.invoke()
+    // Create client with service role
     const supabase = createClient(supabaseUrl, supabaseServiceKey)
 
-    // getUser() without parameters reads from Supabase's injected auth context
-    const { data: { user }, error: userError } = await supabase.auth.getUser()
+    // Get the authorization header from the request (for client-side calls)
+    const authHeader = req.headers.get('Authorization')
+    
+    let user;
+    let userError;
+    
+    if (authHeader) {
+      // Client-side call: extract token from Authorization header
+      const token = authHeader.replace('Bearer ', '')
+      const result = await supabase.auth.getUser(token)
+      user = result.data.user
+      userError = result.error
+    } else {
+      // Server-side call: use injected auth context
+      const result = await supabase.auth.getUser()
+      user = result.data.user
+      userError = result.error
+    }
 
     if (userError || !user) {
       return new Response(
