@@ -20,17 +20,32 @@ export type FetchAnalysisResult = {
  */
 export async function fetchAnalysis(): Promise<FetchAnalysisResult> {
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const [
+    { data: { user } },
+    { data: { session } },
+  ] = await Promise.all([
+    supabase.auth.getUser(),
+    supabase.auth.getSession(),
+  ]);
 
   if (!user) {
     redirect("/auth/login");
   }
 
+  if (!session?.access_token) {
+    return { data: null, error: "Session missing. Please sign in again." };
+  }
+
+  // Server-side invoke() may not send the JWT in production (cookie vs header).
+  // Pass the access token explicitly so the Edge Function receives Authorization.
   const { data, error: invokeError } = await supabase.functions.invoke(
     "analysis",
-    { body: {} }
+    {
+      body: {},
+      headers: {
+        Authorization: `Bearer ${session.access_token}`,
+      },
+    }
   );
 
   if (invokeError) {
