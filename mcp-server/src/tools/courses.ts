@@ -181,7 +181,30 @@ export function registerCourseTools(server: McpServer) {
       console.log(`🔧 [Tool] register_course called with studentId: ${studentId}, sectionId: ${sectionId}`);
       
       try {
-        // First check if already registered (avoid unique constraint violation)
+        // First check if section exists (avoid foreign key constraint violation)
+        const { data: section, error: sectionError } = await supabase
+          .from("course_sections")
+          .select("id")
+          .eq("id", sectionId)
+          .maybeSingle();
+
+        if (sectionError || !section) {
+          console.error(`❌ [Tool Error] register_course failed: section ${sectionId} not found`);
+          return {
+            content: [
+              {
+                type: "text" as const,
+                text: JSON.stringify({
+                  errorCode: "SECTION_NOT_FOUND",
+                  error: `Course section with ID ${sectionId} does not exist. Please use get_course_sections to find valid section IDs.`,
+                  confirmed: false,
+                }),
+              },
+            ],
+          };
+        }
+
+        // Check if already registered (avoid unique constraint violation)
         const { data: existing } = await supabase
           .from("student_registrations")
           .select("id")

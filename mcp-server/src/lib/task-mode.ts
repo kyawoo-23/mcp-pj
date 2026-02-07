@@ -117,6 +117,6 @@ export async function recordTaskCompletion(
       .eq("id", session.id);
   }
 
-  console.log(`✅ [TaskMode] Task ${taskCode} marked as completed for user ${userId}`);
+  console.log(`📋 [TaskMode] ✅ Task ${taskCode} marked as completed for user ${userId}`);
   return { skipped: false };
 }
