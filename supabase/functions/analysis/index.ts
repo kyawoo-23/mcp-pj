@@ -9,7 +9,7 @@ import { createClient } from "jsr:@supabase/supabase-js@2"
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers":
-    "authorization, x-client-info, apikey, content-type",
+    "authorization, x-client-info, apikey, content-type, accept",
 }
 
 Deno.serve(async (req) => {
@@ -19,18 +19,6 @@ Deno.serve(async (req) => {
   }
 
   try {
-    // Get authorization header
-    const authHeader = req.headers.get("Authorization")
-    if (!authHeader) {
-      return new Response(
-        JSON.stringify({ error: "Missing authorization header" }),
-        {
-          status: 401,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        },
-      )
-    }
-
     // Create Supabase client with service role for admin access
     const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? ""
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
@@ -45,7 +33,22 @@ Deno.serve(async (req) => {
       )
     }
 
+    // Create client - Supabase automatically injects auth context (sb.auth_user, sb.jwt.authorization)
+    // when invoked from an authenticated context via functions.invoke()
     const supabase = createClient(supabaseUrl, supabaseServiceKey)
+
+    // getUser() without parameters reads from Supabase's injected auth context
+    const { data: { user }, error: userError } = await supabase.auth.getUser()
+
+    if (userError || !user) {
+      return new Response(
+        JSON.stringify({ error: "Unauthorized", details: userError?.message }),
+        {
+          status: 401,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        },
+      )
+    }
 
     // Fetch all required tables in parallel
     const [
