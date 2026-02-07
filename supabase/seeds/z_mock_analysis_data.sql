@@ -1,0 +1,326 @@
+-- -- ----------------------------------------------------------------------------
+-- -- Mock Analysis Data for Research Dashboard
+-- -- ----------------------------------------------------------------------------
+-- -- Run this AFTER tasks_surveys.sql (task_definitions, task_surveys,
+-- -- task_survey_questions, task_interview_questions must exist).
+-- -- This file is named z_mock_analysis_data.sql so it runs last with seeds/*.sql.
+-- --
+-- -- Usage:
+-- --   supabase db reset   (runs all seeds in order; this runs after tasks_surveys)
+-- --   psql $DATABASE_URL -f supabase/seeds/z_mock_analysis_data.sql
+-- --
+-- -- Mock users: mockuser1@analysis.local .. mockuser15@analysis.local
+-- -- Password for all: password123
+-- -- ----------------------------------------------------------------------------
+
+-- -- Ensure pgcrypto is available for password hashing
+-- CREATE EXTENSION IF NOT EXISTS pgcrypto;
+
+-- -- ----------------------------------------------------------------------------
+-- -- 1. MOCK USERS (auth.users + auth.identities + profiles)
+-- -- ----------------------------------------------------------------------------
+-- -- Using fixed UUIDs so task/survey data can reference them reproducibly.
+-- -- Password for all mock users: "password123"
+
+-- DO $$
+-- DECLARE
+--   uids uuid[] := ARRAY[
+--     'a0000001-0000-4000-8000-000000000001'::uuid,
+--     'a0000002-0000-4000-8000-000000000002'::uuid,
+--     'a0000003-0000-4000-8000-000000000003'::uuid,
+--     'a0000004-0000-4000-8000-000000000004'::uuid,
+--     'a0000005-0000-4000-8000-000000000005'::uuid,
+--     'a0000006-0000-4000-8000-000000000006'::uuid,
+--     'a0000007-0000-4000-8000-000000000007'::uuid,
+--     'a0000008-0000-4000-8000-000000000008'::uuid,
+--     'a0000009-0000-4000-8000-000000000009'::uuid,
+--     'a0000010-0000-4000-8000-000000000010'::uuid,
+--     'a0000011-0000-4000-8000-000000000011'::uuid,
+--     'a0000012-0000-4000-8000-000000000012'::uuid,
+--     'a0000013-0000-4000-8000-000000000013'::uuid,
+--     'a0000014-0000-4000-8000-000000000014'::uuid,
+--     'a0000015-0000-4000-8000-000000000015'::uuid
+--   ];
+--   uid uuid;
+--   i int := 1;
+--   instance_id uuid := '00000000-0000-0000-0000-000000000000'::uuid;
+-- BEGIN
+--   FOREACH uid IN ARRAY uids
+--   LOOP
+--     -- raw_user_meta_data must include student_id for students (valid_student_id check)
+--     -- and role so handle_new_user() creates a valid profile
+--     INSERT INTO auth.users (
+--       instance_id,
+--       id,
+--       aud,
+--       role,
+--       email,
+--       encrypted_password,
+--       email_confirmed_at,
+--       raw_app_meta_data,
+--       raw_user_meta_data,
+--       created_at,
+--       updated_at
+--     ) VALUES (
+--       instance_id,
+--       uid,
+--       'authenticated',
+--       'authenticated',
+--       'mockuser' || i || '@analysis.local',
+--       crypt('password123', gen_salt('bf')),
+--       now(),
+--       '{"provider":"email","providers":["email"]}'::jsonb,
+--       CASE
+--         WHEN i = 1 THEN jsonb_build_object('role', 'admin', 'full_name', 'Mock User ' || i)
+--         ELSE jsonb_build_object('role', 'student', 'student_id', 'MOCK' || lpad(i::text, 3, '0'), 'full_name', 'Mock User ' || i)
+--       END,
+--       now(),
+--       now()
+--     )
+--     ON CONFLICT (id) DO NOTHING;
+
+--     INSERT INTO auth.identities (
+--       id,
+--       user_id,
+--       identity_data,
+--       provider,
+--       provider_id,
+--       last_sign_in_at,
+--       created_at,
+--       updated_at
+--     ) VALUES (
+--       uid,
+--       uid,
+--       jsonb_build_object('sub', uid::text, 'email', 'mockuser' || i || '@analysis.local'),
+--       'email',
+--       uid::text,
+--       now(),
+--       now(),
+--       now()
+--     )
+--     ON CONFLICT (provider, provider_id) DO NOTHING;
+
+--     INSERT INTO public.profiles (id, role, student_id, email, full_name, age_range, gender, technical_proficiency, ai_tool_frequency)
+--     VALUES (
+--       uid,
+--       CASE WHEN i = 1 THEN 'admin'::user_role ELSE 'student'::user_role END,
+--       CASE WHEN i = 1 THEN NULL ELSE 'MOCK' || lpad(i::text, 3, '0') END,
+--       'mockuser' || i || '@analysis.local',
+--       'Mock User ' || i,
+--       (ARRAY['18_24','25_34','35_44','45_54','prefer_not_say']::age_range[])[1 + (i - 1) % 5],
+--       (ARRAY['female','male','prefer_not_say']::gender_identity[])[1 + (i - 1) % 3],
+--       (ARRAY['none','limited','moderate','advanced']::technical_proficiency[])[1 + (i - 1) % 4],
+--       (ARRAY['daily','weekly','monthly','rarely','never']::ai_tool_frequency[])[1 + (i - 1) % 5]
+--     )
+--     ON CONFLICT (id) DO UPDATE SET
+--       age_range = EXCLUDED.age_range,
+--       gender = EXCLUDED.gender,
+--       technical_proficiency = EXCLUDED.technical_proficiency,
+--       ai_tool_frequency = EXCLUDED.ai_tool_frequency,
+--       full_name = EXCLUDED.full_name,
+--       email = EXCLUDED.email;
+
+--     i := i + 1;
+--   END LOOP;
+-- END $$;
+
+-- -- ----------------------------------------------------------------------------
+-- -- 2. TASK SESSIONS (mix of not_started, in_progress, completed)
+-- -- ----------------------------------------------------------------------------
+-- -- Users 1-10: two sessions each (chat_agent + traditional), some completed.
+-- -- Users 11-12: only not_started.
+-- -- Users 13-14: one in_progress.
+-- -- User 15: one completed, one in_progress.
+-- -- Clean existing mock data so script is idempotent.
+
+-- DELETE FROM task_survey_responses WHERE session_id IN (SELECT id FROM task_sessions WHERE user_id IN (SELECT id FROM profiles WHERE email LIKE 'mockuser%@analysis.local'));
+-- DELETE FROM task_progress WHERE session_id IN (SELECT id FROM task_sessions WHERE user_id IN (SELECT id FROM profiles WHERE email LIKE 'mockuser%@analysis.local'));
+-- DELETE FROM task_sessions WHERE user_id IN (SELECT id FROM profiles WHERE email LIKE 'mockuser%@analysis.local');
+
+-- INSERT INTO task_sessions (id, user_id, system_type, status, started_at, completed_at)
+-- VALUES
+--   ('b1000001-0000-4000-8000-000000000001'::uuid, 'a0000001-0000-4000-8000-000000000001'::uuid, 'chat_agent', 'completed', now() - interval '2 hours', now() - interval '1 hour'),
+--   ('b1000002-0000-4000-8000-000000000001'::uuid, 'a0000001-0000-4000-8000-000000000001'::uuid, 'traditional', 'completed', now() - interval '3 hours', now() - interval '2 hours'),
+--   ('b1000001-0000-4000-8000-000000000002'::uuid, 'a0000002-0000-4000-8000-000000000002'::uuid, 'chat_agent', 'completed', now() - interval '2 hours', now() - interval '1 hour'),
+--   ('b1000002-0000-4000-8000-000000000002'::uuid, 'a0000002-0000-4000-8000-000000000002'::uuid, 'traditional', 'completed', now() - interval '3 hours', now() - interval '2 hours'),
+--   ('b1000001-0000-4000-8000-000000000003'::uuid, 'a0000003-0000-4000-8000-000000000003'::uuid, 'chat_agent', 'completed', now() - interval '2 hours', now() - interval '1 hour'),
+--   ('b1000002-0000-4000-8000-000000000003'::uuid, 'a0000003-0000-4000-8000-000000000003'::uuid, 'traditional', 'in_progress', now() - interval '1 hour', NULL),
+--   ('b1000001-0000-4000-8000-000000000004'::uuid, 'a0000004-0000-4000-8000-000000000004'::uuid, 'chat_agent', 'completed', now() - interval '2 hours', now() - interval '1 hour'),
+--   ('b1000002-0000-4000-8000-000000000004'::uuid, 'a0000004-0000-4000-8000-000000000004'::uuid, 'traditional', 'completed', now() - interval '3 hours', now() - interval '2 hours'),
+--   ('b1000001-0000-4000-8000-000000000005'::uuid, 'a0000005-0000-4000-8000-000000000005'::uuid, 'chat_agent', 'completed', now() - interval '2 hours', now() - interval '1 hour'),
+--   ('b1000002-0000-4000-8000-000000000005'::uuid, 'a0000005-0000-4000-8000-000000000005'::uuid, 'traditional', 'completed', now() - interval '3 hours', now() - interval '2 hours'),
+--   ('b1000001-0000-4000-8000-000000000006'::uuid, 'a0000006-0000-4000-8000-000000000006'::uuid, 'chat_agent', 'in_progress', now() - interval '1 hour', NULL),
+--   ('b1000002-0000-4000-8000-000000000006'::uuid, 'a0000006-0000-4000-8000-000000000006'::uuid, 'traditional', 'not_started', NULL, NULL),
+--   ('b1000001-0000-4000-8000-000000000007'::uuid, 'a0000007-0000-4000-8000-000000000007'::uuid, 'chat_agent', 'completed', now() - interval '2 hours', now() - interval '1 hour'),
+--   ('b1000002-0000-4000-8000-000000000007'::uuid, 'a0000007-0000-4000-8000-000000000007'::uuid, 'traditional', 'completed', now() - interval '3 hours', now() - interval '2 hours'),
+--   ('b1000001-0000-4000-8000-000000000008'::uuid, 'a0000008-0000-4000-8000-000000000008'::uuid, 'chat_agent', 'not_started', NULL, NULL),
+--   ('b1000002-0000-4000-8000-000000000008'::uuid, 'a0000008-0000-4000-8000-000000000008'::uuid, 'traditional', 'not_started', NULL, NULL),
+--   ('b1000001-0000-4000-8000-000000000009'::uuid, 'a0000009-0000-4000-8000-000000000009'::uuid, 'chat_agent', 'completed', now() - interval '2 hours', now() - interval '1 hour'),
+--   ('b1000002-0000-4000-8000-000000000009'::uuid, 'a0000009-0000-4000-8000-000000000009'::uuid, 'traditional', 'completed', now() - interval '3 hours', now() - interval '2 hours'),
+--   ('b1000001-0000-4000-8000-000000000010'::uuid, 'a0000010-0000-4000-8000-000000000010'::uuid, 'chat_agent', 'completed', now() - interval '2 hours', now() - interval '1 hour'),
+--   ('b1000002-0000-4000-8000-000000000010'::uuid, 'a0000010-0000-4000-8000-000000000010'::uuid, 'traditional', 'completed', now() - interval '3 hours', now() - interval '2 hours'),
+--   ('b1000001-0000-4000-8000-000000000011'::uuid, 'a0000011-0000-4000-8000-000000000011'::uuid, 'chat_agent', 'not_started', NULL, NULL),
+--   ('b1000002-0000-4000-8000-000000000011'::uuid, 'a0000011-0000-4000-8000-000000000011'::uuid, 'traditional', 'not_started', NULL, NULL),
+--   ('b1000001-0000-4000-8000-000000000012'::uuid, 'a0000012-0000-4000-8000-000000000012'::uuid, 'chat_agent', 'not_started', NULL, NULL),
+--   ('b1000002-0000-4000-8000-000000000012'::uuid, 'a0000012-0000-4000-8000-000000000012'::uuid, 'traditional', 'not_started', NULL, NULL),
+--   ('b1000001-0000-4000-8000-000000000013'::uuid, 'a0000013-0000-4000-8000-000000000013'::uuid, 'chat_agent', 'in_progress', now() - interval '1 hour', NULL),
+--   ('b1000002-0000-4000-8000-000000000013'::uuid, 'a0000013-0000-4000-8000-000000000013'::uuid, 'traditional', 'not_started', NULL, NULL),
+--   ('b1000001-0000-4000-8000-000000000014'::uuid, 'a0000014-0000-4000-8000-000000000014'::uuid, 'chat_agent', 'not_started', NULL, NULL),
+--   ('b1000002-0000-4000-8000-000000000014'::uuid, 'a0000014-0000-4000-8000-000000000014'::uuid, 'traditional', 'in_progress', now() - interval '1 hour', NULL),
+--   ('b1000001-0000-4000-8000-000000000015'::uuid, 'a0000015-0000-4000-8000-000000000015'::uuid, 'chat_agent', 'completed', now() - interval '2 hours', now() - interval '1 hour'),
+--   ('b1000002-0000-4000-8000-000000000015'::uuid, 'a0000015-0000-4000-8000-000000000015'::uuid, 'traditional', 'in_progress', now() - interval '1 hour', NULL)
+-- ON CONFLICT (user_id, system_type) DO NOTHING;
+
+-- -- ----------------------------------------------------------------------------
+-- -- 3. TASK PROGRESS (completed tasks for completed sessions)
+-- -- ----------------------------------------------------------------------------
+-- -- For each completed session, mark all 4 tasks for that system_type as completed.
+
+-- INSERT INTO task_progress (session_id, task_definition_id, status, started_at, completed_at, success_payload)
+-- SELECT
+--   ts.id,
+--   td.id,
+--   'completed'::task_progress_status,
+--   ts.started_at,
+--   ts.completed_at,
+--   '{}'::jsonb
+-- FROM task_sessions ts
+-- JOIN task_definitions td ON td.system_type = ts.system_type
+-- WHERE ts.status = 'completed'
+--   AND ts.user_id IN (SELECT id FROM profiles WHERE email LIKE 'mockuser%@analysis.local')
+-- ON CONFLICT (session_id, task_definition_id) DO NOTHING;
+
+-- -- ----------------------------------------------------------------------------
+-- -- 4. SURVEY RESPONSES (SUS, RAW_TLX, SDT) for completed sessions
+-- -- ----------------------------------------------------------------------------
+-- -- SUS: 10 items, likert 1-5. We'll insert plausible values (odd: pos, even: neg).
+-- -- RAW_TLX: 6 items, 0-100. Performance (order 4) stored as-is; analysis reverse-codes.
+-- -- SDT: 10 items, likert 1-7.
+
+-- DO $$
+-- DECLARE
+--   sess record;
+--   q record;
+--   sus_val int;
+--   tlx_val int;
+--   sdt_val int;
+--   idx int;
+--   is_chat boolean;
+--   session_offset int;  -- per-session variation so not all same-type sessions are identical
+-- BEGIN
+--   FOR sess IN
+--     SELECT ts.id, ts.system_type
+--     FROM task_sessions ts
+--     WHERE ts.status = 'completed'
+--       AND ts.user_id IN (SELECT id FROM profiles WHERE email LIKE 'mockuser%@analysis.local')
+--   LOOP
+--     is_chat := (sess.system_type = 'chat_agent');
+--     session_offset := (hashtext(sess.id::text) % 3);  -- -1, 0, or 1 for variation
+
+--     -- SUS (survey_name = 'SUS'): 10 questions, order_index 1-10
+--     -- Chat: higher usability (odd 4-5, even 2-3). Traditional: lower (odd 2-3, even 1-2).
+--     FOR q IN
+--       SELECT id, order_index
+--       FROM task_survey_questions
+--       WHERE survey_id = (SELECT id FROM task_surveys WHERE survey_name = 'SUS' AND version = '1')
+--       ORDER BY order_index
+--     LOOP
+--       idx := q.order_index;
+--       IF is_chat THEN
+--         IF idx % 2 = 1 THEN sus_val := 4 + (idx + session_offset) % 2; ELSE sus_val := 2 + (idx + session_offset) % 2; END IF;
+--       ELSE
+--         IF idx % 2 = 1 THEN sus_val := 2 + (idx + session_offset) % 2; ELSE sus_val := 1 + (idx + session_offset) % 2; END IF;
+--       END IF;
+--       sus_val := least(5, greatest(1, sus_val));
+--       INSERT INTO task_survey_responses (session_id, question_id, response_value, response_text)
+--       VALUES (sess.id, q.id, sus_val, NULL)
+--       ON CONFLICT (session_id, question_id) DO NOTHING;
+--     END LOOP;
+
+--     -- RAW_TLX: 6 questions, 0-100. Lower = better (except performance order 4: high = good).
+--     -- Chat: lower workload (25-48); traditional: higher (52-78). Performance: chat 65-85, traditional 35-55.
+--     FOR q IN
+--       SELECT id, order_index
+--       FROM task_survey_questions
+--       WHERE survey_id = (SELECT id FROM task_surveys WHERE survey_name = 'RAW_TLX' AND version = '1')
+--       ORDER BY order_index
+--     LOOP
+--       IF q.order_index = 4 THEN
+--         IF is_chat THEN tlx_val := 68 + (q.order_index * 2) + session_offset * 5;
+--         ELSE tlx_val := 42 + (q.order_index * 2) + session_offset * 5; END IF;
+--       ELSIF is_chat THEN
+--         tlx_val := 28 + (q.order_index * 3) + session_offset * 4;
+--       ELSE
+--         tlx_val := 55 + (q.order_index * 3) + session_offset * 4;
+--       END IF;
+--       tlx_val := least(100, greatest(0, tlx_val));
+--       INSERT INTO task_survey_responses (session_id, question_id, response_value, response_text)
+--       VALUES (sess.id, q.id, tlx_val, NULL)
+--       ON CONFLICT (session_id, question_id) DO NOTHING;
+--     END LOOP;
+
+--     -- SDT: 10 questions, likert 1-7. Higher = more satisfaction/autonomy.
+--     -- Chat: 4-6 (leaning positive). Traditional: 2-4 (leaning lower).
+--     FOR q IN
+--       SELECT id, order_index
+--       FROM task_survey_questions
+--       WHERE survey_id = (SELECT id FROM task_surveys WHERE survey_name = 'SDT' AND version = '1')
+--       ORDER BY order_index
+--     LOOP
+--       IF is_chat THEN
+--         sdt_val := 4 + (q.order_index + session_offset) % 3;
+--       ELSE
+--         sdt_val := 2 + (q.order_index + session_offset) % 3;
+--       END IF;
+--       sdt_val := least(7, greatest(1, sdt_val));
+--       INSERT INTO task_survey_responses (session_id, question_id, response_value, response_text)
+--       VALUES (sess.id, q.id, sdt_val, NULL)
+--       ON CONFLICT (session_id, question_id) DO NOTHING;
+--     END LOOP;
+--   END LOOP;
+-- END $$;
+
+-- -- ----------------------------------------------------------------------------
+-- -- 5. INTERVIEW RESPONSES (preference questions)
+-- -- ----------------------------------------------------------------------------
+-- -- One response per user who has completed at least one session (we'll use users 1-10).
+-- -- Options vary by question; use options from task_interview_questions.
+
+-- DO $$
+-- DECLARE
+--   q record;
+--   uid uuid;
+--   opts text[];
+--   chosen text;
+--   uids uuid[] := ARRAY[
+--     'a0000001-0000-4000-8000-000000000001'::uuid,
+--     'a0000002-0000-4000-8000-000000000002'::uuid,
+--     'a0000003-0000-4000-8000-000000000003'::uuid,
+--     'a0000004-0000-4000-8000-000000000004'::uuid,
+--     'a0000005-0000-4000-8000-000000000005'::uuid,
+--     'a0000006-0000-4000-8000-000000000006'::uuid,
+--     'a0000007-0000-4000-8000-000000000007'::uuid,
+--     'a0000008-0000-4000-8000-000000000008'::uuid,
+--     'a0000009-0000-4000-8000-000000000009'::uuid,
+--     'a0000010-0000-4000-8000-000000000010'::uuid
+--   ];
+--   i int;
+--   j int;
+-- BEGIN
+--   FOR q IN SELECT id, order_index, options FROM task_interview_questions ORDER BY order_index
+--   LOOP
+--     opts := ARRAY(SELECT jsonb_array_elements_text(q.options));
+--     IF array_length(opts, 1) IS NULL THEN CONTINUE; END IF;
+
+--     i := 0;
+--     FOREACH uid IN ARRAY uids
+--     LOOP
+--       j := (q.order_index + i) % array_length(opts, 1) + 1;
+--       chosen := opts[j];
+--       INSERT INTO task_interview_responses (user_id, question_id, response_text)
+--       VALUES (uid, q.id, chosen)
+--       ON CONFLICT (user_id, question_id) DO UPDATE SET response_text = EXCLUDED.response_text;
+--       i := i + 1;
+--     END LOOP;
+--   END LOOP;
+-- END $$;

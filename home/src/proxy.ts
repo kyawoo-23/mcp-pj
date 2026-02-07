@@ -38,7 +38,8 @@ export async function proxy(request: NextRequest) {
   // Protect routes
   if (
     (request.nextUrl.pathname.startsWith("/survey") ||
-    request.nextUrl.pathname.startsWith("/settings")) &&
+    request.nextUrl.pathname.startsWith("/settings")) ||
+    request.nextUrl.pathname.startsWith("/analysis") &&
     !user
   ) {
     return NextResponse.redirect(new URL("/auth/login", request.url));

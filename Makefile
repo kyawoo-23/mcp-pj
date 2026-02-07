@@ -14,7 +14,7 @@ install:
 # Run all projects in parallel
 dev:
 	@echo "Starting all projects..."
-	$(MAKE) -j5 chat-agent uni-booking uni-registration home mcp-server
+	$(MAKE) -j6 chat-agent uni-booking uni-registration home mcp-server edge-functions
 
 # Individual project targets
 chat-agent:
@@ -31,6 +31,9 @@ home:
 
 mcp-server:
 	cd mcp-server && pnpm run dev
+
+edge-functions:
+	supabase functions serve 
 
 # Database commands
 db-reset:
