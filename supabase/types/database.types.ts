@@ -722,7 +722,10 @@ export type Database = {
         }
         Returns: string
       }
+      get_never_logged_in_count: { Args: never; Returns: number }
       is_admin: { Args: { user_id: string }; Returns: boolean }
+      show_limit: { Args: never; Returns: number }
+      show_trgm: { Args: { "": string }; Returns: string[] }
     }
     Enums: {
       age_range:
