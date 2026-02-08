@@ -21,6 +21,9 @@ import { Badge } from "@/components/ui/badge";
 import { Clock, Timer, Users } from "lucide-react";
 import { SystemTypes, getSystemTypeLabel } from "@/lib/constants";
 import { type SystemDurationData } from "@/lib/analysis-calculations";
+import { TASK_ORDER } from "@/utils/constants";
+
+const taskOrder = (taskCode: string) => TASK_ORDER[taskCode] ?? 999;
 
 type TaskDurationChartsProps = {
   durations: SystemDurationData[];
@@ -38,16 +41,18 @@ export function TaskDurationCharts({ durations }: TaskDurationChartsProps) {
 
     if (!chatSystem || !traditionalSystem) return [];
 
-    // Match tasks by index (assuming same order and number of tasks per system)
-    const maxTasks = Math.max(
-      chatSystem.tasks.length,
-      traditionalSystem.tasks.length,
+    const sortedChat = [...chatSystem.tasks].sort(
+      (a, b) => taskOrder(a.taskCode) - taskOrder(b.taskCode),
+    );
+    const sortedTrad = [...traditionalSystem.tasks].sort(
+      (a, b) => taskOrder(a.taskCode) - taskOrder(b.taskCode),
     );
 
+    const maxTasks = Math.max(sortedChat.length, sortedTrad.length);
     const data = [];
     for (let i = 0; i < maxTasks; i++) {
-      const chatTask = chatSystem.tasks[i];
-      const tradTask = traditionalSystem.tasks[i];
+      const chatTask = sortedChat[i];
+      const tradTask = sortedTrad[i];
 
       data.push({
         taskLabel: `Task ${i + 1}`,
@@ -102,7 +107,9 @@ export function TaskDurationCharts({ durations }: TaskDurationChartsProps) {
           </CardHeader>
           <CardContent className='pt-4'>
             <div className='space-y-3'>
-              {system.tasks.map((task, index) => (
+              {[...system.tasks]
+                .sort((a, b) => taskOrder(a.taskCode) - taskOrder(b.taskCode))
+                .map((task, index) => (
                 <div
                   key={task.taskCode}
                   className='flex items-center justify-between rounded-lg border bg-muted/30 p-3 transition-colors hover:bg-muted/50'

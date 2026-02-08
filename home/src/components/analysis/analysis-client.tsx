@@ -25,8 +25,13 @@ import { OverviewCards } from "@/components/analysis/overview-cards";
 import { DemographicsCharts } from "@/components/analysis/demographics-charts";
 import { SurveyScoresCharts } from "@/components/analysis/survey-scores-charts";
 import { PreferenceCharts } from "@/components/analysis/preference-charts";
-import { CircleCheck, Database } from "lucide-react";
+import { CircleCheck, Database, Info } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import { DashboardContentSkeleton } from "@/components/analysis/analysis-skeleton";
 
 type AnalysisClientProps = {
@@ -81,9 +86,26 @@ function DashboardContent({ payload }: { payload: AnalysisPayload }) {
 
       {/* Task Performance Duration */}
       <section className='mb-12'>
-        <h2 className='text-2xl font-semibold mb-4'>
-          Task Performance Duration
-        </h2>
+        <div className='flex items-center gap-2 mb-4'>
+          <h2 className='text-2xl font-semibold'>Task Performance Duration</h2>
+          <Popover>
+            <PopoverTrigger asChild>
+              <button
+                type='button'
+                className='inline-flex items-center justify-center rounded-full p-1 text-muted-foreground hover:text-foreground hover:bg-muted focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2'
+                aria-label='How task duration is calculated'
+              >
+                <Info className='h-5 w-5' />
+              </button>
+            </PopoverTrigger>
+            <PopoverContent side='bottom' align='start' className='max-w-sm'>
+              <p className='text-sm'>
+                Task durations longer than 1 hour are considered noise and are
+                excluded from the calculation.
+              </p>
+            </PopoverContent>
+          </Popover>
+        </div>
         <TaskDurationCharts durations={taskDurations} />
       </section>
     </>

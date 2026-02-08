@@ -31,6 +31,35 @@ export const AI_TOOL_FREQUENCY_OPTIONS: Array<{ value: ProfileRow["ai_tool_frequ
   { value: "never", label: "Never" },
 ];
 
+// Value → display label mappers for analysis (age, gender, technical proficiency, AI tool frequency)
+export const AGE_RANGE_LABELS: Record<string, string> = Object.fromEntries(
+  AGE_OPTIONS.map((o) => [o.value, o.label]),
+);
+export const GENDER_LABELS: Record<string, string> = Object.fromEntries(
+  GENDER_OPTIONS.map((o) => [o.value, o.label]),
+);
+export const TECHNICAL_PROFICIENCY_LABELS: Record<string, string> =
+  Object.fromEntries(
+    TECHNICAL_PROFICIENCY_OPTIONS.map((o) => [o.value, o.label]),
+  );
+export const AI_TOOL_FREQUENCY_LABELS: Record<string, string> =
+  Object.fromEntries(
+    AI_TOOL_FREQUENCY_OPTIONS.map((o) => [o.value, o.label]),
+  );
+
+export function getAgeRangeLabel(value: string): string {
+  return AGE_RANGE_LABELS[value] ?? value;
+}
+export function getGenderLabel(value: string): string {
+  return GENDER_LABELS[value] ?? value;
+}
+export function getTechnicalProficiencyLabel(value: string): string {
+  return TECHNICAL_PROFICIENCY_LABELS[value] ?? value;
+}
+export function getAiToolFrequencyLabel(value: string): string {
+  return AI_TOOL_FREQUENCY_LABELS[value] ?? value;
+}
+
 export const TASK_ORDER: Record<string, number> = {
   register_course: 1,
   drop_course: 2,

@@ -15,6 +15,12 @@ import {
   ChartLegend,
   type ChartConfig,
 } from "@/components/ui/chart";
+import {
+  getAgeRangeLabel,
+  getGenderLabel,
+  getTechnicalProficiencyLabel,
+  getAiToolFrequencyLabel,
+} from "@/utils/constants";
 
 // Color palette for pie charts
 const COLORS = [
@@ -40,15 +46,6 @@ interface DemographicsChartsProps {
   demographics: DemographicsData;
 }
 
-// Format labels for display
-function formatLabel(label: string): string {
-  const words = label
-    .split("_")
-    .map((word) => word.charAt(0).toUpperCase() + word.slice(1));
-  const shouldJoinWithDash = words.some((word) => !isNaN(Number(word)));
-  return words.join(shouldJoinWithDash ? "-" : " ");
-}
-
 // Exclude Unknown / empty demographics from chart data
 function excludeUnknown<T extends { label: string }>(items: T[]): T[] {
   return items.filter((item) => item.label.toLowerCase() !== "unknown");
@@ -57,27 +54,27 @@ function excludeUnknown<T extends { label: string }>(items: T[]): T[] {
 export function DemographicsCharts({ demographics }: DemographicsChartsProps) {
   // Prepare chart data (excluding Unknown so only filled-in demographics are shown)
   const ageData = excludeUnknown(demographics.ageRange).map((item) => ({
-    label: formatLabel(item.label),
+    label: getAgeRangeLabel(item.label),
     count: item.count,
     percentage: item.percentage,
   }));
 
   const genderData = excludeUnknown(demographics.gender).map((item) => ({
-    label: formatLabel(item.label),
+    label: getGenderLabel(item.label),
     count: item.count,
     percentage: item.percentage,
   }));
 
   const techData = excludeUnknown(demographics.technicalProficiency).map(
     (item) => ({
-      label: formatLabel(item.label),
+      label: getTechnicalProficiencyLabel(item.label),
       count: item.count,
       percentage: item.percentage,
     }),
   );
 
   const aiData = excludeUnknown(demographics.aiFrequency).map((item) => ({
-    label: formatLabel(item.label),
+    label: getAiToolFrequencyLabel(item.label),
     count: item.count,
     percentage: item.percentage,
   }));
@@ -109,7 +106,7 @@ export function DemographicsCharts({ demographics }: DemographicsChartsProps) {
             <PieChart>
               <ChartTooltip
                 cursor={false}
-                content={<ChartTooltipContent hideLabel />}
+                content={<ChartTooltipContent hideLabel className='min-w-36' />}
               />
               <Pie
                 data={ageData}
@@ -145,7 +142,7 @@ export function DemographicsCharts({ demographics }: DemographicsChartsProps) {
             <PieChart>
               <ChartTooltip
                 cursor={false}
-                content={<ChartTooltipContent hideLabel />}
+                content={<ChartTooltipContent hideLabel className='min-w-36' />}
               />
               <Pie
                 data={genderData}
@@ -183,7 +180,7 @@ export function DemographicsCharts({ demographics }: DemographicsChartsProps) {
             <PieChart>
               <ChartTooltip
                 cursor={false}
-                content={<ChartTooltipContent hideLabel />}
+                content={<ChartTooltipContent hideLabel className='min-w-52' />}
               />
               <Pie
                 data={techData}
@@ -219,7 +216,7 @@ export function DemographicsCharts({ demographics }: DemographicsChartsProps) {
             <PieChart>
               <ChartTooltip
                 cursor={false}
-                content={<ChartTooltipContent hideLabel />}
+                content={<ChartTooltipContent hideLabel className='min-w-52' />}
               />
               <Pie
                 data={aiData}

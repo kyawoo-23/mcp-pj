@@ -119,7 +119,8 @@ export function PreferenceCharts({ preferences }: PreferenceChartsProps) {
       <CardHeader>
         <CardTitle>Preference responses</CardTitle>
         <CardDescription>
-          100% stacked by question — compare distributions at a glance. Hover for option labels and counts.
+          100% stacked by question — compare distributions at a glance. Hover
+          for option labels and counts.
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -166,7 +167,8 @@ export function PreferenceCharts({ preferences }: PreferenceChartsProps) {
                     return (
                       <div className='flex items-center gap-2 text-xs'>
                         <span className='font-medium'>
-                          {label.length > 24 ? label.slice(0, 24) + "…" : label}:
+                          {label.length > 24 ? label.slice(0, 24) + "…" : label}
+                          :
                         </span>
                         <span>
                           {Number(pct).toFixed(1)}% ({count} responses)
