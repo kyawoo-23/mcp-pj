@@ -321,8 +321,10 @@ export function calculateTaskDurations(
     const completedAt = new Date(progress.completed_at).getTime();
     const duration = completedAt - startedAt;
 
-    // Skip negative or zero durations
-    if (duration <= 0) {
+    const ONE_HOUR_MS = 60 * 60 * 1000;
+
+    // Skip negative, zero, or >1hr durations
+    if (duration <= 0 || duration > ONE_HOUR_MS) {
       continue;
     }
 
