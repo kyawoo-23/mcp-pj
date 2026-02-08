@@ -10,6 +10,7 @@ import {
   calculateTaskDurations,
   filterPayloadToCompletedUsers,
 } from "@/lib/analysis-calculations";
+import { revalidateAnalysisAction } from "@/app/actions/analysis";
 import { TaskDurationCharts } from "@/components/analysis/task-duration-charts";
 import {
   Card,
@@ -124,15 +125,15 @@ export function AnalysisClient({
         <CardContent>
           <Button
             onClick={() => {
-              // Trigger refresh by updating query param
-              // Read searchParams on demand instead of subscribing (best practice 5.1)
-              const params = new URLSearchParams(window.location.search);
-              params.set("refresh", Date.now().toString());
-              router.push(`${pathname}?${params.toString()}`, { scroll: false });
+              startTransition(async () => {
+                await revalidateAnalysisAction();
+                router.refresh();
+              });
             }}
+            disabled={isPending}
             variant='outline'
           >
-            Retry
+            {isPending ? "Retrying..." : "Retry"}
           </Button>
         </CardContent>
       </Card>
