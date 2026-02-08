@@ -115,7 +115,7 @@ export function SurveyScoresCharts({ surveyScores }: SurveyScoresChartsProps) {
     },
   };
 
-  // SDT Radar Chart Data (order sets axis positions: System Satisfaction and Autonomy swapped)
+  // SDT Radar Chart Data (order matches SDT subscale order: Autonomy → Competence → Performance Satisfaction → System Satisfaction)
   type SdtRadarDataPoint = {
     subject: string;
     fullMark: number;
@@ -125,10 +125,10 @@ export function SurveyScoresCharts({ surveyScores }: SurveyScoresChartsProps) {
 
   const sdtRadarData = useMemo((): SdtRadarDataPoint[] => {
     const dims = [
-      { subject: "System Satisfaction", fullMark: 7 },
+      { subject: "Autonomy", fullMark: 7 },
       { subject: "Competence", fullMark: 7 },
       { subject: "Performance Satisfaction", fullMark: 7 },
-      { subject: "Autonomy", fullMark: 7 },
+      { subject: "System Satisfaction", fullMark: 7 },
     ];
     const chatSystem = surveyScores.sdt.find(
       (s) => s.systemType === SYSTEM_TYPE_KEYS[0],
@@ -403,7 +403,7 @@ export function SurveyScoresCharts({ surveyScores }: SurveyScoresChartsProps) {
               />
               <PolarAngleAxis dataKey='subject' tick={{ fontSize: 12 }} />
               <PolarGrid radialLines={false} />
-              <PolarRadiusAxis angle={60} domain={[0, 7]} />
+              <PolarRadiusAxis angle={60} domain={[1, 7]} />
               <Radar
                 dataKey='chat'
                 fill='var(--color-chat)'
