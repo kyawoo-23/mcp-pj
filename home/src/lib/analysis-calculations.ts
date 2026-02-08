@@ -4,7 +4,6 @@ import type {
   SurveyQuestionRow,
   SurveyResponseRow,
   TaskSessionRow,
-  TaskProgressRow,
   TaskDefinitionRow,
   SystemType,
 } from "./types";
@@ -196,10 +195,10 @@ export function calculateSDT(
 // ============================================================================
 
 export function calculateUserMetrics(payload: AnalysisPayload) {
-  const { profiles, task_sessions, task_interview_responses, never_logged_in_count } = payload;
+  const { task_sessions, task_interview_responses, never_logged_in_count, total_auth_users_count } = payload;
 
-  // Total users
-  const totalUsers = new Set(profiles.map((p) => p.id)).size;
+  // Total users - use total auth users count from Supabase
+  const totalUsers = total_auth_users_count;
 
   // In Progress Logic (based on SQL):
   // SELECT DISTINCT p.id AS user_id FROM task_sessions ts
@@ -723,5 +722,6 @@ export function filterPayloadToCompletedUsers(
     task_interview_questions: payload.task_interview_questions, // Reference data, unchanged
     task_interview_responses: filteredTaskInterviewResponses,
     never_logged_in_count: payload.never_logged_in_count, // Pass through unchanged
+    total_auth_users_count: payload.total_auth_users_count, // Pass through unchanged
   };
 }

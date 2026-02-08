@@ -119,6 +119,14 @@ Deno.serve(async (req) => {
       console.error("Error fetching never logged in count:", neverLoggedInError)
     }
 
+    // Get total auth users count using database function (has access to auth.users)
+    const { data: totalAuthUsersCount, error: totalAuthUsersError } = await supabase
+      .rpc("get_total_auth_users_count")
+    
+    if (totalAuthUsersError) {
+      console.error("Error fetching total auth users count:", totalAuthUsersError)
+    }
+
     // Check for errors
     const errors = [
       profilesError,
@@ -159,6 +167,7 @@ Deno.serve(async (req) => {
         task_interview_questions: taskInterviewQuestions ?? [],
         task_interview_responses: taskInterviewResponses ?? [],
         never_logged_in_count: neverLoggedInCount ?? 0,
+        total_auth_users_count: totalAuthUsersCount ?? 0,
       }),
       {
         headers: { ...corsHeaders, "Content-Type": "application/json" },

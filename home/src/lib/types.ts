@@ -28,6 +28,7 @@ export interface AnalysisPayload {
   task_interview_questions: InterviewQuestionRow[];
   task_interview_responses: UserInterviewResponseRow[];
   never_logged_in_count: number;
+  total_auth_users_count: number;
 }
 
 export type { Json };
