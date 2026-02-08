@@ -79,33 +79,42 @@ Deno.serve(async (req) => {
     ] = await Promise.all([
       supabase
         .from("profiles")
-        .select("id, age_range, gender, technical_proficiency, ai_tool_frequency, created_at"),
+        .select("id, age_range, gender, technical_proficiency, ai_tool_frequency, created_at")
+        .limit(100000),
       supabase
         .from("task_sessions")
-        .select("id, user_id, system_type, status, started_at, completed_at, created_at"),
+        .select("id, user_id, system_type, status, started_at, completed_at, created_at")
+        .limit(100000),
       supabase
         .from("task_progress")
-        .select("id, session_id, task_definition_id, status, started_at, completed_at"),
+        .select("id, session_id, task_definition_id, status, started_at, completed_at")
+        .limit(100000),
       supabase
         .from("task_definitions")
-        .select("id, task_code, title, system_type"),
+        .select("id, task_code, title, system_type")
+        .limit(100000),
       supabase
         .from("task_surveys")
-        .select("id, survey_name, version"),
+        .select("id, survey_name, version")
+        .limit(100000),
       supabase
         .from("task_survey_questions")
         .select("id, survey_id, question_text, scale_type, min_value, max_value, order_index, construct")
-        .order("order_index", { ascending: true }),
+        .order("order_index", { ascending: true })
+        .limit(100000),
       supabase
         .from("task_survey_responses")
-        .select("id, session_id, question_id, response_value, response_text"),
+        .select("id, session_id, question_id, response_value, response_text")
+        .limit(100000),
       supabase
         .from("task_interview_questions")
         .select("id, question_text, order_index, options")
-        .order("order_index", { ascending: true }),
+        .order("order_index", { ascending: true })
+        .limit(100000),
       supabase
         .from("task_interview_responses")
-        .select("id, user_id, question_id, response_text"),
+        .select("id, user_id, question_id, response_text")
+        .limit(100000),
     ])
 
     // Get never logged in count using database function (has access to auth.users)
