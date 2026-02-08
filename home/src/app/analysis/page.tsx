@@ -4,7 +4,7 @@ import { ChevronLeft } from "lucide-react";
 import { RefreshButton } from "@/components/analysis/refresh-button";
 import { Button } from "@/components/ui/button";
 import { AnalysisData } from "@/components/analysis/analysis-data";
-import { DashboardContentSkeleton } from "@/components/analysis/analysis-skeleton";
+import { AnalysisSkeleton } from "@/components/analysis/analysis-skeleton";
 
 export default function AnalysisPage() {
   return (
@@ -32,7 +32,7 @@ export default function AnalysisPage() {
         <RefreshButton />
       </div>
 
-      <Suspense fallback={<DashboardContentSkeleton />}>
+      <Suspense fallback={<AnalysisSkeleton />}>
         <AnalysisData />
       </Suspense>
     </div>
