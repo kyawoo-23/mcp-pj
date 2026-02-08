@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useTransition } from "react";
+import { useMemo, useState, useEffect, useTransition } from "react";
 import { useRouter, useSearchParams, usePathname } from "next/navigation";
 import type { AnalysisPayload } from "@/lib/types";
 import {
@@ -32,8 +32,6 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { DashboardContentSkeleton } from "@/components/analysis/analysis-skeleton";
-
 type AnalysisClientProps = {
   initialData: AnalysisPayload | null;
   initialError: string | null;
@@ -122,14 +120,22 @@ export function AnalysisClient({
   const pathname = usePathname();
   const [isPending, startTransition] = useTransition();
 
-  const activeTab = searchParams.get("tab") || "all";
+  // Sync tab from URL on mount and when URL changes (e.g. back/forward)
+  const tabFromUrl = searchParams.get("tab") || "all";
+  const [activeTab, setActiveTab] = useState(tabFromUrl);
+  useEffect(() => {
+    setActiveTab(tabFromUrl);
+  }, [tabFromUrl]);
 
   const handleTabChange = (value: string) => {
+    setActiveTab(value);
     const params = new URLSearchParams(searchParams.toString());
     params.set("tab", value);
-    startTransition(() => {
-      router.push(`${pathname}?${params.toString()}`, { scroll: false });
-    });
+    window.history.replaceState(
+      null,
+      "",
+      `${pathname}?${params.toString()}`,
+    );
   };
 
   const filteredData = useMemo(
@@ -215,18 +221,10 @@ export function AnalysisClient({
           </TabsTrigger>
         </TabsList>
         <TabsContent value='all' className='mt-8'>
-          {isPending ? (
-            <DashboardContentSkeleton />
-          ) : (
-            <DashboardContent payload={data} />
-          )}
+          <DashboardContent payload={data} />
         </TabsContent>
         <TabsContent value='completed' className='mt-8'>
-          {isPending ? (
-            <DashboardContentSkeleton />
-          ) : (
-            <DashboardContent payload={filteredData!} />
-          )}
+          <DashboardContent payload={filteredData!} />
         </TabsContent>
       </Tabs>
     </>

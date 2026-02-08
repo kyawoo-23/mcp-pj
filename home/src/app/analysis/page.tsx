@@ -1,10 +1,24 @@
 import { Suspense } from "react";
 import Link from "next/link";
 import { ChevronLeft } from "lucide-react";
+import { fetchAnalysis } from "@/app/actions/analysis";
 import { RefreshButton } from "@/components/analysis/refresh-button";
 import { Button } from "@/components/ui/button";
-import { AnalysisData } from "@/components/analysis/analysis-data";
+import { AnalysisClient } from "@/components/analysis/analysis-client";
 import { AnalysisSkeleton } from "@/components/analysis/analysis-skeleton";
+import { calculateUserMetrics } from "@/lib/analysis-calculations";
+
+async function AnalysisContent() {
+  const result = await fetchAnalysis();
+  const fullMetrics = result.data ? calculateUserMetrics(result.data) : null;
+  return (
+    <AnalysisClient
+      initialData={result.data}
+      initialError={result.error}
+      metrics={fullMetrics}
+    />
+  );
+}
 
 export default function AnalysisPage() {
   return (
@@ -33,7 +47,7 @@ export default function AnalysisPage() {
       </div>
 
       <Suspense fallback={<AnalysisSkeleton />}>
-        <AnalysisData />
+        <AnalysisContent />
       </Suspense>
     </div>
   );
