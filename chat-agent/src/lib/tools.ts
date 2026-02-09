@@ -330,6 +330,32 @@ export const createTools = (supabase: SupabaseClient<Database>) => {
         };
       }
 
+      // Validate booking date is not in the past (based on server time, date-only comparison)
+      const bookingDateObj = new Date(`${params.bookingDate}T00:00:00`);
+      if (isNaN(bookingDateObj.getTime())) {
+        return {
+          errorCode: "INVALID_DATE",
+          error: `Invalid booking date format: "${params.bookingDate}". Please use "YYYY-MM-DD".`,
+          confirmed: true,
+        };
+      }
+
+      const now = new Date();
+      const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+      const bookingDay = new Date(
+        bookingDateObj.getFullYear(),
+        bookingDateObj.getMonth(),
+        bookingDateObj.getDate()
+      );
+
+      if (bookingDay < today) {
+        return {
+          errorCode: "INVALID_DATE_PAST",
+          error: "Booking date must not be in the past.",
+          confirmed: true,
+        };
+      }
+
       // Construct full timestamp strings
       const startDateTime = `${params.bookingDate}T${normalizedStartTime}`;
       const endDateTime = `${params.bookingDate}T${normalizedEndTime}`;

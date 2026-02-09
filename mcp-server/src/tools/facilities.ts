@@ -154,6 +154,46 @@ export function registerFacilityTools(server: McpServer) {
           };
         }
 
+        // Validate booking date is not in the past (based on server time, date-only comparison)
+        const bookingDateObj = new Date(`${bookingDate}T00:00:00`);
+        if (isNaN(bookingDateObj.getTime())) {
+          return {
+            content: [
+              {
+                type: "text" as const,
+                text: JSON.stringify({
+                  errorCode: "INVALID_DATE",
+                  error: `Invalid booking date format: "${bookingDate}". Please use "YYYY-MM-DD".`,
+                  confirmed: true,
+                }),
+              },
+            ],
+          };
+        }
+
+        const now = new Date();
+        const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+        const bookingDay = new Date(
+          bookingDateObj.getFullYear(),
+          bookingDateObj.getMonth(),
+          bookingDateObj.getDate()
+        );
+
+        if (bookingDay < today) {
+          return {
+            content: [
+              {
+                type: "text" as const,
+                text: JSON.stringify({
+                  errorCode: "INVALID_DATE_PAST",
+                  error: "Booking date must not be in the past.",
+                  confirmed: true,
+                }),
+              },
+            ],
+          };
+        }
+
         // Construct full timestamp strings
         const startDateTime = `${bookingDate}T${normalizedStartTime}`;
         const endDateTime = `${bookingDate}T${normalizedEndTime}`;
