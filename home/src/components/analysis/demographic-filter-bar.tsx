@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, useState, useCallback } from "react";
 import {
   Select,
   SelectContent,
@@ -21,7 +21,18 @@ import {
 } from "@/components/ui/combobox";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-import { X } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { JsonView, allExpanded, defaultStyles } from "react-json-view-lite";
+import "react-json-view-lite/dist/index.css";
+import { X, Braces, Copy, Check } from "lucide-react";
+import type { AnalysisPayload } from "@/lib/types";
+import { buildMappedSurveyData } from "@/lib/build-mapped-survey-data";
 import type { DemographicDimension } from "@/lib/analysis-calculations";
 import {
   AGE_OPTIONS,
@@ -126,16 +137,116 @@ export interface DemographicFilterValue {
   values: string[];
 }
 
+function SurveyDataDialog({
+  effectivePayload,
+  activeTab,
+  filters,
+}: {
+  effectivePayload: AnalysisPayload | null;
+  activeTab: "all" | "completed";
+  filters: DemographicFilterValue[];
+}) {
+  const [copied, setCopied] = useState(false);
+  const mappedData = useMemo(
+    () =>
+      effectivePayload
+        ? buildMappedSurveyData(
+            effectivePayload,
+            activeTab,
+            filters.filter((f) => f.values?.length),
+          )
+        : null,
+    [effectivePayload, activeTab, filters],
+  );
+
+  const handleCopy = useCallback(async () => {
+    if (!mappedData) return;
+    try {
+      await navigator.clipboard.writeText(JSON.stringify(mappedData, null, 2));
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      // ignore
+    }
+  }, [mappedData]);
+
+  return (
+    <Dialog>
+      <DialogTrigger asChild>
+        <Button
+          type='button'
+          variant='outline'
+          className='gap-1.5 border-muted-foreground/30 text-muted-foreground hover:bg-muted/50'
+          aria-label='View mapped survey and interview data'
+        >
+          <Braces className='h-3.5 w-3.5' />
+          Survey data
+        </Button>
+      </DialogTrigger>
+      <DialogContent
+        className='max-w-[90vw] sm:max-w-4xl max-h-[85vh] flex flex-col gap-4'
+        showCloseButton={true}
+      >
+        <DialogHeader className='flex-row items-center justify-between gap-4'>
+          <DialogTitle className='flex-1'>
+            Survey & interview data (tab: {activeTab}
+            {filters.some((f) => f.values?.length) ? ", filtered" : ""})
+          </DialogTitle>
+          {mappedData && (
+            <Button
+              type='button'
+              variant='outline'
+              size='sm'
+              className='shrink-0 gap-1.5'
+              onClick={handleCopy}
+              aria-label='Copy JSON to clipboard'
+            >
+              {copied ? (
+                <>
+                  <Check className='h-3.5 w-3.5 text-green-600' />
+                  <span className='text-green-600'>Copied</span>
+                </>
+              ) : (
+                <>
+                  <Copy className='h-3.5 w-3.5' />
+                  Copy
+                </>
+              )}
+            </Button>
+          )}
+        </DialogHeader>
+        <div className='overflow-auto rounded-md border bg-muted/30 p-4 text-xs'>
+          {effectivePayload !== null && mappedData ? (
+            <JsonView
+              data={mappedData}
+              shouldExpandNode={allExpanded}
+              style={defaultStyles}
+            />
+          ) : (
+            <span className='text-muted-foreground'>No data available.</span>
+          )}
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 interface DemographicFilterBarProps {
   filters: DemographicFilterValue[];
   onFiltersChange: (filters: DemographicFilterValue[]) => void;
   filteredCount?: number;
+  /** Effective payload (respects tab + filters). Used for mapped survey data popup. */
+  effectivePayload?: AnalysisPayload | null;
+  /** Current tab: all | completed */
+  activeTab?: "all" | "completed";
 }
 
 export function DemographicFilterBar({
   filters,
   onFiltersChange,
   filteredCount,
+  effectivePayload,
+  activeTab = "all",
 }: DemographicFilterBarProps) {
   const usedDimensions = useMemo(
     () => new Set(filters.map((f) => f.dimension)),
@@ -145,8 +256,7 @@ export function DemographicFilterBar({
     () => DIMENSION_OPTIONS.filter((d) => !usedDimensions.has(d.value)),
     [usedDimensions],
   );
-  const canAddMore =
-    availableDimensions.length > 0 && filters.length < 4;
+  const canAddMore = availableDimensions.length > 0 && filters.length < 4;
 
   const addFilter = () => {
     const nextDimension = availableDimensions[0];
@@ -255,6 +365,13 @@ export function DemographicFilterBar({
           </span>
         )}
       </div>
+      {effectivePayload !== undefined && (
+        <SurveyDataDialog
+          effectivePayload={effectivePayload}
+          activeTab={activeTab}
+          filters={filters}
+        />
+      )}
     </div>
   );
 }

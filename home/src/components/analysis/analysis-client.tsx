@@ -214,6 +214,8 @@ export function AnalysisClient({
           filteredCount={
             demographicFilters.length > 0 ? effectivePayload.profiles.length : undefined
           }
+          effectivePayload={effectivePayload}
+          activeTab={activeTab as "all" | "completed"}
         />
       </div>
 
