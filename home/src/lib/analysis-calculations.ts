@@ -740,12 +740,13 @@ export type DemographicDimension =
 
 export type DemographicCriterion = {
   dimension: DemographicDimension;
-  value: string;
+  values: string[];
 };
 
 /**
  * Filters the analysis payload to only include data from users who match ALL
- * of the given demographic criteria (AND logic).
+ * of the given demographic criteria (AND across dimensions).
+ * Within each dimension, multiple values use OR logic (match any selected value).
  */
 export function filterPayloadByDemographics(
   payload: AnalysisPayload,
@@ -753,13 +754,19 @@ export function filterPayloadByDemographics(
 ): AnalysisPayload {
   if (criteria.length === 0) return payload;
 
-  // Get set of user IDs whose profile matches ALL criteria (null = no match)
+  const validCriteria = criteria.filter((c) => c.values.length > 0);
+  if (validCriteria.length === 0) return payload;
+
+  // Get set of user IDs whose profile matches ALL criteria (AND)
+  // For each criterion, profile matches if it matches ANY of the values (OR)
   const matchingUserIds = new Set(
     payload.profiles
       .filter((p) =>
-        criteria.every(({ dimension, value }) => {
+        validCriteria.every(({ dimension, values }) => {
           const profileValue = p[dimension];
-          return profileValue != null && profileValue === value;
+          if (profileValue == null) return false;
+          const valueSet = new Set(values);
+          return valueSet.has(profileValue);
         }),
       )
       .map((p) => p.id),

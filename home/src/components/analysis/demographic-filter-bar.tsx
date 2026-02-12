@@ -8,6 +8,17 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  Combobox,
+  ComboboxChip,
+  ComboboxChips,
+  ComboboxChipsInput,
+  ComboboxContent,
+  ComboboxEmpty,
+  ComboboxItem,
+  ComboboxList,
+  ComboboxValue,
+} from "@/components/ui/combobox";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { X } from "lucide-react";
@@ -28,6 +39,65 @@ const DIMENSION_OPTIONS: Array<{
   { value: "technical_proficiency", label: "Technical proficiency" },
   { value: "ai_tool_frequency", label: "AI usage frequency" },
 ];
+
+type OptionItem = { value: string; label: string };
+
+function ValueMultiselect({
+  dimension,
+  selectedValues,
+  onValuesChange,
+}: {
+  dimension: DemographicDimension;
+  selectedValues: string[];
+  onValuesChange: (values: string[]) => void;
+}) {
+  const options = VALUE_OPTIONS_MAP[dimension];
+  const selectedItems = options.filter((o) => selectedValues.includes(o.value));
+
+  const handleValueChange = (newVal: OptionItem | OptionItem[] | null) => {
+    if (!newVal) {
+      onValuesChange([]);
+      return;
+    }
+    const arr = Array.isArray(newVal) ? newVal : [newVal];
+    const vals = arr.map((o) => o.value);
+    onValuesChange(vals);
+  };
+
+  return (
+    <Combobox
+      items={options}
+      multiple
+      value={selectedItems}
+      onValueChange={handleValueChange}
+      itemToStringValue={(item) => item.value}
+      itemToStringLabel={(item) => item.label}
+    >
+      <ComboboxChips className='min-w-[130px] max-w-[200px] border-0 bg-transparent shadow-none focus-within:ring-0'>
+        <ComboboxValue>
+          {(val: OptionItem | OptionItem[] | null) =>
+            Array.isArray(val)
+              ? val.map((item) => (
+                  <ComboboxChip key={item.value}>{item.label}</ComboboxChip>
+                ))
+              : null
+          }
+        </ComboboxValue>
+        <ComboboxChipsInput placeholder='Select…' className='min-w-12' />
+      </ComboboxChips>
+      <ComboboxContent className='min-w-[180px]'>
+        <ComboboxEmpty>No matches.</ComboboxEmpty>
+        <ComboboxList>
+          {(item: OptionItem) => (
+            <ComboboxItem key={item.value} value={item}>
+              {item.label}
+            </ComboboxItem>
+          )}
+        </ComboboxList>
+      </ComboboxContent>
+    </Combobox>
+  );
+}
 
 const VALUE_OPTIONS_MAP: Record<
   DemographicDimension,
@@ -53,7 +123,7 @@ const VALUE_OPTIONS_MAP: Record<
 
 export interface DemographicFilterValue {
   dimension: DemographicDimension;
-  value: string;
+  values: string[];
 }
 
 interface DemographicFilterBarProps {
@@ -75,15 +145,15 @@ export function DemographicFilterBar({
     () => DIMENSION_OPTIONS.filter((d) => !usedDimensions.has(d.value)),
     [usedDimensions],
   );
-  const canAddMore = availableDimensions.length > 0;
+  const canAddMore =
+    availableDimensions.length > 0 && filters.length < 4;
 
   const addFilter = () => {
     const nextDimension = availableDimensions[0];
     if (!nextDimension) return;
-    const firstValue = VALUE_OPTIONS_MAP[nextDimension.value][0];
     onFiltersChange([
       ...filters,
-      { dimension: nextDimension.value, value: firstValue?.value ?? "" },
+      { dimension: nextDimension.value, values: [] },
     ]);
   };
 
@@ -126,42 +196,36 @@ export function DemographicFilterBar({
           >
             <Select
               value={filter.dimension}
-              onValueChange={(v) =>
+              onValueChange={(v) => {
                 updateFilter(index, {
                   dimension: v as DemographicDimension,
-                  value:
-                    VALUE_OPTIONS_MAP[v as DemographicDimension][0]?.value ??
-                    "",
-                })
-              }
+                  values: [],
+                });
+              }}
             >
               <SelectTrigger className='h-8 w-[140px] border-0 bg-transparent font-semibold text-muted-foreground shadow-none focus:ring-0'>
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
                 {DIMENSION_OPTIONS.map((opt) => (
-                  <SelectItem key={opt.value} value={opt.value}>
+                  <SelectItem
+                    key={opt.value}
+                    value={opt.value}
+                    disabled={filters.some(
+                      (f, j) => j !== index && f.dimension === opt.value,
+                    )}
+                  >
                     {opt.label}
                   </SelectItem>
                 ))}
               </SelectContent>
             </Select>
             <span className='text-muted-foreground'>:</span>
-            <Select
-              value={filter.value}
-              onValueChange={(v) => updateFilter(index, { value: v })}
-            >
-              <SelectTrigger className='h-8 w-[130px] border-0 bg-transparent font-medium text-primary shadow-none focus:ring-0'>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {VALUE_OPTIONS_MAP[filter.dimension].map((opt) => (
-                  <SelectItem key={opt.value} value={opt.value}>
-                    {opt.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <ValueMultiselect
+              dimension={filter.dimension}
+              selectedValues={filter.values}
+              onValuesChange={(values) => updateFilter(index, { values })}
+            />
             <Button
               type='button'
               variant='ghost'

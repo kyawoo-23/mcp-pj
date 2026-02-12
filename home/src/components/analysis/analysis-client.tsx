@@ -155,7 +155,7 @@ export function AnalysisClient({
   const effectivePayload = useMemo(() => {
     const base = activeTab === "completed" ? filteredData! : data!;
     const validFilters = demographicFilters.filter(
-      (f) => f.dimension && f.value,
+      (f) => f.dimension && f.values?.length > 0,
     );
     if (validFilters.length > 0) {
       return filterPayloadByDemographics(base, validFilters);
