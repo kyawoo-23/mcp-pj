@@ -727,3 +727,80 @@ export function filterPayloadToCompletedUsers(
     total_auth_users_count: payload.total_auth_users_count, // Pass through unchanged
   };
 }
+
+// ============================================================================
+// Filter Payload by Demographic
+// ============================================================================
+
+export type DemographicDimension =
+  | "age_range"
+  | "gender"
+  | "technical_proficiency"
+  | "ai_tool_frequency";
+
+export type DemographicCriterion = {
+  dimension: DemographicDimension;
+  value: string;
+};
+
+/**
+ * Filters the analysis payload to only include data from users who match ALL
+ * of the given demographic criteria (AND logic).
+ */
+export function filterPayloadByDemographics(
+  payload: AnalysisPayload,
+  criteria: DemographicCriterion[],
+): AnalysisPayload {
+  if (criteria.length === 0) return payload;
+
+  // Get set of user IDs whose profile matches ALL criteria (null = no match)
+  const matchingUserIds = new Set(
+    payload.profiles
+      .filter((p) =>
+        criteria.every(({ dimension, value }) => {
+          const profileValue = p[dimension];
+          return profileValue != null && profileValue === value;
+        }),
+      )
+      .map((p) => p.id),
+  );
+
+  const filteredProfiles = payload.profiles.filter((p) =>
+    matchingUserIds.has(p.id),
+  );
+
+  const filteredTaskSessions = payload.task_sessions.filter((s) =>
+    matchingUserIds.has(s.user_id),
+  );
+
+  const filteredSessionIds = new Set(
+    filteredTaskSessions.map((s) => s.id),
+  );
+
+  const filteredTaskProgress = payload.task_progress.filter((tp) =>
+    filteredSessionIds.has(tp.session_id),
+  );
+
+  const filteredTaskSurveyResponses = payload.task_survey_responses.filter(
+    (r) => filteredSessionIds.has(r.session_id),
+  );
+
+  const filteredTaskInterviewResponses =
+    payload.task_interview_responses.filter((r) =>
+      matchingUserIds.has(r.user_id),
+    );
+
+  return {
+    profiles: filteredProfiles,
+    task_sessions: filteredTaskSessions,
+    task_progress: filteredTaskProgress,
+    task_definitions: payload.task_definitions,
+    task_surveys: payload.task_surveys,
+    task_survey_questions: payload.task_survey_questions,
+    task_survey_responses: filteredTaskSurveyResponses,
+    task_interview_questions: payload.task_interview_questions,
+    task_interview_responses: filteredTaskInterviewResponses,
+    never_logged_in_count: payload.never_logged_in_count,
+    total_auth_users_count: payload.total_auth_users_count,
+  };
+}

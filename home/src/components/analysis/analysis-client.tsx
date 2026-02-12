@@ -9,6 +9,7 @@ import {
   calculatePreferenceResponses,
   calculateTaskDurations,
   filterPayloadToCompletedUsers,
+  filterPayloadByDemographics,
 } from "@/lib/analysis-calculations";
 import { revalidateAnalysisAction } from "@/app/actions/analysis";
 import { TaskDurationCharts } from "@/components/analysis/task-duration-charts";
@@ -25,6 +26,10 @@ import { OverviewCards } from "@/components/analysis/overview-cards";
 import { DemographicsCharts } from "@/components/analysis/demographics-charts";
 import { SurveyScoresCharts } from "@/components/analysis/survey-scores-charts";
 import { PreferenceCharts } from "@/components/analysis/preference-charts";
+import {
+  DemographicFilterBar,
+  type DemographicFilterValue,
+} from "@/components/analysis/demographic-filter-bar";
 import { CircleCheck, Database, Info } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -143,6 +148,21 @@ export function AnalysisClient({
     [data],
   );
 
+  const [demographicFilters, setDemographicFilters] = useState<
+    DemographicFilterValue[]
+  >([]);
+
+  const effectivePayload = useMemo(() => {
+    const base = activeTab === "completed" ? filteredData! : data!;
+    const validFilters = demographicFilters.filter(
+      (f) => f.dimension && f.value,
+    );
+    if (validFilters.length > 0) {
+      return filterPayloadByDemographics(base, validFilters);
+    }
+    return base;
+  }, [activeTab, data, filteredData, demographicFilters]);
+
   if (error) {
     return (
       <Card>
@@ -187,6 +207,16 @@ export function AnalysisClient({
         <OverviewCards metrics={metrics} />
       </section>
 
+      <div className='mb-6'>
+        <DemographicFilterBar
+          filters={demographicFilters}
+          onFiltersChange={setDemographicFilters}
+          filteredCount={
+            demographicFilters.length > 0 ? effectivePayload.profiles.length : undefined
+          }
+        />
+      </div>
+
       <Tabs
         value={activeTab}
         onValueChange={handleTabChange}
@@ -221,10 +251,10 @@ export function AnalysisClient({
           </TabsTrigger>
         </TabsList>
         <TabsContent value='all' className='mt-8'>
-          <DashboardContent payload={data} />
+          <DashboardContent payload={effectivePayload} />
         </TabsContent>
         <TabsContent value='completed' className='mt-8'>
-          <DashboardContent payload={filteredData!} />
+          <DashboardContent payload={effectivePayload} />
         </TabsContent>
       </Tabs>
     </>
