@@ -6,7 +6,23 @@ import type {
   TaskSessionRow,
   TaskDefinitionRow,
   SystemType,
+  UserInterviewResponseRow,
 } from "./types";
+
+// ============================================================================
+// Completed Users (canonical definition)
+// ============================================================================
+
+/**
+ * Users who completed all tasks: user_id exists in task_interview_responses
+ * (submitted the final interview/preference questions).
+ * Used consistently across metrics, filtering, and paired analysis.
+ */
+export function getCompletedUserIds(
+  task_interview_responses: UserInterviewResponseRow[],
+): Set<string> {
+  return new Set(task_interview_responses.map((r) => r.user_id));
+}
 
 // ============================================================================
 // SUS (System Usability Scale) Calculation
@@ -194,33 +210,48 @@ export function calculateSDT(
 // User Metrics
 // ============================================================================
 
-export function calculateUserMetrics(payload: AnalysisPayload) {
-  const { task_sessions, task_interview_responses, never_logged_in_count, total_auth_users_count } = payload;
+/**
+ * Compute user metrics from a payload.
+ * For unfiltered data, uses server counts; for filtered views, derives from payload.
+ */
+export function calculateUserMetricsFromPayload(
+  payload: AnalysisPayload,
+  options?: { isFiltered: boolean },
+): {
+  totalUsers: number;
+  neverLoggedIn: number;
+  inProgress: number;
+  completedAllTasks: number;
+} {
+  const { task_sessions, task_interview_responses } = payload;
 
-  // Total users - use total auth users count from Supabase
-  const totalUsers = total_auth_users_count;
+  const totalUsers = options?.isFiltered
+    ? payload.profiles.length
+    : payload.total_auth_users_count;
 
-  // In Progress Logic (based on SQL):
-  // SELECT DISTINCT p.id AS user_id FROM task_sessions ts
-  // JOIN profiles p ON p.id = ts.user_id
-  // WHERE ts.status IN ('in_progress', 'not_started')
+  const neverLoggedIn = options?.isFiltered
+    ? 0
+    : payload.never_logged_in_count;
+
   const inProgressUserIds = new Set(
     task_sessions
       .filter((s) => s.status === "in_progress" || s.status === "not_started")
-      .map((s) => s.user_id)
+      .map((s) => s.user_id),
   );
 
-  // Users who completed all tasks: user_id exists in task_interview_responses
-  const usersCompletedAllTasks = new Set(
-    task_interview_responses.map((r) => r.user_id),
-  );
+  const completedUserIds = getCompletedUserIds(task_interview_responses);
 
   return {
     totalUsers,
-    neverLoggedIn: never_logged_in_count,
+    neverLoggedIn,
     inProgress: inProgressUserIds.size,
-    completedAllTasks: usersCompletedAllTasks.size,
+    completedAllTasks: completedUserIds.size,
   };
+}
+
+/** Alias for full unfiltered payload metrics. */
+export function calculateUserMetrics(payload: AnalysisPayload) {
+  return calculateUserMetricsFromPayload(payload, { isFiltered: false });
 }
 
 // ============================================================================
@@ -473,44 +504,26 @@ export function calculateSurveyScoresBySystem(
     systemSatisfaction: number;
   }[];
 } {
-  const {
-    task_sessions,
-    task_surveys,
-    task_survey_questions,
-    task_survey_responses,
-  } = payload;
+  const { task_sessions, task_survey_responses } = payload;
 
-  // Get survey IDs
-  const susSurvey = task_surveys.find((s) => s.survey_name === "SUS");
-  const tlxSurvey = task_surveys.find((s) => s.survey_name === "RAW_TLX");
-  const sdtSurvey = task_surveys.find((s) => s.survey_name === "SDT");
-
-  if (!susSurvey || !tlxSurvey || !sdtSurvey) {
-    return {
-      sus: [],
-      rawTlx: [],
-      sdt: [],
-    };
+  const setup = getSurveySetup(payload);
+  if (!setup) {
+    return { sus: [], rawTlx: [], sdt: [] };
   }
+  const { susQuestions, tlxQuestions, sdtQuestions } = setup;
 
-  // Get questions for each survey
-  const susQuestions = task_survey_questions.filter(
-    (q) => q.survey_id === susSurvey.id,
-  );
-  const tlxQuestions = task_survey_questions.filter(
-    (q) => q.survey_id === tlxSurvey.id,
-  );
-  const sdtQuestions = task_survey_questions.filter(
-    (q) => q.survey_id === sdtSurvey.id,
-  );
+  // Use same sample as Paired Analysis: only users with both sessions and valid
+  // scores for all constructs. This ensures Survey Results matches Paired section.
+  const pairedRows = buildPairedSurveyData(payload);
+  const pairedUserIds = new Set(pairedRows.map((r) => r.user_id));
 
-  // Group sessions by system_type
+  // Group sessions by system_type (only from paired users)
   const sessionsBySystem = Object.fromEntries(
     SYSTEM_TYPE_KEYS.map((k) => [k, [] as TaskSessionRow[]]),
   ) as Record<SystemType, TaskSessionRow[]>;
 
   for (const session of task_sessions) {
-    if (session.status === "completed") {
+    if (session.status === "completed" && pairedUserIds.has(session.user_id)) {
       sessionsBySystem[session.system_type].push(session);
     }
   }
@@ -631,6 +644,262 @@ export function calculateSurveyScoresBySystem(
 }
 
 // ============================================================================
+// Survey Setup (shared by paired analysis and survey scores)
+// ============================================================================
+
+type SurveySetup = {
+  susQuestions: SurveyQuestionRow[];
+  tlxQuestions: SurveyQuestionRow[];
+  sdtQuestions: SurveyQuestionRow[];
+};
+
+function getSurveySetup(payload: AnalysisPayload): SurveySetup | null {
+  const { task_surveys, task_survey_questions } = payload;
+
+  const susSurvey = task_surveys.find((s) => s.survey_name === "SUS");
+  const tlxSurvey = task_surveys.find((s) => s.survey_name === "RAW_TLX");
+  const sdtSurvey = task_surveys.find((s) => s.survey_name === "SDT");
+
+  if (!susSurvey || !tlxSurvey || !sdtSurvey) return null;
+
+  return {
+    susQuestions: task_survey_questions.filter(
+      (q) => q.survey_id === susSurvey.id,
+    ),
+    tlxQuestions: task_survey_questions.filter(
+      (q) => q.survey_id === tlxSurvey.id,
+    ),
+    sdtQuestions: task_survey_questions.filter(
+      (q) => q.survey_id === sdtSurvey.id,
+    ),
+  };
+}
+
+// ============================================================================
+// Paired Survey Data (for within-subject statistical analysis)
+// ============================================================================
+
+export type PairedSurveyRow = {
+  user_id: string;
+  SUS_trad: number;
+  SUS_chat: number;
+  TLX_trad: number;
+  TLX_chat: number;
+  autonomy_trad: number;
+  autonomy_chat: number;
+  competence_trad: number;
+  competence_chat: number;
+  performanceSatisfaction_trad: number;
+  performanceSatisfaction_chat: number;
+  systemSatisfaction_trad: number;
+  systemSatisfaction_chat: number;
+};
+
+/**
+ * Build paired survey data for within-subject analysis.
+ * Only includes users who: (1) have user_id in task_interview_responses
+ * (same "completed" definition as filterPayloadToCompletedUsers), (2) have BOTH
+ * completed sessions (traditional AND chat_agent), (3) valid survey scores for both.
+ * Caller should pass already-filtered payload (e.g. filterPayloadByDemographics).
+ */
+export function buildPairedSurveyData(
+  payload: AnalysisPayload,
+): PairedSurveyRow[] {
+  const {
+    task_sessions,
+    task_survey_responses,
+    task_interview_responses,
+  } = payload;
+
+  const completedUserIds = getCompletedUserIds(task_interview_responses);
+
+  const setup = getSurveySetup(payload);
+  if (!setup) return [];
+
+  const { susQuestions, tlxQuestions, sdtQuestions } = setup;
+
+  // Group completed sessions by user_id and system_type
+  type UserSessions = Partial<{
+    traditional: TaskSessionRow;
+    chat_agent: TaskSessionRow;
+  }>;
+  const sessionsByUser = new Map<string, UserSessions>();
+
+  for (const session of task_sessions) {
+    if (session.status !== "completed") continue;
+    if (!completedUserIds.has(session.user_id)) continue;
+
+    const existing: UserSessions = sessionsByUser.get(session.user_id) ?? {};
+    if (session.system_type === "traditional") {
+      existing.traditional = session;
+    } else if (session.system_type === "chat_agent") {
+      existing.chat_agent = session;
+    }
+    sessionsByUser.set(session.user_id, existing);
+  }
+
+  const rows: PairedSurveyRow[] = [];
+
+  for (const [userId, sessions] of sessionsByUser) {
+    const tradSession = sessions.traditional;
+    const chatSession = sessions.chat_agent;
+
+    if (!tradSession || !chatSession) continue;
+
+    const susTrad = calculateSUS(
+      susQuestions,
+      task_survey_responses,
+      tradSession.id,
+    );
+    const susChat = calculateSUS(
+      susQuestions,
+      task_survey_responses,
+      chatSession.id,
+    );
+    const tlxTrad = calculateRawTLX(
+      tlxQuestions,
+      task_survey_responses,
+      tradSession.id,
+    );
+    const tlxChat = calculateRawTLX(
+      tlxQuestions,
+      task_survey_responses,
+      chatSession.id,
+    );
+    const sdtTrad = calculateSDT(
+      sdtQuestions,
+      task_survey_responses,
+      tradSession.id,
+    );
+    const sdtChat = calculateSDT(
+      sdtQuestions,
+      task_survey_responses,
+      chatSession.id,
+    );
+
+    if (
+      susTrad === null ||
+      susChat === null ||
+      tlxTrad === null ||
+      tlxChat === null ||
+      sdtTrad.autonomy === null ||
+      sdtChat.autonomy === null ||
+      sdtTrad.competence === null ||
+      sdtChat.competence === null ||
+      sdtTrad.performanceSatisfaction === null ||
+      sdtChat.performanceSatisfaction === null ||
+      sdtTrad.systemSatisfaction === null ||
+      sdtChat.systemSatisfaction === null
+    ) {
+      continue;
+    }
+
+    rows.push({
+      user_id: userId,
+      SUS_trad: susTrad,
+      SUS_chat: susChat,
+      TLX_trad: tlxTrad,
+      TLX_chat: tlxChat,
+      autonomy_trad: sdtTrad.autonomy,
+      autonomy_chat: sdtChat.autonomy,
+      competence_trad: sdtTrad.competence,
+      competence_chat: sdtChat.competence,
+      performanceSatisfaction_trad: sdtTrad.performanceSatisfaction,
+      performanceSatisfaction_chat: sdtChat.performanceSatisfaction,
+      systemSatisfaction_trad: sdtTrad.systemSatisfaction,
+      systemSatisfaction_chat: sdtChat.systemSatisfaction,
+    });
+  }
+
+  return rows;
+}
+
+// ============================================================================
+// Paired Task Time Data (for H4 — Behavioral Efficiency)
+// ============================================================================
+
+export type PairedTaskTimeRow = {
+  user_id: string;
+  time_trad_ms: number;
+  time_chat_ms: number;
+};
+
+const ONE_HOUR_MS = 60 * 60 * 1000;
+
+/**
+ * Build paired task completion time data for within-subject analysis (H4).
+ * For each user with both system sessions, computes mean duration per system
+ * across completed tasks. Excludes durations > 1 hour and requires started_at/completed_at.
+ * Only includes users with at least one valid task duration per system.
+ * Note: caller should pass an already-filtered payload (e.g. completed users only).
+ */
+export function buildPairedTaskTimeData(
+  payload: AnalysisPayload,
+): PairedTaskTimeRow[] {
+  const { task_sessions, task_progress } = payload;
+
+  type UserSessions = Partial<{
+    traditional: TaskSessionRow;
+    chat_agent: TaskSessionRow;
+  }>;
+  const sessionsByUser = new Map<string, UserSessions>();
+
+  for (const session of task_sessions) {
+    const existing: UserSessions = sessionsByUser.get(session.user_id) ?? {};
+    if (session.system_type === "traditional") {
+      existing.traditional = session;
+    } else if (session.system_type === "chat_agent") {
+      existing.chat_agent = session;
+    }
+    sessionsByUser.set(session.user_id, existing);
+  }
+
+  const rows: PairedTaskTimeRow[] = [];
+
+  for (const [userId, sessions] of sessionsByUser) {
+    const tradSession = sessions.traditional;
+    const chatSession = sessions.chat_agent;
+
+    if (!tradSession || !chatSession) continue;
+
+    const computeMeanDuration = (sessionId: string): number | null => {
+      const durations: number[] = [];
+      for (const progress of task_progress) {
+        if (
+          progress.session_id !== sessionId ||
+          progress.status !== "completed" ||
+          !progress.started_at ||
+          !progress.completed_at
+        ) {
+          continue;
+        }
+        const startedAt = new Date(progress.started_at).getTime();
+        const completedAt = new Date(progress.completed_at).getTime();
+        const duration = completedAt - startedAt;
+        if (duration > 0 && duration <= ONE_HOUR_MS) {
+          durations.push(duration);
+        }
+      }
+      if (durations.length === 0) return null;
+      return durations.reduce((sum, d) => sum + d, 0) / durations.length;
+    };
+
+    const timeTrad = computeMeanDuration(tradSession.id);
+    const timeChat = computeMeanDuration(chatSession.id);
+
+    if (timeTrad === null || timeChat === null) continue;
+
+    rows.push({
+      user_id: userId,
+      time_trad_ms: timeTrad,
+      time_chat_ms: timeChat,
+    });
+  }
+
+  return rows;
+}
+
+// ============================================================================
 // Preference Questions (Interview Responses)
 // ============================================================================
 
@@ -677,10 +946,7 @@ export function calculatePreferenceResponses(payload: AnalysisPayload) {
 export function filterPayloadToCompletedUsers(
   payload: AnalysisPayload,
 ): AnalysisPayload {
-  // Get set of user IDs who have interview responses
-  const completedUserIds = new Set(
-    payload.task_interview_responses.map((r) => r.user_id),
-  );
+  const completedUserIds = getCompletedUserIds(payload.task_interview_responses);
 
   // Filter profiles
   const filteredProfiles = payload.profiles.filter((p) =>

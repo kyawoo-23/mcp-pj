@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState, useEffect, useTransition } from "react";
+import Link from "next/link";
 import { useRouter, useSearchParams, usePathname } from "next/navigation";
 import type { AnalysisPayload } from "@/lib/types";
 import {
@@ -30,7 +31,7 @@ import {
   DemographicFilterBar,
   type DemographicFilterValue,
 } from "@/components/analysis/demographic-filter-bar";
-import { CircleCheck, Database, Info } from "lucide-react";
+import { CircleCheck, Database, Info, ArrowRight } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import {
   Popover,
@@ -78,6 +79,25 @@ function DashboardContent({ payload }: { payload: AnalysisPayload }) {
         <h2 className='text-2xl font-semibold mb-4'>Survey Results</h2>
         <SurveyScoresCharts surveyScores={surveyScores} />
       </section>
+
+      {/* Link to Paired Statistics page */}
+      {/* <section className='mb-12'>
+        <Link
+          href='/statistics'
+          className='flex items-center justify-between rounded-lg border bg-card p-6 shadow-sm hover:bg-accent/50 transition-colors group'
+        >
+          <div>
+            <h2 className='text-xl font-semibold'>
+              Paired Statistical Analysis
+            </h2>
+            <p className='text-sm text-muted-foreground mt-1'>
+              Hypothesis testing, paired t-tests, and effect sizes for completed
+              participants
+            </p>
+          </div>
+          <ArrowRight className='h-5 w-5 text-muted-foreground group-hover:text-foreground transition-colors' />
+        </Link>
+      </section> */}
 
       {/* Preference Questions */}
       <section className='mb-12'>
@@ -136,11 +156,7 @@ export function AnalysisClient({
     setActiveTab(value);
     const params = new URLSearchParams(searchParams.toString());
     params.set("tab", value);
-    window.history.replaceState(
-      null,
-      "",
-      `${pathname}?${params.toString()}`,
-    );
+    window.history.replaceState(null, "", `${pathname}?${params.toString()}`);
   };
 
   const filteredData = useMemo(
@@ -212,7 +228,9 @@ export function AnalysisClient({
           filters={demographicFilters}
           onFiltersChange={setDemographicFilters}
           filteredCount={
-            demographicFilters.length > 0 ? effectivePayload.profiles.length : undefined
+            demographicFilters.length > 0
+              ? effectivePayload.profiles.length
+              : undefined
           }
           effectivePayload={effectivePayload}
           activeTab={activeTab as "all" | "completed"}
