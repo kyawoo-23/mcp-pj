@@ -146,7 +146,7 @@ export function AnalysisClient({
   const [isPending, startTransition] = useTransition();
 
   // Sync tab from URL on mount and when URL changes (e.g. back/forward)
-  const tabFromUrl = searchParams.get("tab") || "all";
+  const tabFromUrl = searchParams.get("tab") || "completed";
   const [activeTab, setActiveTab] = useState(tabFromUrl);
   useEffect(() => {
     setActiveTab(tabFromUrl);
@@ -244,19 +244,6 @@ export function AnalysisClient({
       >
         <TabsList className='grid w-full grid-cols-2 h-12'>
           <TabsTrigger
-            value='all'
-            className='gap-2 text-base py-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground group'
-          >
-            <Database className='w-4 h-4 hidden md:block' />
-            <span className='text-sm md:text-base'>ALL DATA</span>
-            <Badge
-              variant='secondary'
-              className='ml-1 px-1.5 py-0 text-[10px] h-4 min-w-5 justify-center transition-colors group-data-[state=active]:bg-primary-foreground/20 group-data-[state=active]:text-primary-foreground'
-            >
-              {metrics.totalUsers}
-            </Badge>
-          </TabsTrigger>
-          <TabsTrigger
             value='completed'
             className='gap-2 text-base py-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground group'
           >
@@ -269,11 +256,24 @@ export function AnalysisClient({
               {metrics.completedAllTasks}
             </Badge>
           </TabsTrigger>
+          <TabsTrigger
+            value='all'
+            className='gap-2 text-base py-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground group'
+          >
+            <Database className='w-4 h-4 hidden md:block' />
+            <span className='text-sm md:text-base'>ALL DATA</span>
+            <Badge
+              variant='secondary'
+              className='ml-1 px-1.5 py-0 text-[10px] h-4 min-w-5 justify-center transition-colors group-data-[state=active]:bg-primary-foreground/20 group-data-[state=active]:text-primary-foreground'
+            >
+              {metrics.totalUsers}
+            </Badge>
+          </TabsTrigger>
         </TabsList>
-        <TabsContent value='all' className='mt-8'>
+        <TabsContent value='completed' className='mt-8'>
           <DashboardContent payload={effectivePayload} />
         </TabsContent>
-        <TabsContent value='completed' className='mt-8'>
+        <TabsContent value='all' className='mt-8'>
           <DashboardContent payload={effectivePayload} />
         </TabsContent>
       </Tabs>
