@@ -29,7 +29,7 @@ export function WorkflowDiagram() {
                 </div>
               </div>
               <Image
-                src='/Project Plan.jpg'
+                src='/Project Plan.png'
                 alt='Diagram showing traditional websites and AI chat assistant both connected to the same system'
                 width={1200}
                 height={800}
@@ -41,7 +41,7 @@ export function WorkflowDiagram() {
           <DialogContent className='max-w-7xl w-[98vw] max-h-[98vh] p-0 border-none bg-transparent shadow-none sm:max-w-7xl'>
             <div className='relative w-full h-full flex items-center justify-center p-2 md:p-4'>
               <Image
-                src='/Project Plan.jpg'
+                src='/Project Plan.png'
                 alt='Workflow Diagram Fullscreen'
                 width={2000}
                 height={1500}
