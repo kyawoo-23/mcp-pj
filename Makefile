@@ -20,7 +20,7 @@ install:
 	cd uni-booking && pnpm install
 	cd uni-registration && pnpm install
 	cd home && pnpm install
-	cd mcp-server && pnpm install
+	cd mcp-server && bun install
 
 # Run all projects in parallel
 dev:
@@ -41,7 +41,7 @@ home:
 	cd home && pnpm run dev
 
 mcp-server:
-	cd mcp-server && pnpm run dev
+	cd mcp-server && bun run dev
 
 edge-functions:
 	supabase functions serve 

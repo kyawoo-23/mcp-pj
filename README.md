@@ -51,15 +51,13 @@ make setup
 
 2. **Create environment files**
 
-Copy `.env.example` → `.env.local` for each app:
+`make setup` will create env files for you (only if they don’t already exist):
 
-```bash
-cp chat-agent/.env.example chat-agent/.env.local
-cp uni-booking/.env.example uni-booking/.env.local
-cp uni-registration/.env.example uni-registration/.env.local
-cp home/.env.example home/.env.local
-cp mcp-server/.env.example mcp-server/.env
-```
+- `chat-agent/.env.local`
+- `uni-booking/.env.local`
+- `uni-registration/.env.local`
+- `home/.env.local`
+- `mcp-server/.env`
 
 Then fill in the values (details below).
 

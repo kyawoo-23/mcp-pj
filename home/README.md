@@ -1,24 +1,32 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+This is the **Home / Research UI** for the MCP research prototype. It hosts the landing/research pages (survey, analysis, etc.) and uses the shared Supabase backend.
 
 ## Getting Started
 
-First, run the development server:
+### 1) Create `.env.local`
+
+Copy the template:
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+cp .env.example .env.local
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Then fill the variables below.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### 2) Run the dev server
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+From this folder:
+
+```bash
+pnpm dev
+```
+
+By default this app runs at `http://localhost:4003` (see `package.json`).
+
+## Environment variables (`.env.example`)
+
+- **`NEXT_PUBLIC_SUPABASE_URL` / `NEXT_PUBLIC_SUPABASE_ANON_KEY`**: Supabase client config used by the app (browser-safe anon key). For local values, run `supabase status` from the repo root.
+- **`NEXT_PUBLIC_SITE_URL`**: Used for server-side URL construction in some utilities (safe to set for local).
+- **`NEXT_PUBLIC_DEV_MODE`**: Used by some UI logic to prefer local URLs (e.g. link to the local survey path).
 
 ## Learn More
 
