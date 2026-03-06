@@ -1,7 +1,18 @@
-.PHONY: all dev install chat-agent uni-booking uni-registration home mcp-server
+.PHONY: all dev install setup env-init chat-agent uni-booking uni-registration home mcp-server edge-functions db-start db-stop db-status db-reset db-gen
 
 # Default target
 all: dev
+
+# Bootstrap local development
+setup: env-init install db-start db-reset db-gen
+
+# Initialize local env files from templates (non-destructive)
+env-init:
+	@test -f chat-agent/.env.local || cp chat-agent/.env.example chat-agent/.env.local
+	@test -f uni-booking/.env.local || cp uni-booking/.env.example uni-booking/.env.local
+	@test -f uni-registration/.env.local || cp uni-registration/.env.example uni-registration/.env.local
+	@test -f home/.env.local || cp home/.env.example home/.env.local
+	@test -f mcp-server/.env || cp mcp-server/.env.example mcp-server/.env
 
 # Install dependencies for all projects
 install:
@@ -36,6 +47,15 @@ edge-functions:
 	supabase functions serve 
 
 # Database commands
+db-start:
+	supabase start
+
+db-stop:
+	supabase stop
+
+db-status:
+	supabase status
+
 db-reset:
 	supabase db reset
 
