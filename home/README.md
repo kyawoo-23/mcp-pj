@@ -1,4 +1,7 @@
-This is the **Home / Research UI** for the MCP research prototype. It hosts the landing/research pages (survey, analysis, etc.) and uses the shared Supabase backend.
+This is the **Home / Research UI** for the MCP research prototype  
+**“Comparing Intent-Driven and Interface-Driven Interaction: An Empirical Study of Traditional UI and Conversational AI Using the Model Context Protocol (MCP)”**.
+
+It hosts the landing and research pages used in the experiment (pre-task demographics, post-task SUS / SDT / NASA Raw-TLX surveys, and comparative preference questions) and uses the shared Supabase backend for storing interaction logs and questionnaire responses.
 
 ## Getting Started
 

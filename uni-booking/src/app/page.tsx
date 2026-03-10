@@ -12,11 +12,13 @@ export default function Home() {
     <div className='container mx-auto px-4 py-16'>
       <div className='mx-auto max-w-4xl text-center'>
         <h1 className='text-4xl font-bold tracking-tight sm:text-5xl md:text-6xl'>
-          University Facility Booking
+          Traditional Facility Booking Interface
         </h1>
         <p className='mt-6 text-lg text-balance leading-8 text-muted-foreground'>
-          Easily browse, book, and manage university facilities. Find the
-          perfect space for your study sessions, meetings, or events.
+          This app is the traditional graphical user interface for browsing,
+          booking, and managing university facilities in the MCP research
+          prototype, used to compare interface-driven workflows with
+          MCP-enabled conversational AI.
         </p>
         <HeroButtons />
       </div>

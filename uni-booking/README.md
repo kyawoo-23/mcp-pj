@@ -1,4 +1,12 @@
-This is the **Traditional UI (Facility Booking)** app for the MCP research prototype. It provides a standard GUI workflow for facility booking, backed by the shared Supabase database.
+This is the **Traditional UI (Facility Booking)** app for the MCP research prototype  
+**“Comparing Intent-Driven and Interface-Driven Interaction: An Empirical Study of Traditional UI and Conversational AI Using the Model Context Protocol (MCP)”**.
+
+It implements the **interface-driven** facility booking workflow used in the experiment, where participants:
+
+- Book a facility room
+- Cancel a facility booking
+
+The app uses standard GUI elements (navigation menus, forms, buttons) and shares the same Supabase backend as the conversational MCP-based chat agent.
 
 ## Getting Started
 

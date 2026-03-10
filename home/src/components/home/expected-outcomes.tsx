@@ -3,27 +3,27 @@ import { BarChart3, Cpu, FileText, Users } from "lucide-react";
 const outcomes = [
   {
     icon: BarChart3,
-    title: "Real User Feedback",
+    title: "Empirical Comparison",
     description:
-      "Understanding which approach people prefer and which helps them complete tasks more easily.",
+      "Controlled comparison of MCP-based conversational interaction and traditional web interfaces.",
   },
   {
     icon: Cpu,
-    title: "Working Examples",
+    title: "Prototype System",
     description:
-      "Both approaches are fully functional, so you can try them out and see which feels better to you.",
+      "A system where you can complete the same tasks through either menus and forms or natural language.",
   },
   {
     icon: FileText,
-    title: "Better Design Guidelines",
+    title: "Hybrid Design Insights",
     description:
-      "Learning what makes AI chat assistants helpful and when traditional websites might work better.",
+      "How conversational AI and traditional interfaces can coexist—and when each works best.",
   },
   {
     icon: Users,
-    title: "Help Shape the Future",
+    title: "SUS, SDT, NASA-TLX",
     description:
-      "Your participation helps us understand how people want to interact with websites and AI assistants.",
+      "Usability, perceived autonomy and competence, and cognitive workload.",
   },
 ];
 
@@ -33,15 +33,14 @@ export function ExpectedOutcomes() {
       <div className='max-w-6xl mx-auto'>
         <div className='text-center mb-16'>
           <span className='text-sm md:text-base font-semibold tracking-wide uppercase text-foreground/80 mb-4 block'>
-            What We Hope to Learn
+            Study Contributions
           </span>
           <h2 className='text-3xl md:text-4xl font-medium tracking-tight mb-4'>
-            What This Study Will Tell Us
+            Main Contributions
           </h2>
           <p className='text-foreground/90 max-w-2xl mx-auto text-base'>
-            By comparing these two approaches, we hope to understand which way
-            of using websites feels better and helps people get things done more
-            easily.
+            Empirical insights into how conversational AI and traditional
+            interfaces may coexist in future hybrid interaction environments.
           </p>
         </div>
 

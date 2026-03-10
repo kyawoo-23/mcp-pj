@@ -11,18 +11,22 @@ import { ExpectedOutcomes } from "@/components/home/expected-outcomes";
 import { Footer } from "@/components/home/footer";
 
 export const metadata: Metadata = {
-  title: "Research | Traditional Web Portals vs AI Chat Assistants",
+  title:
+    "Comparing Intent-Driven and Interface-Driven Interaction: Traditional UI vs Conversational AI with MCP",
   description:
-    "Participate in our user experience research study comparing traditional web portals with conversational AI interfaces for university facility booking and course registration. Help us understand which approach works better.",
+    "Participate in the user study behind “Comparing Intent-Driven and Interface-Driven Interaction”, evaluating traditional graphical user interfaces versus MCP-enabled conversational AI for university facility booking and course registration.",
   keywords: [
+    "Comparing Intent-Driven and Interface-Driven Interaction",
+    "Traditional UI vs Conversational AI",
+    "Model Context Protocol",
+    "MCP conversational interface",
+    "intent-driven interaction",
+    "interface-driven interaction",
     "user experience research",
-    "AI chat interface",
-    "conversational AI",
-    "university portal",
+    "human-computer interaction",
     "facility booking",
     "course registration",
     "UX study",
-    "human-computer interaction",
   ],
   authors: [{ name: "Kyaw Kyaw Oo" }],
   creator: "Kyaw Kyaw Oo",
@@ -36,9 +40,10 @@ export const metadata: Metadata = {
     canonical: "/",
   },
   openGraph: {
-    title: "Research | Traditional Web Portals vs AI Chat Assistants",
+    title:
+      "Comparing Intent-Driven and Interface-Driven Interaction: Traditional UI vs Conversational AI with MCP",
     description:
-      "Participate in our user experience research study comparing traditional web portals with AI chat assistants for university tasks.",
+      "Landing page for the user study comparing traditional graphical interfaces with MCP-enabled conversational AI for university tasks.",
     url: "/",
     siteName: "Research Study",
     locale: "en_US",
@@ -48,15 +53,16 @@ export const metadata: Metadata = {
         url: "/og-image.jpg",
         width: 1200,
         height: 630,
-        alt: "Research - Traditional Web Portals vs AI Chat Assistants",
+        alt: "Comparing Intent-Driven and Interface-Driven Interaction (MCP study)",
       },
     ],
   },
   twitter: {
     card: "summary_large_image",
-    title: "Research | Traditional Web Portals vs AI Chat Assistants",
+    title:
+      "Comparing Intent-Driven and Interface-Driven Interaction: Traditional UI vs Conversational AI with MCP",
     description:
-      "Participate in our user experience research study comparing traditional web portals with AI chat assistants.",
+      "Participate in the user study comparing traditional graphical interfaces with MCP-enabled conversational AI for university services.",
     images: ["/og-image.jpg"],
   },
   robots: {

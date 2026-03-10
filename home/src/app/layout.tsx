@@ -16,9 +16,10 @@ const _geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://mcp-project.app"),
-  title: "MCP Research | Traditional Web Portals vs Chat Interfaces",
+  title:
+    "Comparing Intent-Driven and Interface-Driven Interaction: An Empirical Study of Traditional UI and Conversational AI Using the Model Context Protocol (MCP)",
   description:
-    "Research comparing traditional web portals with MCP-powered conversational interfaces for university facility booking and course registration",
+    "Experimental platform for the study “Comparing Intent-Driven and Interface-Driven Interaction”, evaluating traditional UIs versus MCP-enabled conversational AI for university course registration and facility booking.",
   icons: {
     icon: [
       {
@@ -28,9 +29,10 @@ export const metadata: Metadata = {
     ],
   },
   openGraph: {
-    title: "MCP Research | Traditional Web Portals vs Chat Interfaces",
+    title:
+      "Comparing Intent-Driven and Interface-Driven Interaction: An Empirical Study of Traditional UI and Conversational AI Using the Model Context Protocol (MCP)",
     description:
-      "Research comparing traditional web portals with MCP-powered conversational interfaces for university facility booking and course registration",
+      "Experimental platform and system architecture for comparing traditional graphical user interfaces with MCP-enabled conversational AI for university services.",
     url: "/",
     siteName: "MCP Research",
     locale: "en_US",
@@ -40,15 +42,16 @@ export const metadata: Metadata = {
         url: "/og-image.jpg",
         width: 1200,
         height: 630,
-        alt: "MCP Research",
+        alt: "Comparing Intent-Driven and Interface-Driven Interaction (MCP study)",
       },
     ],
   },
   twitter: {
     card: "summary_large_image",
-    title: "MCP Research | Traditional Web Portals vs Chat Interfaces",
+    title:
+      "Comparing Intent-Driven and Interface-Driven Interaction: Traditional UI vs Conversational AI with MCP",
     description:
-      "Research comparing traditional web portals with MCP-powered conversational interfaces for university facility booking and course registration",
+      "Experimental platform comparing traditional graphical interfaces with MCP-enabled conversational AI for university course registration and facility booking.",
     images: ["/og-image.jpg"],
   },
   alternates: {

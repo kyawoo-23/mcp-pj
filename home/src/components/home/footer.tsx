@@ -7,24 +7,37 @@ import {
 
 export function Footer() {
   const links = [
-    { label: "uni-booking", url: getUniBookingBaseUrl() },
-    { label: "uni-registration", url: getUniRegistrationBaseUrl() },
+    { label: "booking", url: getUniBookingBaseUrl() },
+    { label: "registration", url: getUniRegistrationBaseUrl() },
     { label: "chat-agent", url: getChatAgentBaseUrl() },
   ];
 
   return (
-    <footer className='py-12 px-6 bg-foreground text-primary-foreground'>
+    <footer className='py-12 px-6 bg-foreground text-primary-foreground border-t border-primary-foreground/15'>
       <div className='max-w-6xl mx-auto'>
         <div className='flex flex-col md:flex-row justify-between items-start md:items-center gap-8'>
           <div>
-            <h3 className='font-semibold text-lg mb-2'>Website Design Study</h3>
-            <p className='text-base text-primary-foreground/85 max-w-md'>
-              Comparing traditional websites with AI chat assistants to
-              understand which approach works better for users.
+            <h3 className='font-semibold text-lg mb-2 text-balance'>
+              Comparing Intent-Driven and Interface-Driven Interaction
+            </h3>
+            <p className='text-sm md:text-base text-primary-foreground/85 max-w-md leading-relaxed'>
+              Part of a research project at Chulalongkorn University comparing
+              traditional web interfaces with MCP-based conversational AI.
+              Conducted by{" "}
+              <Link
+                href='https://kko-portfolio.vercel.app/'
+                target='_blank'
+                rel='noopener noreferrer'
+                className='text-primary-foreground hover:text-primary-foreground transition-colors'
+              >
+                Kyaw Kyaw Oo
+              </Link>{" "}
+              under the supervision of Dr. Arthorn Luangsodsai and Dr.
+              Pattarasinee Bhattarakosol.
             </p>
           </div>
 
-          <div className='flex flex-col sm:flex-row gap-6 md:gap-12'>
+          <div className='flex flex-col sm:flex-row gap-6 md:gap-10'>
             <div>
               <p className='text-xs md:text-sm uppercase tracking-wide text-primary-foreground/80 mb-3 font-semibold'>
                 Projects
@@ -36,13 +49,14 @@ export function Footer() {
                     href={link.url}
                     target='_blank'
                     rel='noopener noreferrer'
-                    className='text-base text-primary-foreground/85 hover:text-primary-foreground transition-colors font-medium'
+                    className='text-sm md:text-base text-primary-foreground/85 hover:text-primary-foreground transition-colors'
                   >
                     {link.label}
                   </a>
                 ))}
               </div>
             </div>
+
             <div>
               <p className='text-xs md:text-sm uppercase tracking-wide text-primary-foreground/80 mb-3 font-semibold'>
                 Participate
@@ -50,12 +64,13 @@ export function Footer() {
               <div className='flex flex-col gap-2'>
                 <Link
                   href='/survey'
-                  className='text-base text-primary-foreground/85 hover:text-primary-foreground transition-colors font-medium'
+                  className='text-sm md:text-base text-primary-foreground/85 hover:text-primary-foreground transition-colors font-medium'
                 >
-                  Take the Survey
+                  Take the survey
                 </Link>
               </div>
             </div>
+
             <div>
               <p className='text-xs md:text-sm uppercase tracking-wide text-primary-foreground/80 mb-3 font-semibold'>
                 Resources
@@ -65,7 +80,7 @@ export function Footer() {
                   href='https://ai-sdk.dev/'
                   target='_blank'
                   rel='noopener noreferrer'
-                  className='text-base text-primary-foreground/85 hover:text-primary-foreground transition-colors font-medium'
+                  className='text-sm md:text-base text-primary-foreground/85 hover:text-primary-foreground transition-colors'
                 >
                   AI SDK
                 </Link>
@@ -73,39 +88,49 @@ export function Footer() {
                   href='https://modelcontextprotocol.io'
                   target='_blank'
                   rel='noopener noreferrer'
-                  className='text-base text-primary-foreground/85 hover:text-primary-foreground transition-colors font-medium'
+                  className='text-sm md:text-base text-primary-foreground/85 hover:text-primary-foreground transition-colors'
                 >
-                  MCP Documentation
+                  MCP docs
                 </Link>
                 <Link
                   href='https://supabase.com'
                   target='_blank'
                   rel='noopener noreferrer'
-                  className='text-base text-primary-foreground/85 hover:text-primary-foreground transition-colors font-medium'
+                  className='text-sm md:text-base text-primary-foreground/85 hover:text-primary-foreground transition-colors'
                 >
                   Supabase
                 </Link>
+                <Link
+                  href='https://github.com/kyawoo-23/mcp-pj'
+                  target='_blank'
+                  rel='noopener noreferrer'
+                  className='text-sm md:text-base text-primary-foreground/85 hover:text-primary-foreground transition-colors'
+                >
+                  GitHub
+                </Link>
               </div>
             </div>
+
             <div>
               <p className='text-xs md:text-sm uppercase tracking-wide text-primary-foreground/80 mb-3 font-semibold'>
                 Contact
               </p>
               <div className='flex flex-col gap-2'>
                 <a
-                  href='mailto:6878035423@student.chula.ac.th'
-                  className='text-base text-primary-foreground/85 hover:text-primary-foreground transition-colors font-medium'
+                  href='mailto:kyawkyawjek@gmail.com'
+                  className='text-sm md:text-base text-primary-foreground/85 hover:text-primary-foreground transition-colors'
                 >
-                  6878035423@student.chula.ac.th
+                  kyawkyawjek@gmail.com
                 </a>
               </div>
             </div>
           </div>
         </div>
 
-        <div className='mt-12 pt-8 border-t border-primary-foreground/20'>
-          <p className='text-base text-primary-foreground/80 text-center font-medium'>
-            User Experience Study: Traditional Websites vs. AI Chat Assistants
+        <div className='mt-10 pt-6 border-t border-primary-foreground/20'>
+          <p className='text-xs md:text-sm text-primary-foreground/80 text-center font-medium'>
+            2026 - Traditional UI vs MCP Conversational System (Chulalongkorn
+            University)
           </p>
         </div>
       </div>

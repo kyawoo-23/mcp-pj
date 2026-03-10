@@ -1,6 +1,7 @@
 {
   "name": "uni-registration",
   "version": "0.1.0",
+  "description": "Traditional GUI course registration app used as the interface-driven condition in the MCP interaction study on traditional UI vs conversational AI.",
   "private": true,
   "scripts": {
     "dev": "next dev --port 4002",

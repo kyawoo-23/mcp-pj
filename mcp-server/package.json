@@ -1,6 +1,7 @@
 {
   "name": "mcp-server",
   "version": "0.1.0",
+  "description": "Model Context Protocol server exposing university tools for the conversational agent in the MCP interaction study on traditional UI vs conversational AI.",
   "type": "module",
   "scripts": {
     "dev": "bun run --watch src/index.ts",

@@ -1,33 +1,33 @@
 const comparisons = [
   {
-    aspect: "Interaction Method",
-    traditional: "Forms & Buttons",
-    mcp: "Natural Language",
+    aspect: "Interface",
+    traditional: "Menus, forms, buttons",
+    mcp: "Chat, natural language",
   },
   {
-    aspect: "Navigation",
-    traditional: "Multi-page, menu-based",
-    mcp: "Single interface",
+    aspect: "Execution",
+    traditional: "Navigate to the page, select options, submit forms",
+    mcp: "Describe your goal; system interprets and executes via MCP",
   },
   {
-    aspect: "Learning Curve",
-    traditional: "Moderate - need to learn the interface",
-    mcp: "Low - just chat naturally",
+    aspect: "Backend",
+    traditional: "REST / GraphQL",
+    mcp: "MCP",
   },
   {
-    aspect: "Task Completion",
-    traditional: "Follow steps one by one",
-    mcp: "AI adapts to what you need",
+    aspect: "Control",
+    traditional: "Higher for general users",
+    mcp: "Higher for advanced users",
   },
   {
-    aspect: "User Control",
-    traditional: "High - you control every step",
-    mcp: "Moderate - AI helps along the way",
+    aspect: "Trust",
+    traditional: "More trusted across users",
+    mcp: "Lower for unsupervised use",
   },
   {
-    aspect: "Accessibility",
-    traditional: "Depends on implementation",
-    mcp: "Text friendly",
+    aspect: "Data",
+    traditional: "Shared database",
+    mcp: "Same database",
   },
 ];
 
@@ -37,13 +37,14 @@ export function ComparisonTable() {
       <div className='max-w-6xl mx-auto'>
         <div className='text-center mb-16'>
           <span className='text-sm md:text-base font-semibold tracking-wide uppercase text-foreground/80 mb-4 block'>
-            Side-by-Side
+            Experimental Systems
           </span>
           <h2 className='text-3xl md:text-4xl font-medium tracking-tight mb-4'>
-            Comparison Overview
+            Traditional UI vs MCP Conversational System
           </h2>
           <p className='text-foreground/90 max-w-2xl mx-auto text-base'>
-            Here&apos;s how the two approaches compare side by side.
+            Both systems share the same backend and business logic, so
+            differences come from how you interact, not what the system does.
           </p>
         </div>
 
@@ -56,10 +57,10 @@ export function ComparisonTable() {
                   Aspect
                 </th>
                 <th className='text-left py-5 px-5 text-base font-semibold text-foreground'>
-                  Traditional Portal
+                  Traditional
                 </th>
                 <th className='text-left py-5 px-5 text-base font-semibold text-foreground'>
-                  AI Chat Assistant
+                  MCP Chat
                 </th>
               </tr>
             </thead>

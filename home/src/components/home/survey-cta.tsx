@@ -13,12 +13,12 @@ export function SurveyCTA() {
               <CheckCircle className='w-10 h-10 text-accent-foreground' />
             </div>
             <h2 className='text-3xl md:text-4xl font-medium tracking-tight mb-4'>
-              Participate in Our UX Study
+              Participate in the Experiment
             </h2>
             <p className='text-lg text-foreground/90 max-w-2xl mx-auto mb-8'>
-              Try out both approaches and share your experience. Your feedback
-              helps us understand which way of using websites works better for
-              real people.
+              Complete the same tasks with both systems. We measure usability,
+              how in control you feel, and cognitive workload using standard
+              scales (SUS, SDT, NASA-TLX).
             </p>
           </div>
 
@@ -32,21 +32,28 @@ export function SurveyCTA() {
                   <span className='text-accent-foreground font-bold text-lg leading-none w-4 shrink-0'>
                     •
                   </span>
+                  <span>Pre-task questionnaire (demographics)</span>
+                </li>
+                <li className='flex items-start gap-3'>
+                  <span className='text-accent-foreground font-bold text-lg leading-none w-4 shrink-0'>
+                    •
+                  </span>
                   <span>
-                    Try both the traditional websites and AI chat assistant
+                    Four tasks: register or drop a course, book or cancel a
+                    facility room
                   </span>
                 </li>
                 <li className='flex items-start gap-3'>
                   <span className='text-accent-foreground font-bold text-lg leading-none w-4 shrink-0'>
                     •
                   </span>
-                  <span>Complete some simple tasks</span>
+                  <span>SUS, SDT, and NASA-TLX after each system</span>
                 </li>
                 <li className='flex items-start gap-3'>
                   <span className='text-accent-foreground font-bold text-lg leading-none w-4 shrink-0'>
                     •
                   </span>
-                  <span>Share your thoughts and preferences</span>
+                  <span>Comparative preference questions</span>
                 </li>
               </ul>
             </div>
@@ -58,19 +65,16 @@ export function SurveyCTA() {
                   <span className='text-accent-foreground font-bold text-lg leading-none w-4 shrink-0'>
                     •
                   </span>
-                  <span>Help shape the future of website design</span>
+                  <span>Contribute to HCI research</span>
                 </li>
                 <li className='flex items-start gap-3'>
                   <span className='text-accent-foreground font-bold text-lg leading-none w-4 shrink-0'>
                     •
                   </span>
-                  <span>Try new AI technology firsthand</span>
-                </li>
-                <li className='flex items-start gap-3'>
-                  <span className='text-accent-foreground font-bold text-lg leading-none w-4 shrink-0'>
-                    •
+                  <span>
+                    Help shape how conversational AI and traditional interfaces
+                    work together in the future
                   </span>
-                  <span>Your opinion matters and makes a difference</span>
                 </li>
               </ul>
             </div>

@@ -8,31 +8,19 @@ import {
 const portals = [
   {
     id: "uni-booking",
-    title: "Facility Booking Portal",
-    description:
-      "Book rooms and facilities by browsing available options, selecting dates, and filling out a booking form.",
+    title: "Facility Booking",
+    description: "Book or cancel facility rooms through menus and forms.",
     icon: Calendar,
     getUrl: getUniBookingBaseUrl,
-    features: [
-      "Browse available facilities",
-      "Search & filter options",
-      "Calendar-based booking",
-      "Booking management dashboard",
-    ],
+    features: ["Book room", "Cancel booking", "Browse facilities", "Calendar"],
   },
   {
     id: "uni-registration",
-    title: "Course Registration Portal",
-    description:
-      "Register for courses by browsing the catalog, selecting classes, and completing registration forms.",
+    title: "Course Registration",
+    description: "Register or drop courses through menus and forms.",
     icon: BookOpen,
     getUrl: getUniRegistrationBaseUrl,
-    features: [
-      "Browse course catalog",
-      "Search & filter courses",
-      "Section selection",
-      "Schedule management",
-    ],
+    features: ["Register", "Drop course", "Browse catalog", "Sections"],
   },
 ];
 
@@ -43,15 +31,15 @@ export function TraditionalPortals() {
         <div className='text-center mb-16'>
           <div className='inline-flex items-center gap-3 px-6 py-3 bg-indigo-500/10 border-2 border-indigo-500/30 rounded-full mb-6'>
             <span className='text-lg md:text-xl font-bold tracking-wide uppercase text-indigo-600 dark:text-indigo-400'>
-              Approach A
+              Traditional GUI
             </span>
           </div>
-          <h2 className='text-3xl md:text-4xl font-medium tracking-tight mb-4'>
-            Traditional Web Portals
+          <h2 className='text-3xl md:text-4xl font-bold tracking-tight mb-4'>
+            Traditional UI System
           </h2>
-          <p className='text-foreground/90 max-w-2xl mx-auto text-base'>
-            The way websites usually work: you click through pages, fill out
-            forms, and follow step-by-step instructions to get things done.
+          <p className='text-foreground/90 max-w-2xl mx-auto text-base text-balance'>
+            Web-based course registration and facility booking using standard
+            navigation menus, forms, and buttons.
           </p>
         </div>
 

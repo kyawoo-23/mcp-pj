@@ -1,6 +1,7 @@
 {
   "name": "home",
   "version": "0.1.0",
+  "description": "Home and research UI hosting surveys, analytics, and results for the MCP interaction study on traditional UI vs conversational AI.",
   "private": true,
   "scripts": {
     "dev": "next dev --port 4003 ",

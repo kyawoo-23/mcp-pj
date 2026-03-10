@@ -1,4 +1,7 @@
-This is the **conversational** part of the MCP research prototype: a Next.js chat UI + an API route that talks to **Google Gemini** and can optionally call tools via an **MCP server**.
+This is the **conversational (intent-driven)** part of the MCP research prototype  
+**“Comparing Intent-Driven and Interface-Driven Interaction: An Empirical Study of Traditional UI and Conversational AI Using the Model Context Protocol (MCP)”**.
+
+It provides a Next.js chat UI and API route that talk to **Google Gemini** and invoke university service tools via an **MCP server**, enabling users to perform the same tasks as the traditional UIs by expressing goals in natural language (e.g., “Book a study room tomorrow at 2 PM” or “Drop CS101 this semester”).
 
 ## Getting Started
 

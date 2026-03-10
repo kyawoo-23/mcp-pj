@@ -9,12 +9,12 @@ export function TechStack() {
             Behind the Scenes
           </span>
           <h2 className='text-3xl md:text-4xl font-medium tracking-tight mb-4'>
-            How We Built This
+            System Design
           </h2>
           <p className='text-foreground/90 max-w-2xl mx-auto text-base'>
-            Both approaches use the same underlying systems, so any differences
-            you experience come from how you interact with them, not from
-            technical differences.
+            Two web applications and a conversational agent share one backend. The
+            same database powers both interaction paths, so we can compare how
+            modality affects experience—not functionality.
           </p>
         </div>
 
@@ -26,16 +26,16 @@ export function TechStack() {
               <div className='inline-flex items-center justify-center w-14 h-14 rounded-full bg-muted mb-4'>
                 <Layers className='w-7 h-7 text-foreground' />
               </div>
-              <h3 className='font-semibold mb-3 text-base'>What You See</h3>
+              <h3 className='font-semibold mb-3 text-base'>Interaction</h3>
               <div className='space-y-2.5 text-base text-foreground/85'>
                 <p className='p-2.5 bg-muted rounded font-medium'>
-                  Booking Website
+                  Facility Booking
                 </p>
                 <p className='p-2.5 bg-muted rounded font-medium'>
-                  Registration Website
+                  Course Registration
                 </p>
                 <p className='p-2.5 bg-muted rounded font-medium'>
-                  AI Chat Assistant
+                  Chat Agent
                 </p>
               </div>
             </div>
@@ -45,16 +45,16 @@ export function TechStack() {
               <div className='inline-flex items-center justify-center w-14 h-14 rounded-full bg-muted mb-4'>
                 <Server className='w-7 h-7 text-foreground' />
               </div>
-              <h3 className='font-semibold mb-3 text-base'>How They Work</h3>
+              <h3 className='font-semibold mb-3 text-base'>Service</h3>
               <div className='space-y-2.5 text-base text-foreground/85'>
                 <p className='p-2.5 bg-muted rounded font-medium'>
-                  Website Functions
+                  REST / GraphQL
                 </p>
                 <p className='p-2.5 bg-muted rounded font-medium'>
-                  AI Assistant Tools
+                  MCP Tool Invocation
                 </p>
                 <p className='p-2.5 bg-muted rounded font-medium'>
-                  Shared Services
+                  Backend
                 </p>
               </div>
             </div>
@@ -64,16 +64,16 @@ export function TechStack() {
               <div className='inline-flex items-center justify-center w-14 h-14 rounded-full bg-muted mb-4'>
                 <Database className='w-7 h-7 text-foreground' />
               </div>
-              <h3 className='font-semibold mb-3 text-base'>Where Data Lives</h3>
+              <h3 className='font-semibold mb-3 text-base'>Data</h3>
               <div className='space-y-2.5 text-base text-foreground/85'>
                 <p className='p-2.5 bg-accent/10 border-2 border-accent/30 rounded text-accent-foreground font-semibold'>
                   Shared Database
                 </p>
                 <p className='p-2.5 bg-muted rounded font-medium'>
-                  Your Information
+                  Task Time & Progress
                 </p>
                 <p className='p-2.5 bg-muted rounded font-medium'>
-                  Secure Storage
+                  Survey & Logs
                 </p>
               </div>
             </div>
@@ -84,28 +84,27 @@ export function TechStack() {
         <div className='grid md:grid-cols-3 gap-6'>
           <div className='p-6 rounded-xl bg-card border-2 border-border'>
             <GitBranch className='w-6 h-6 text-foreground mb-3' />
-            <h3 className='font-semibold mb-2 text-base'>Fair Testing</h3>
+            <h3 className='font-semibold mb-2 text-base'>Functional Equivalence</h3>
             <p className='text-base text-foreground/85'>
-              Both approaches are built separately but use the same data, so we
-              can compare them fairly.
+              Same backend; differences come from modality, not functionality.
             </p>
           </div>
           <div className='p-6 rounded-xl bg-card border-2 border-border'>
             <Database className='w-6 h-6 text-foreground mb-3' />
-            <h3 className='font-semibold mb-2 text-base'>Same Data</h3>
+            <h3 className='font-semibold mb-2 text-base'>Unified Analytics</h3>
             <p className='text-base text-foreground/85'>
-              Both approaches access the same information, so your experience is
-              consistent across both.
+              We record task time, progress, interaction logs, and survey
+              responses so we can compare both systems directly.
             </p>
           </div>
           <div className='p-6 rounded-xl bg-card border-2 border-border'>
             <Server className='w-6 h-6 text-foreground mb-3' />
             <h3 className='font-semibold mb-2 text-base'>
-              Learning from Usage
+              Experimental Platform
             </h3>
             <p className='text-base text-foreground/85'>
-              We track how people use both approaches to understand which works
-              better.
+              Open-source prototype. Within-subject design with counterbalanced
+              order.
             </p>
           </div>
         </div>

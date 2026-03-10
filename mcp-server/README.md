@@ -1,6 +1,9 @@
 # MCP Server (`mcp-server`)
 
-This is the **Model Context Protocol (MCP) server** for the research prototype. It exposes “university services” tools (course registration + facility booking) over an MCP HTTP endpoint.
+This is the **Model Context Protocol (MCP) server** for the research prototype  
+**“Comparing Intent-Driven and Interface-Driven Interaction: An Empirical Study of Traditional UI and Conversational AI Using the Model Context Protocol (MCP)”**.
+
+It exposes “university services” tools (course registration + facility booking) over an MCP HTTP endpoint so that the conversational chat agent can execute the same tasks as the traditional UIs through standardized, intent-driven tool calls.
 
 ## Prerequisites
 

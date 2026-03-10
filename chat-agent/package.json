@@ -1,6 +1,7 @@
 {
   "name": "chat-agent",
   "version": "0.1.0",
+  "description": "MCP-enabled conversational chat agent implementing the intent-driven condition in the MCP interaction study on traditional UI vs conversational AI.",
   "private": true,
   "scripts": {
     "dev": "next dev --port 4000 --inspect",

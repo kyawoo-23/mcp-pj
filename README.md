@@ -1,15 +1,48 @@
-# MCP Research Prototype: Traditional UI vs Conversational AI (MCP)
+## MCP Research Prototype: Traditional UI vs Conversational AI (MCP)
+
+**Experimental platform comparing traditional GUI workflows and MCP-enabled conversational interaction for university course registration and facility booking.**
 
 This repository contains the prototype system and research artifact for the study:
 
-**“An Empirical Comparison of Traditional User Interface and Conversational Artificial Intelligence Using the Model Context Protocol”**
+**“Comparing Intent-Driven and Interface-Driven Interaction: An Empirical Study of Traditional UI and Conversational AI Using the Model Context Protocol (MCP)”**
 
-The project implements **two interaction modalities** for the same task scenarios (course registration + facility booking):
+The project implements **two interaction modalities** for the same task scenarios (course registration + facility booking), mirroring the experimental setup in the paper:
 
 - **Traditional web UIs**: task completion via standard navigation, forms, and buttons
 - **Conversational system**: a chat-based agent that interprets intent and executes actions via **Model Context Protocol (MCP)** tool invocation
 
-Both modalities share the **same Supabase backend** (schema, business logic, and data), enabling controlled comparisons.
+Both modalities share the **same Supabase backend** (schema, business logic, and data), enabling controlled comparisons between **interface-driven** and **intent-driven** interaction.
+
+## Research goals (from the paper)
+
+The study investigates how MCP-enabled conversational systems compare with traditional graphical user interfaces in terms of:
+
+- **Usability** (System Usability Scale, SUS)
+- **Psychological experience** (Self-Determination Theory–based measures of autonomy, competence, and satisfaction)
+- **Cognitive workload** (NASA Raw Task Load Index, NASA Raw-TLX)
+- **User preference and trust** for task-oriented digital services
+
+The main research contributions are:
+
+1. **Empirical comparison** of MCP-based conversational interaction and traditional GUIs under controlled task scenarios.
+2. **Prototype platform** that enables equivalent task execution through both interaction modalities on a shared backend.
+3. **Human-centered design insights** into how conversational AI and traditional interfaces can coexist in hybrid interaction environments.
+
+## Experimental tasks and systems
+
+In the experiment, each participant used both systems (within-subject design) to complete four university-style digital service tasks:
+
+- Register for a course
+- Drop a course
+- Book a facility room
+- Cancel a facility booking
+
+The two experimental systems are:
+
+- **Traditional UI System**: web-based course registration and facility booking apps using standard navigation menus, forms, and buttons.
+- **MCP Conversational System**: a Gemini-powered chat agent where users express intent in natural language and the agent executes actions via MCP tools.
+
+Both systems share the same database and business logic so that any differences in the results come from the **interaction modality**, not the underlying functionality.
 
 ## System workflow diagram
 
@@ -154,21 +187,24 @@ This repo ships with a root [`Makefile`](Makefile) to make local dev repeatable.
 - **Gemini key issues**: ensure `GOOGLE_GENERATIVE_AI_API_KEY` is set in `chat-agent/.env.local`.
 - **Ports already in use**: the apps run on ports `4000–4004` and Supabase uses `23456/34567/56789`. Stop conflicting processes or change ports in each app’s `package.json` scripts.
 
-## Research context (high level)
+## Key findings (summary)
 
-The study evaluates usability and workload differences between traditional GUI workflows and MCP-enabled conversational task execution. Tasks include:
+The full details, analysis, and figures are presented in the associated research paper. At a high level, the empirical results show that:
 
-- Register for a course
-- Drop a course
-- Book a facility room
-- Cancel a facility booking
+- **For the full participant sample (N = 142)**:
+  - The **Traditional UI** achieved higher SUS scores (≈68.9) than the conversational **Chat-Agent** (≈62.7), and produced **lower cognitive workload** on NASA Raw-TLX.
+  - Participants reported higher perceived **autonomy and competence** with the Traditional UI, and expressed **greater trust** in the graphical interface for unsupervised task execution.
+- **For technically proficient participants (N = 18)**:
+  - The pattern reverses for usability: the **Chat-Agent** achieved a higher SUS score (≈74.0) than the Traditional UI (≈62.9), and workload perceptions became more balanced.
+  - Advanced users perceived conversational, intent-driven interaction as offering greater **control and efficiency**, but still reported **higher trust** in the traditional interface for autonomous operation.
+- **Task-based preferences** across both groups favored a **hybrid model**:
+  - Many participants preferred **chat for simple or well-defined tasks**, and **traditional UI for complex tasks** where transparency and step-by-step control are more important.
 
-Measures used include **SUS**, **SDT-derived autonomy/competence**, and **NASA Raw-TLX**.
+Overall, the study suggests that MCP-enabled conversational systems are most effective when they **complement** traditional interfaces rather than replace them, enabling hybrid interaction where users can express intent conversationally while still relying on graphical elements for visibility, confirmation, and fine-grained control.
 
-## About the author
+## Contact
 
-**Kyaw Kyaw Oo**  
+**Author**  
+Kyaw Kyaw Oo  
 Department of Mathematics and Computer Science, Chulalongkorn University (Bangkok, Thailand)  
 Email: `kyawkyawjek@gmail.com`
-
-If you’re using this repo for academic or research purposes, please cite the paper title above (draft).
