@@ -20,6 +20,9 @@ export const metadata: Metadata = {
     "Comparing Intent-Driven and Interface-Driven Interaction: An Empirical Study of Traditional UI and Conversational AI Using the Model Context Protocol (MCP)",
   description:
     "Experimental platform for the study “Comparing Intent-Driven and Interface-Driven Interaction”, evaluating traditional UIs versus MCP-enabled conversational AI for university course registration and facility booking.",
+  verification: {
+    google: "ATO72YinSdQAXDsGxKLb-CxHmql8ozFoAVw17NB2RXg",
+  },
   icons: {
     icon: [
       {
