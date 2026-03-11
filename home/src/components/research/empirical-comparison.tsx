@@ -520,8 +520,10 @@ function PreferenceGroupedBarChart({ data }: { data: EmpiricalData }) {
     };
 
     return data.preferences.map((q) => {
-      const getVal = (responses: any[], label: string) =>
-        responses.find((r) => r.label === label)?.percentage || 0;
+      const getVal = (
+        responses: { label: string; percentage: number }[],
+        label: string,
+      ) => responses.find((r) => r.label === label)?.percentage || 0;
 
       return {
         category: labelMap[q.orderIndex] || q.shortLabel,
@@ -540,11 +542,11 @@ function PreferenceGroupedBarChart({ data }: { data: EmpiricalData }) {
       <CardContent className='p-2 sm:p-6 pb-2'>
         <ChartContainer
           config={prefChartConfig}
-          className='w-full aspect-4/3 sm:aspect-2/1 min-h-[350px]'
+          className='w-full aspect-4/3 sm:aspect-2/1 min-h-[350px] overflow-visible'
         >
           <BarChart
             data={chartData}
-            margin={{ top: 20, right: 0, left: -10, bottom: 25 }}
+            margin={{ top: 20, right: 0, left: -10, bottom: 60 }}
             barGap={4}
           >
             <CartesianGrid vertical={false} strokeDasharray='3 3' />
@@ -713,7 +715,10 @@ export function EmpiricalComparison({ payload }: EmpiricalComparisonProps) {
         <div className='flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6'>
           <div>
             <div className='flex items-center gap-2 mb-2'>
-              <Badge variant='secondary' className='rounded-full px-3 py-1 text-[10px] h-auto uppercase tracking-wider font-semibold bg-primary/10 text-primary border-none'>
+              <Badge
+                variant='secondary'
+                className='rounded-full px-3 py-1 text-[10px] h-auto uppercase tracking-wider font-semibold bg-primary/10 text-primary border-none'
+              >
                 <Sparkles className='w-3 h-3 mr-1' />
                 Research Insights
               </Badge>
@@ -726,11 +731,11 @@ export function EmpiricalComparison({ payload }: EmpiricalComparisonProps) {
             <ResearchDataDialog data={payload} />
           </div>
         </div>
-        
+
         <p className='text-base sm:text-lg text-muted-foreground leading-relaxed max-w-4xl'>
-          This stage of our study compares the traditional graphical interface and the
-          MCP-based conversational system across usability, cognitive workload,
-          psychological experience, and user preference for{" "}
+          This stage of our study compares the traditional graphical interface
+          and the MCP-based conversational system across usability, cognitive
+          workload, psychological experience, and user preference for{" "}
           <span className='text-foreground font-semibold'>
             all completed participants (N={data.allCount})
           </span>{" "}
