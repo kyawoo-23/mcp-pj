@@ -2,6 +2,8 @@
 
 import * as React from "react";
 import * as RechartsPrimitive from "recharts";
+import { Download } from "lucide-react";
+import { toPng } from "html-to-image";
 
 import { cn } from "@/lib/utils";
 
@@ -49,18 +51,75 @@ function ChartContainer({
   const uniqueId = React.useId();
   const chartId = `chart-${id || uniqueId.replace(/:/g, "")}`;
 
+  const chartRef = React.useRef<HTMLDivElement>(null);
+  const handleDownload = React.useCallback(() => {
+    if (!chartRef.current) return;
+
+    // Radar charts have axis labels (PolarAngleAxis, PolarRadiusAxis) that extend
+    // further beyond the chart bounds than bar/donut charts, so they need more padding
+    const isRadarChart =
+      chartRef.current.querySelector(".recharts-polar-grid") != null;
+    const offset = isRadarChart ? 56 : 32; // Safe zone to capture overflowing labels
+    const width = chartRef.current.offsetWidth + offset * 2;
+    const height = chartRef.current.offsetHeight + offset * 2;
+
+    toPng(chartRef.current, {
+      cacheBust: true,
+      backgroundColor: "#ffffff",
+      width,
+      height,
+      style: {
+        width: `${width}px`,
+        height: `${height}px`,
+        padding: `${offset}px`,
+        boxSizing: "border-box", // Ensure padding is included in dimensions to avoid clipping
+        display: "flex",
+        justifyContent: "center",
+        alignItems: "center",
+      },
+      pixelRatio: 2,
+      filter: (node) => {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const el = node as any;
+        if (el?.getAttribute) {
+          return el.getAttribute("data-hide-on-export") !== "true";
+        }
+        return true;
+      },
+    })
+      .then((dataUrl) => {
+        const link = document.createElement("a");
+        link.download = `${chartId}.png`;
+        link.href = dataUrl;
+        link.click();
+      })
+      .catch((err) => {
+        console.error("Failed to export chart", err);
+      });
+  }, [chartId]);
+
   return (
     <ChartContext.Provider value={{ config }}>
       <div
+        ref={chartRef}
         data-slot='chart'
         data-chart={chartId}
         className={cn(
-          "[&_.recharts-cartesian-axis-tick_text]:fill-muted-foreground [&_.recharts-cartesian-grid_line[stroke='#ccc']]:stroke-border/50 [&_.recharts-curve.recharts-tooltip-cursor]:stroke-border [&_.recharts-polar-grid_[stroke='#ccc']]:stroke-border [&_.recharts-radial-bar-background-sector]:fill-muted [&_.recharts-rectangle.recharts-tooltip-cursor]:fill-muted [&_.recharts-reference-line_[stroke='#ccc']]:stroke-border flex aspect-video justify-center text-xs [&_.recharts-dot[stroke='#fff']]:stroke-transparent [&_.recharts-layer]:outline-hidden [&_.recharts-sector]:outline-hidden [&_.recharts-sector[stroke='#fff']]:stroke-transparent [&_.recharts-surface]:outline-hidden",
+          "group relative [&_.recharts-cartesian-axis-tick_text]:fill-muted-foreground [&_.recharts-cartesian-grid_line[stroke='#ccc']]:stroke-border/50 [&_.recharts-curve.recharts-tooltip-cursor]:stroke-border [&_.recharts-polar-grid_[stroke='#ccc']]:stroke-border [&_.recharts-radial-bar-background-sector]:fill-muted [&_.recharts-rectangle.recharts-tooltip-cursor]:fill-muted [&_.recharts-reference-line_[stroke='#ccc']]:stroke-border flex aspect-video items-center justify-center text-xs [&_.recharts-dot[stroke='#fff']]:stroke-transparent [&_.recharts-layer]:outline-hidden [&_.recharts-sector]:outline-hidden [&_.recharts-sector[stroke='#fff']]:stroke-transparent [&_.recharts-surface]:outline-hidden",
           className,
         )}
         {...props}
       >
         <ChartStyle id={chartId} config={config} />
+        <button
+          type='button'
+          onClick={handleDownload}
+          data-hide-on-export='true'
+          className='absolute right-2 top-2 z-10 rounded-md border bg-background/80 p-1.5 opacity-0 backdrop-blur-sm transition-opacity hover:bg-muted group-hover:opacity-100'
+          title='Download chart as PNG'
+        >
+          <Download className='h-4 w-4 text-muted-foreground' />
+        </button>
         <RechartsPrimitive.ResponsiveContainer>
           {children}
         </RechartsPrimitive.ResponsiveContainer>

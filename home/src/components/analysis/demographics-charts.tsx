@@ -106,7 +106,10 @@ export function DemographicsCharts({ demographics }: DemographicsChartsProps) {
             <PieChart>
               <ChartTooltip
                 cursor={false}
-                content={<ChartTooltipContent hideLabel className='min-w-36' />}
+                formatter={(value, name, item) =>
+                  `${name}: ${value} (${item.payload.percentage.toFixed(0)}%)`
+                }
+                content={<ChartTooltipContent hideLabel className='min-w-40' />}
               />
               <Pie
                 data={ageData}
@@ -142,7 +145,10 @@ export function DemographicsCharts({ demographics }: DemographicsChartsProps) {
             <PieChart>
               <ChartTooltip
                 cursor={false}
-                content={<ChartTooltipContent hideLabel className='min-w-36' />}
+                formatter={(value, name, item) =>
+                  `${name}: ${value} (${item.payload.percentage.toFixed(0)}%)`
+                }
+                content={<ChartTooltipContent hideLabel className='min-w-40' />}
               />
               <Pie
                 data={genderData}
@@ -180,7 +186,10 @@ export function DemographicsCharts({ demographics }: DemographicsChartsProps) {
             <PieChart>
               <ChartTooltip
                 cursor={false}
-                content={<ChartTooltipContent hideLabel className='min-w-52' />}
+                formatter={(value, name, item) =>
+                  `${name}: ${value} (${item.payload.percentage.toFixed(0)}%)`
+                }
+                content={<ChartTooltipContent hideLabel className='min-w-40' />}
               />
               <Pie
                 data={techData}
@@ -216,7 +225,10 @@ export function DemographicsCharts({ demographics }: DemographicsChartsProps) {
             <PieChart>
               <ChartTooltip
                 cursor={false}
-                content={<ChartTooltipContent hideLabel className='min-w-52' />}
+                formatter={(value, name, item) =>
+                  `${name}: ${value} (${item.payload.percentage.toFixed(0)}%)`
+                }
+                content={<ChartTooltipContent hideLabel className='min-w-40' />}
               />
               <Pie
                 data={aiData}
