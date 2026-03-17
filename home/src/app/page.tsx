@@ -1,14 +1,49 @@
 import type { Metadata } from "next";
+import dynamic from "next/dynamic";
 import { HeroSection } from "@/components/home/hero-section";
-import { SurveyCTA } from "@/components/home/survey-cta";
-import { ResearchTarget } from "@/components/home/research-target";
-import { TraditionalPortals } from "@/components/home/traditional-portals";
-import { MCPChatAgent } from "@/components/home/mcp-chat-agent";
-import { ComparisonTable } from "@/components/home/comparison-table";
-import { WorkflowDiagram } from "@/components/home/workflow-diagram";
-import { TechStack } from "@/components/home/tech-stack";
-import { ExpectedOutcomes } from "@/components/home/expected-outcomes";
-import { Footer } from "@/components/home/footer";
+import { ScrollToTopClient } from "@/components/home/scroll-to-top-client";
+
+// Lazy load below-the-fold components for better initial load performance
+const ResearchAnalysis = dynamic(
+  () => import("@/components/home/research-analysis").then((m) => m.ResearchAnalysis),
+  { ssr: true }
+);
+const ResearchTarget = dynamic(
+  () => import("@/components/home/research-target").then((m) => m.ResearchTarget),
+  { ssr: true }
+);
+const TraditionalPortals = dynamic(
+  () => import("@/components/home/traditional-portals").then((m) => m.TraditionalPortals),
+  { ssr: true }
+);
+const MCPChatAgent = dynamic(
+  () => import("@/components/home/mcp-chat-agent").then((m) => m.MCPChatAgent),
+  { ssr: true }
+);
+const ComparisonTable = dynamic(
+  () => import("@/components/home/comparison-table").then((m) => m.ComparisonTable),
+  { ssr: true }
+);
+const WorkflowDiagram = dynamic(
+  () => import("@/components/home/workflow-diagram").then((m) => m.WorkflowDiagram),
+  { ssr: true }
+);
+const TechStack = dynamic(
+  () => import("@/components/home/tech-stack").then((m) => m.TechStack),
+  { ssr: true }
+);
+const SurveyCTA = dynamic(
+  () => import("@/components/home/survey-cta").then((m) => m.SurveyCTA),
+  { ssr: true }
+);
+const ExpectedOutcomes = dynamic(
+  () => import("@/components/home/expected-outcomes").then((m) => m.ExpectedOutcomes),
+  { ssr: true }
+);
+const Footer = dynamic(
+  () => import("@/components/home/footer").then((m) => m.Footer),
+  { ssr: true }
+);
 
 export const metadata: Metadata = {
   title:
@@ -35,9 +70,6 @@ export const metadata: Metadata = {
     email: false,
     address: false,
     telephone: false,
-  },
-  alternates: {
-    canonical: "/",
   },
   openGraph: {
     title:
@@ -82,6 +114,7 @@ export default function HomePage() {
   return (
     <main>
       <HeroSection />
+      <ResearchAnalysis />
       <ResearchTarget />
       <TraditionalPortals />
       <MCPChatAgent />
@@ -91,6 +124,7 @@ export default function HomePage() {
       <SurveyCTA />
       <ExpectedOutcomes />
       <Footer />
+      <ScrollToTopClient />
     </main>
   );
 }

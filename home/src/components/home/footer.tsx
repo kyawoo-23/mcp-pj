@@ -13,7 +13,10 @@ export function Footer() {
   ];
 
   return (
-    <footer className='py-12 px-6 bg-foreground text-primary-foreground border-t border-primary-foreground/15'>
+    <footer
+      className='py-12 px-6 bg-foreground text-primary-foreground border-t border-primary-foreground/15'
+      id='footer'
+    >
       <div className='max-w-6xl mx-auto'>
         <div className='flex flex-col md:flex-row justify-between items-start md:items-center gap-8'>
           <div>

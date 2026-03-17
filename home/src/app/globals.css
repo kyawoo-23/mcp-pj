@@ -111,6 +111,62 @@
   animation: scroll-line 2.5s cubic-bezier(0.65, 0, 0.35, 1) infinite;
 }
 
+/* Hero stripe background - uses theme colors (foreground to primary) */
+.hero-stripe-bg {
+  position: relative;
+  background: linear-gradient(90deg, 
+    oklch(0.08 0.02 350) 0%, 
+    oklch(0.25 0.12 350) 50%,
+    oklch(0.45 0.18 350) 100%
+  );
+}
+
+.hero-stripe-bg::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: 
+    repeating-linear-gradient(
+      90deg,
+      transparent 0px,
+      oklch(0.08 0.02 350 / 0.4) 2px,
+      oklch(0.15 0.08 350 / 0.6) 8px,
+      oklch(0.12 0.05 350 / 0.3) 16px,
+      transparent 32px
+    ),
+    repeating-linear-gradient(
+      90deg,
+      transparent 0px,
+      oklch(0.3 0.15 350 / 0.2) 4px,
+      transparent 12px,
+      oklch(0.5 0.18 350 / 0.15) 24px,
+      transparent 48px
+    );
+  opacity: 0.8;
+  pointer-events: none;
+}
+
+/* Double chevron bounce animation */
+@keyframes chevron-bounce {
+  0%, 100% {
+    transform: translateY(0);
+    opacity: 0.6;
+  }
+  50% {
+    transform: translateY(8px);
+    opacity: 1;
+  }
+}
+
+.animate-chevron-bounce {
+  animation: chevron-bounce 2s ease-in-out infinite;
+}
+
+.animate-chevron-bounce-delayed {
+  animation: chevron-bounce 2s ease-in-out infinite;
+  animation-delay: 0.3s;
+}
+
 @theme inline {
   --font-sans: var(--font-outfit);
   --font-mono: "Geist Mono", "Geist Mono Fallback";
