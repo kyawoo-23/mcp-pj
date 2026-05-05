@@ -10,18 +10,22 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { ChatStatus } from "@/lib/types";
+import { THINKING_LABEL } from "@/lib/chat-activity";
 import { ModeToggle } from "@/components/mode-toggle";
 import { cn } from "@/lib/utils";
 
 interface ChatHeaderProps {
   title: string;
   status?: ChatStatus;
+  /** While submitted/streaming: tool-aware text when tools run, else short defaults */
+  busyCaption?: string;
   onMobileMenuToggle: () => void;
 }
 
 export function ChatHeader({
   title,
   status = "ready",
+  busyCaption,
   onMobileMenuToggle,
 }: ChatHeaderProps) {
   return (
@@ -76,9 +80,15 @@ export function ChatHeader({
             </div>
           )}
           {(status === "submitted" || status === "streaming") && (
-            <div className='flex items-center gap-1.5'>
-              <Loader2 className='h-3 w-3 animate-spin' />
-              <span>{status === "submitted" ? "Wait..." : "Typing..."}</span>
+            <div
+              className='flex min-w-0 max-w-[min(52vw,13rem)] sm:max-w-[16rem] items-center gap-1.5'
+              role='status'
+              aria-live='polite'
+              aria-busy='true'
+              title={busyCaption}
+            >
+              <Loader2 className='h-3 w-3 shrink-0 animate-spin' aria-hidden />
+              <span className='truncate'>{busyCaption ?? THINKING_LABEL}</span>
             </div>
           )}
           {status === "error" && (
@@ -110,7 +120,7 @@ export function ChatHeader({
                 <p>
                   A{" "}
                   <strong>
-                    free{" "}
+                    limited{" "}
                     {process.env.NEXT_PUBLIC_GOOGLE_GENERATIVE_MODEL_ID ||
                       "gemini-2.5-flash"}{" "}
                     model

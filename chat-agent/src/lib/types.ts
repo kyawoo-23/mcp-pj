@@ -104,6 +104,8 @@ export interface AITextPart {
 export interface AIToolPart {
   type: string;
   toolCallId: string;
+  /** Present when `type` is `dynamic-tool` (e.g. MCP tools from `@ai-sdk/mcp`). */
+  toolName?: string;
   state: string;
   input?: unknown;
   output?: unknown;

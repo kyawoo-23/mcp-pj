@@ -18,7 +18,6 @@ import type {
   ToolInvocationPart,
   AIMessagePart,
   AITextPart,
-  AIToolPart,
   MessageRow,
   ConversationWithCount,
 } from "@/lib/types";
@@ -27,6 +26,8 @@ import {
   getConversationWithMessagesAction,
 } from "@/app/actions/conversations";
 import { toast } from "sonner";
+import { getToolName, isToolUIPart } from "ai";
+import { getBusyCaptionFromChatMessages } from "@/lib/chat-activity";
 
 interface ChatPageClientProps {
   initialConversations: ConversationWithCount[];
@@ -286,19 +287,25 @@ export function ChatPageClient({
         if (p.type === "text") {
           return { type: "text", text: (p as AITextPart).text } as TextPart;
         }
-        // Handle tool parts - they have type like "tool-search_courses"
-        if (p.type.startsWith("tool-")) {
-          const toolName = p.type.replace("tool-", "");
-          const toolPart = p as AIToolPart;
+        // Static tools: type `tool-{name}`; MCP / dynamic tools: type `dynamic-tool` + toolName
+        const uiPart = p as Parameters<typeof isToolUIPart>[0];
+        if (isToolUIPart(uiPart)) {
+          const toolName = getToolName(uiPart);
+          const input =
+            typeof uiPart.input === "object" &&
+            uiPart.input !== null &&
+            !Array.isArray(uiPart.input)
+              ? (uiPart.input as Record<string, unknown>)
+              : {};
           return {
             type: "tool-invocation",
-            toolCallId: toolPart.toolCallId,
-            toolName: toolName,
-            input: toolPart.input || {},
-            state: toolPart.state,
-            output: toolPart.output,
-            errorText: toolPart.errorText,
-          } as ToolInvocationPart;
+            toolCallId: uiPart.toolCallId,
+            toolName,
+            input,
+            state: uiPart.state as ToolInvocationPart["state"],
+            output: uiPart.output,
+            errorText: uiPart.errorText,
+          };
         }
         return null;
       })
@@ -327,6 +334,11 @@ export function ChatPageClient({
     (c) => c.messages && c.messages[0] && c.messages[0].count === 0,
   );
 
+  const busyCaption = React.useMemo(
+    () => getBusyCaptionFromChatMessages(messages, status),
+    [messages, status],
+  );
+
   return (
     <ChatLayout
       sidebarOpen={sidebarOpen}
@@ -349,6 +361,7 @@ export function ChatPageClient({
         title={activeConversation?.title || "New Chat"}
         onMobileMenuToggle={() => setSidebarOpen(true)}
         status={status}
+        busyCaption={busyCaption}
       />
 
       <div className='flex flex-1 flex-col min-h-0 overflow-hidden'>
@@ -360,6 +373,7 @@ export function ChatPageClient({
           }}
           isLoading={isLoading}
           status={status}
+          pendingCaption={busyCaption}
         />
 
         <ChatInput
