@@ -2,7 +2,11 @@ import * as React from "react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { ChatMessage } from "./chat-message";
 import { WelcomeMessage } from "./welcome-message";
-import type { ChatMessageData, ChatStatus } from "@/lib/types";
+import type {
+  ChatMessageData,
+  ChatResultActionHandler,
+  ChatStatus,
+} from "@/lib/types";
 import { THINKING_LABEL } from "@/lib/chat-activity";
 import { AssistantAvatar } from "./icons/message-icons";
 import { Loader2 } from "lucide-react";
@@ -10,6 +14,7 @@ import { Loader2 } from "lucide-react";
 interface ChatMessageListProps {
   messages: ChatMessageData[];
   onPromptSelect: (prompt: string) => void;
+  onAction?: ChatResultActionHandler;
   isLoading?: boolean;
   status: ChatStatus;
   /** Matches header when possible (tool-aware during streaming). */
@@ -19,6 +24,7 @@ interface ChatMessageListProps {
 export function ChatMessageList({
   messages,
   onPromptSelect,
+  onAction,
   isLoading,
   status = "ready",
   pendingCaption,
@@ -51,6 +57,7 @@ export function ChatMessageList({
             <ChatMessage
               key={message.id}
               message={message}
+              onAction={onAction}
               isStreaming={
                 status === "streaming" && index === messages.length - 1
               }

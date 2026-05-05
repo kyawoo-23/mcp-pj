@@ -1,7 +1,13 @@
+import * as React from "react";
 import { cn } from "@/lib/utils";
 import { UserAvatar, AssistantAvatar, SystemIcon } from "./icons/message-icons";
 import ReactMarkdown from "react-markdown";
-import { Loader2 } from "lucide-react";
+import { ChevronRight, Loader2, MessageSquareText } from "lucide-react";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
 import {
   THINKING_LABEL,
   WRITING_LABEL,
@@ -11,6 +17,7 @@ import type {
   TextPart,
   ToolInvocationPart,
   ChatMessageData,
+  ChatResultActionHandler,
 } from "@/lib/types";
 import { ToolInvocation } from "./chat-tool-invocation";
 
@@ -18,6 +25,7 @@ interface ChatMessageProps {
   message: ChatMessageData;
   showTimestamp?: boolean;
   isStreaming?: boolean;
+  onAction?: ChatResultActionHandler;
 }
 
 /** Compact status row while the assistant turn is streaming but has no reply text yet */
@@ -38,10 +46,61 @@ function AssistantStreamingStatus({ label }: { label: string }) {
   );
 }
 
+function MarkdownContent({ text }: { text: string }) {
+  return (
+    <div className='prose prose-sm dark:prose-invert max-w-none whitespace-pre-wrap leading-relaxed'>
+      <ReactMarkdown>{text}</ReactMarkdown>
+    </div>
+  );
+}
+
+function AssistantNote({
+  text,
+  isStreaming,
+}: {
+  text: string;
+  isStreaming: boolean;
+}) {
+  const [open, setOpen] = React.useState(false);
+
+  return (
+    <Collapsible
+      open={open}
+      onOpenChange={setOpen}
+      className='w-full overflow-hidden rounded-xl border border-border/50 bg-muted/25'
+    >
+      <CollapsibleTrigger className='flex w-full items-center gap-2 px-3 py-2 text-left text-xs font-medium text-muted-foreground transition-colors hover:bg-muted/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50'>
+        <ChevronRight
+          className={cn(
+            "h-3.5 w-3.5 shrink-0 transition-transform duration-200",
+            open && "rotate-90",
+          )}
+          aria-hidden
+        />
+        {isStreaming ? (
+          <Loader2 className='h-3.5 w-3.5 shrink-0 animate-spin' aria-hidden />
+        ) : (
+          <MessageSquareText className='h-3.5 w-3.5 shrink-0' aria-hidden />
+        )}
+        <span>{isStreaming ? "Writing note..." : "Assistant note"}</span>
+      </CollapsibleTrigger>
+      <CollapsibleContent>
+        <div className='border-t border-border/40 px-3 py-2 text-sm text-foreground'>
+          <MarkdownContent text={text} />
+          {isStreaming && (
+            <span className='ml-1 inline-block h-4 w-1.5 animate-pulse align-middle bg-foreground/50' />
+          )}
+        </div>
+      </CollapsibleContent>
+    </Collapsible>
+  );
+}
+
 export function ChatMessage({
   message,
   showTimestamp = false,
   isStreaming = false,
+  onAction,
 }: ChatMessageProps) {
   const isUser = message.role === "user";
   const isSystem = message.role === "system";
@@ -70,6 +129,7 @@ export function ChatMessage({
     (p): p is ToolInvocationPart => p.type === "tool-invocation",
   );
   const textContent = textParts.map((p) => p.text).join("");
+  const hasToolUi = !isUser && toolParts.length > 0;
 
   const showThinkingStrip =
     !isUser &&
@@ -99,8 +159,8 @@ export function ChatMessage({
       {/* Content */}
       <div
         className={cn(
-          "flex max-w-[80%] flex-col gap-2",
-          isUser ? "items-end" : "items-start",
+          "flex flex-col gap-2",
+          isUser ? "max-w-[80%] items-end" : "w-full max-w-[80%] items-start",
         )}
       >
         {/* Thinking until first streamed part (tools or text) arrives */}
@@ -112,7 +172,11 @@ export function ChatMessage({
         {!isUser && toolParts.length > 0 && (
           <div className='w-full space-y-2'>
             {toolParts.map((part) => (
-              <ToolInvocation key={part.toolCallId} part={part} />
+              <ToolInvocation
+                key={part.toolCallId}
+                part={part}
+                onAction={onAction}
+              />
             ))}
           </div>
         )}
@@ -123,7 +187,11 @@ export function ChatMessage({
         )}
 
         {/* Text Content Bubble */}
-        {textContent && (
+        {textContent && hasToolUi && (
+          <AssistantNote text={textContent} isStreaming={isStreaming} />
+        )}
+
+        {textContent && !hasToolUi && (
           <div
             className={cn(
               "rounded-2xl px-4 py-3 text-sm shadow-sm",
@@ -132,9 +200,7 @@ export function ChatMessage({
                 : "bg-muted/60 text-foreground border border-border/50 rounded-tl-sm",
             )}
           >
-            <div className='prose prose-sm dark:prose-invert max-w-none whitespace-pre-wrap leading-relaxed'>
-              <ReactMarkdown>{textContent}</ReactMarkdown>
-            </div>
+            <MarkdownContent text={textContent} />
             {isStreaming && (
               <span className='animate-pulse inline-block h-4 w-1.5 align-middle bg-foreground/50 ml-1' />
             )}

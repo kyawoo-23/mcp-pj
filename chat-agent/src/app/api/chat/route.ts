@@ -12,6 +12,10 @@ import { revalidatePath } from "next/cache";
 import { AVAILABLE_TOOLS } from "@/lib/tool-definitions";
 import { getTaskSessionByUser, recordTaskEvent } from "@/lib/task-mode-server";
 import { createMCPClient, type MCPClient } from "@ai-sdk/mcp";
+import {
+  messagePartFromUIPart,
+  stripDisplayOnlyPartsForModel,
+} from "@/lib/chat-message-parts";
 
 // Allow streaming responses up to 30 seconds
 export const maxDuration = 30;
@@ -147,13 +151,9 @@ export async function POST(req: Request) {
       (p): p is { type: "text"; text: string } => p.type === "text"
     );
     const content = textParts.map((p) => p.text).join("\n");
-    const parts: MessagePart[] = (lastMessage.parts || []).map((p) => {
-      if (p.type === "text") {
-        return { type: "text", text: p.text };
-      }
-      // Preserve other part types as-is
-      return p as MessagePart;
-    });
+    const parts: MessagePart[] = (lastMessage.parts || [])
+      .map(messagePartFromUIPart)
+      .filter((part): part is MessagePart => part !== null);
 
     try {
       await createMessage({
@@ -168,7 +168,9 @@ export async function POST(req: Request) {
   }
 
   // Convert UIMessage format (with parts) to CoreMessage format (with content)
-  const coreMessages = await convertToModelMessages(messages);
+  const coreMessages = await convertToModelMessages(
+    stripDisplayOnlyPartsForModel(messages),
+  );
   const systemPrompt = `
     Current Date and Time: ${new Date().toLocaleString('en-US', { timeZone: 'Asia/Bangkok', weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' })}.
     
@@ -207,9 +209,9 @@ export async function POST(req: Request) {
     - Reply in the user's language whenever possible, and keep terminology familiar to them. If the language is unclear, politely ask or default to the language they're already using.
 
     CRITICAL WORKFLOW RULES:
-    1. **Confirmation**: Before modifying data (booking/registering), YOU MUST explicitly ask for confirmation.
+    1. **Confirmation**: Before modifying data (booking, registering, dropping, or canceling), YOU MUST explicitly ask for confirmation.
        - Clear: "Shall I go ahead and book the Tennis Court for 5 PM?"
-       - Wait for a "Yes" or equivalent before calling the booking tool.
+       - Wait for a "Yes" or equivalent before calling any mutation tool.
 
     2. **Course Registration**:
        - User gives Code/Name -> Call \`search_courses\` to get the course list.
@@ -245,58 +247,26 @@ export async function POST(req: Request) {
     messages: coreMessages,
     tools: allTools,
     stopWhen: stepCountIs(5), // Allow up to 5 tool call steps
-    onFinish: async ({ text, toolCalls, toolResults }) => {
-      // Save assistant response to database
+  });
+
+  // Return response with conversationId in headers
+  const response = result.toUIMessageStreamResponse({
+    originalMessages: stripDisplayOnlyPartsForModel(messages),
+    onFinish: async ({ responseMessage }) => {
       try {
-        const parts: MessagePart[] = [{ type: "text", text }];
-
-        // Add tool invocations if any
-        if (toolCalls && toolCalls.length > 0) {
-          for (let i = 0; i < toolCalls.length; i++) {
-            const toolCall = toolCalls[i];
-            const toolResult = toolResults?.[i];
-
-            // Extract input from toolCall - it may be in different formats
-            const input =
-              "args" in toolCall
-                ? (toolCall.args as Record<string, unknown>)
-                : "input" in toolCall
-                ? (toolCall.input as Record<string, unknown>)
-                : {};
-
-            // Extract result/error from toolResult
-            const result =
-              toolResult && "result" in toolResult
-                ? toolResult.result
-                : toolResult && "output" in toolResult
-                ? toolResult.output
-                : undefined;
-            const error =
-              toolResult && "error" in toolResult
-                ? String(toolResult.error)
-                : undefined;
-
-            parts.push({
-              type: "tool-invocation",
-              toolCallId: toolCall.toolCallId,
-              toolName: toolCall.toolName,
-              input,
-              state: error
-                ? "output-error"
-                : result !== undefined
-                ? "output-available"
-                : "input-available",
-              output: result,
-              errorText: error,
-            });
-          }
-        }
+        const parts: MessagePart[] = (responseMessage.parts || [])
+          .map(messagePartFromUIPart)
+          .filter((part): part is MessagePart => part !== null);
+        const text = parts
+          .filter((part): part is { type: "text"; text: string } => part.type === "text")
+          .map((part) => part.text)
+          .join("");
 
         await createMessage({
           conversationId: currentConversationId,
           role: "assistant",
           content: text,
-          parts,
+          parts: parts.length > 0 ? parts : [{ type: "text", text }],
         });
 
         // Auto-generate conversation title from first user message if title is null
@@ -323,14 +293,10 @@ export async function POST(req: Request) {
       } catch (error) {
         console.error("Failed to save assistant message:", error);
       } finally {
-        // Clean up MCP client connection
         await closeMcpClient();
       }
     },
   });
-
-  // Return response with conversationId in headers
-  const response = result.toUIMessageStreamResponse();
   response.headers.set("X-Conversation-Id", currentConversationId);
   return response;
 }
