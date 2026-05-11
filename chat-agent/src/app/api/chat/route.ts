@@ -58,7 +58,10 @@ export async function POST(req: Request) {
       allTools = await mcpClient.tools();
       console.log("✅ Using MCP tools from:", process.env.MCP_SERVER_URL);
     } catch (error) {
-      console.error("❌ MCP connection failed, falling back to direct tools:", error);
+      console.error(
+        "❌ MCP connection failed, falling back to direct tools:",
+        error,
+      );
       allTools = createTools(supabase);
     }
   } else {
@@ -107,7 +110,7 @@ export async function POST(req: Request) {
         JSON.stringify({
           error: "Failed to create user profile. Please complete your profile.",
         }),
-        { status: 500, headers: { "Content-Type": "application/json" } }
+        { status: 500, headers: { "Content-Type": "application/json" } },
       );
     }
     profile = newProfile;
@@ -127,7 +130,7 @@ export async function POST(req: Request) {
   const taskSession = await getTaskSessionByUser(
     supabase,
     user.id,
-    "chat_agent"
+    "chat_agent",
   );
   const lastMessage = messages[messages.length - 1];
   if (
@@ -136,7 +139,7 @@ export async function POST(req: Request) {
     lastMessage?.role === "user"
   ) {
     const textParts = (lastMessage.parts || []).filter(
-      (p): p is { type: "text"; text: string } => p.type === "text"
+      (p): p is { type: "text"; text: string } => p.type === "text",
     );
     const content = textParts.map((p) => p.text).join("\n");
     await recordTaskEvent(supabase, taskSession.id, "turn", "user_message", {
@@ -148,7 +151,7 @@ export async function POST(req: Request) {
   // Save the last user message to database
   if (lastMessage && lastMessage.role === "user") {
     const textParts = (lastMessage.parts || []).filter(
-      (p): p is { type: "text"; text: string } => p.type === "text"
+      (p): p is { type: "text"; text: string } => p.type === "text",
     );
     const content = textParts.map((p) => p.text).join("\n");
     const parts: MessagePart[] = (lastMessage.parts || [])
@@ -172,11 +175,11 @@ export async function POST(req: Request) {
     stripDisplayOnlyPartsForModel(messages),
   );
   const systemPrompt = `
-    Current Date and Time: ${new Date().toLocaleString('en-US', { timeZone: 'Asia/Bangkok', weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' })}.
-    
+    Current Date and Time: ${new Date().toLocaleString("en-US", { timeZone: "Asia/Bangkok", weekday: "long", year: "numeric", month: "long", day: "numeric", hour: "2-digit", minute: "2-digit" })}.
+
     You are the Uni-Chat Agent, a friendly and helpful virtual assistant for university students.
     Your tone should be warm, conversational, and encouraging as if you are a supportive senior student or a helpful friend.
-    
+
     ${
       profile
         ? `You are talking to ${profile.full_name}. Their Student ID is ${
@@ -189,12 +192,19 @@ export async function POST(req: Request) {
     The student's internal UUID is "${profile?.id || "unknown"}".
     - You MUST use this UUID for all tool calls (bookings, registrations, fetching data).
     - You MUST NOT mention this UUID to the user. Only refer to them by their name or Student ID.
-    
+
+    HIDDEN METADATA CONVENTION:
+    User messages may end with a "(ref: {...})" block containing JSON with database IDs.
+    - Example: "I choose Study Room 201.\n\n(ref: {\"facilityId\":\"abc-123\"})"
+    - The (ref: ...) block contains the canonical IDs you must use for tool calls.
+    - Always use the IDs from (ref: ...) when present. Never guess or extract IDs from the human-readable part.
+    - Do NOT mention the (ref: ...) block or raw UUIDs in your replies to the user.
+
     You have access to tools that can help students:
     ${AVAILABLE_TOOLS.map((tool) => `    - ${tool.name}: ${tool.description}`).join("\n")}
-    
+
     When a student asks about courses, facilities, or wants to make a booking/registration, USE THE TOOLS to help them.
-    
+
     RESPONSE STYLE GUIDELINES:
     - Be conversational! Avoid sounding like a form or robot.
     - Ask for missing information naturally (e.g., "What time works best for you?" instead of "Provide: Time").
@@ -234,7 +244,9 @@ export async function POST(req: Request) {
   `;
 
   const result = streamText({
-    model: google(`models/${process.env.NEXT_PUBLIC_GOOGLE_GENERATIVE_MODEL_ID || "gemini-2.5-flash"}`),
+    model: google(
+      `models/${process.env.NEXT_PUBLIC_GOOGLE_GENERATIVE_MODEL_ID || "gemini-2.5-flash"}`,
+    ),
     providerOptions: {
       google: {
         thinkingConfig: {
@@ -258,7 +270,10 @@ export async function POST(req: Request) {
           .map(messagePartFromUIPart)
           .filter((part): part is MessagePart => part !== null);
         const text = parts
-          .filter((part): part is { type: "text"; text: string } => part.type === "text")
+          .filter(
+            (part): part is { type: "text"; text: string } =>
+              part.type === "text",
+          )
           .map((part) => part.text)
           .join("");
 
@@ -274,7 +289,7 @@ export async function POST(req: Request) {
           const firstUserMessage = messages.find((m) => m.role === "user");
           if (firstUserMessage) {
             const textParts = (firstUserMessage.parts || []).filter(
-              (p): p is { type: "text"; text: string } => p.type === "text"
+              (p): p is { type: "text"; text: string } => p.type === "text",
             );
             const titleText = textParts
               .map((p) => p.text)
@@ -284,7 +299,7 @@ export async function POST(req: Request) {
               await updateConversationTitle(
                 currentConversationId,
                 user.id,
-                titleText
+                titleText,
               );
               revalidatePath("/");
             }

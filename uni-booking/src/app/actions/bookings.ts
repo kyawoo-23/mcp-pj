@@ -85,16 +85,55 @@ export async function createBooking(formData: BookingFormData) {
     return { data: null, error: error.message };
   }
 
-  await recordTaskCompletion(supabase, {
-    userId: user.id,
-    systemType: "traditional",
-    taskCode: "book_room",
-    successPayload: {
-      booking_id: data?.id ?? null,
-      facility_id: formData.facility_id,
-      booking_date: formData.booking_date,
-    },
-  });
+  // Check task assignment criteria
+  const { data: assignment } = await supabase
+    .from("task_user_assignments")
+    .select(`
+      task_assignment_sets (
+        targets
+      )
+    `)
+    .eq("user_id", user.id)
+    .maybeSingle();
+
+  let isTargetMatch = true;
+
+  const taskAssignmentSets = assignment?.task_assignment_sets as any;
+  if (taskAssignmentSets?.targets) {
+    const targets = taskAssignmentSets.targets as Record<string, { title: string; description: string; criteria: Record<string, string> }>;
+    const criteria = targets.book_room?.criteria;
+    
+    if (criteria) {
+      const { data: facilityData } = await supabase
+        .from("facilities")
+        .select("name")
+        .eq("id", formData.facility_id)
+        .single();
+        
+      if (facilityData) {
+        const facilityName = facilityData.name;
+        isTargetMatch = 
+          (!criteria.facility_name || criteria.facility_name === facilityName) &&
+          (!criteria.start_time || criteria.start_time === formData.start_time) &&
+          (!criteria.end_time || criteria.end_time === formData.end_time);
+      } else {
+        isTargetMatch = false;
+      }
+    }
+  }
+
+  if (isTargetMatch) {
+    await recordTaskCompletion(supabase, {
+      userId: user.id,
+      systemType: "traditional",
+      taskCode: "book_room",
+      successPayload: {
+        booking_id: data?.id ?? null,
+        facility_id: formData.facility_id,
+        booking_date: formData.booking_date,
+      },
+    });
+  }
 
   revalidatePath("/bookings");
   revalidatePath("/facilities");
@@ -206,15 +245,51 @@ export async function cancelBooking(id: string) {
     return { data: null, error: error.message };
   }
 
-  await recordTaskCompletion(supabase, {
-    userId: user.id,
-    systemType: "traditional",
-    taskCode: "cancel_booking",
-    successPayload: {
-      booking_id: data?.id ?? null,
-      facility_id: data?.facility_id ?? null,
-    },
-  });
+  // Check task assignment criteria
+  const { data: assignment } = await supabase
+    .from("task_user_assignments")
+    .select(`
+      task_assignment_sets (
+        targets
+      )
+    `)
+    .eq("user_id", user.id)
+    .maybeSingle();
+
+  let isTargetMatch = true;
+
+  const taskAssignmentSets = assignment?.task_assignment_sets as any;
+  if (taskAssignmentSets?.targets) {
+    const targets = taskAssignmentSets.targets as Record<string, { title: string; description: string; criteria: Record<string, string> }>;
+    const criteria = targets.cancel_booking?.criteria;
+    
+    if (criteria) {
+      const { data: facilityData } = await supabase
+        .from("facilities")
+        .select("name")
+        .eq("id", data?.facility_id ?? "")
+        .single();
+        
+      if (facilityData) {
+        const facilityName = facilityData.name;
+        isTargetMatch = !criteria.facility_name || criteria.facility_name === facilityName;
+      } else {
+        isTargetMatch = false;
+      }
+    }
+  }
+
+  if (isTargetMatch) {
+    await recordTaskCompletion(supabase, {
+      userId: user.id,
+      systemType: "traditional",
+      taskCode: "cancel_booking",
+      successPayload: {
+        booking_id: data?.id ?? null,
+        facility_id: data?.facility_id ?? null,
+      },
+    });
+  }
 
   revalidatePath("/bookings");
   revalidatePath(`/bookings/${id}`);

@@ -13,6 +13,14 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Controller } from "react-hook-form";
 import { cn } from "@/lib/utils";
 import type { ChatResultActionHandler } from "@/lib/types";
 import {
@@ -21,27 +29,52 @@ import {
 } from "@/components/chat/tool-collapsible";
 import type { FacilitySummary } from "./tool-result-model";
 
-const bookingRequestSchema = z.object({
-  bookingDate: z.string().min(1, "Date is required"),
-  startTime: z.string().min(1, "Start time is required"),
-  endTime: z.string().min(1, "End time is required"),
-  purpose: z.string().optional(),
-});
+const bookingRequestSchema = z
+  .object({
+    bookingDate: z
+      .string()
+      .min(1, "Date is required")
+      .refine((val) => {
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const date = new Date(val);
+        return date >= today;
+      }, "Date cannot be in the past"),
+    startTime: z.string().min(1, "Start time is required"),
+    endTime: z.string().min(1, "End time is required"),
+    purpose: z.string().optional(),
+  })
+  .refine(
+    (data) => {
+      if (!data.startTime || !data.endTime) return true;
+      return data.startTime < data.endTime;
+    },
+    {
+      message: "End time must be after start time",
+      path: ["endTime"],
+    },
+  );
 
 export type BookingRequestFormData = z.infer<typeof bookingRequestSchema>;
 
-const BOOKING_GRID_FIELDS = [
-  { key: "bookingDate", label: "Date", inputType: "date" },
-  { key: "startTime", label: "Start", inputType: "time" },
-  { key: "endTime", label: "End", inputType: "time" },
-] as const satisfies ReadonlyArray<{
-  key: keyof Pick<
-    BookingRequestFormData,
-    "bookingDate" | "startTime" | "endTime"
-  >;
+interface TimeOption {
+  value: string;
   label: string;
-  inputType: "date" | "time";
-}>;
+}
+
+function generateTimeOptions(): TimeOption[] {
+  const options: TimeOption[] = [];
+  for (let hour = 8; hour <= 21; hour++) {
+    const timeValue = `${hour.toString().padStart(2, "0")}:00`;
+    const displayHour = hour > 12 ? hour - 12 : hour === 0 ? 12 : hour;
+    const ampm = hour >= 12 ? "PM" : "AM";
+    const label = `${displayHour}:00 ${ampm}`;
+    options.push({ value: timeValue, label });
+  }
+  return options;
+}
+
+const timeOptions = generateTimeOptions();
 
 function FieldError({ message }: { message?: string }) {
   return message ? (
@@ -62,6 +95,8 @@ export function BookingRequestForm({
   const {
     register,
     handleSubmit,
+    control,
+    watch,
     formState: { errors },
   } = useForm<BookingRequestFormData>({
     resolver: zodResolver(bookingRequestSchema),
@@ -73,11 +108,19 @@ export function BookingRequestForm({
     },
   });
 
+  const startTime = watch("startTime");
+
   const onSubmit = (data: BookingRequestFormData) => {
     onAction?.({
       kind: "request-booking",
       label: "Request booking",
-      prompt: `I want to book ${facility.name}. Facility ID: ${facility.id}. Date: ${data.bookingDate}. Time: ${data.startTime} to ${data.endTime}. Purpose: ${data.purpose?.trim() || "not specified"}. Please confirm these details before booking.`,
+      prompt: `I want to book ${facility.name} on ${data.bookingDate} from ${data.startTime} to ${data.endTime}. Purpose: ${data.purpose?.trim() || "not specified"}. Please confirm these details before booking.`,
+      data: {
+        facilityId: facility.id,
+        bookingDate: data.bookingDate,
+        startTime: data.startTime,
+        endTime: data.endTime,
+      },
     });
   };
 
@@ -104,27 +147,92 @@ export function BookingRequestForm({
           onSubmit={handleSubmit(onSubmit)}
         >
           <div className="grid gap-3 sm:grid-cols-3">
-            {BOOKING_GRID_FIELDS.map(({ key, label, inputType }) => {
-              const id = `${key}-${prefix}`;
-              const fieldError = errors[key];
-              return (
-                <div key={key} className="space-y-1">
-                  <Label className="text-xs" htmlFor={id}>
-                    {label}
-                  </Label>
-                  <Input
-                    id={id}
-                    type={inputType}
-                    autoComplete="off"
-                    className="h-9 text-xs"
-                    aria-invalid={Boolean(fieldError)}
-                    {...register(key)}
-                  />
-                  <FieldError message={fieldError?.message} />
-                </div>
-              );
-            })}
+            {/* Booking Date */}
+            <div className="space-y-1">
+              <Label className="text-xs" htmlFor={`bookingDate-${prefix}`}>
+                Date
+              </Label>
+              <Input
+                id={`bookingDate-${prefix}`}
+                type="date"
+                autoComplete="off"
+                className="h-9 text-xs"
+                min={new Date().toISOString().split("T")[0]}
+                aria-invalid={Boolean(errors.bookingDate)}
+                {...register("bookingDate")}
+              />
+              <FieldError message={errors.bookingDate?.message} />
+            </div>
+
+            {/* Start Time */}
+            <div className="space-y-1">
+              <Label className="text-xs" htmlFor={`startTime-${prefix}`}>
+                Start
+              </Label>
+              <Controller
+                name="startTime"
+                control={control}
+                render={({ field }) => (
+                  <Select onValueChange={field.onChange} value={field.value}>
+                    <SelectTrigger
+                      id={`startTime-${prefix}`}
+                      className="h-9 w-full text-xs"
+                      aria-invalid={Boolean(errors.startTime)}
+                    >
+                      <SelectValue placeholder="Start" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {timeOptions.map((option) => (
+                        <SelectItem key={option.value} value={option.value}>
+                          {option.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                )}
+              />
+              <FieldError message={errors.startTime?.message} />
+            </div>
+
+            {/* End Time */}
+            <div className="space-y-1">
+              <Label className="text-xs" htmlFor={`endTime-${prefix}`}>
+                End
+              </Label>
+              <Controller
+                name="endTime"
+                control={control}
+                render={({ field }) => (
+                  <Select
+                    onValueChange={field.onChange}
+                    value={field.value}
+                    disabled={!startTime}
+                  >
+                    <SelectTrigger
+                      id={`endTime-${prefix}`}
+                      className="h-9 w-full text-xs"
+                      aria-invalid={Boolean(errors.endTime)}
+                    >
+                      <SelectValue placeholder={startTime ? "End" : "---"} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {timeOptions
+                        .filter(
+                          (option) => !startTime || option.value > startTime,
+                        )
+                        .map((option) => (
+                          <SelectItem key={option.value} value={option.value}>
+                            {option.label}
+                          </SelectItem>
+                        ))}
+                    </SelectContent>
+                  </Select>
+                )}
+              />
+              <FieldError message={errors.endTime?.message} />
+            </div>
           </div>
+
           <div className="space-y-1">
             <Label className="text-xs" htmlFor={`purpose-${prefix}`}>
               Purpose

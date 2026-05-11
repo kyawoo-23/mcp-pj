@@ -327,17 +327,56 @@ export function registerFacilityTools(server: McpServer) {
           };
         }
 
-        // Record task completion for task mode
-        await recordTaskCompletion(supabase, {
-          userId: studentId,
-          systemType: "chat_agent",
-          taskCode: "book_room",
-          successPayload: {
-            booking_id: data?.id ?? null,
-            facility_id: facilityId,
-            booking_date: bookingDate,
-          },
-        });
+        // Check task assignment criteria
+        const { data: assignment } = await supabase
+          .from("task_user_assignments")
+          .select(`
+            task_assignment_sets (
+              targets
+            )
+          `)
+          .eq("user_id", studentId)
+          .maybeSingle();
+
+        let isTargetMatch = true;
+
+        const taskAssignmentSets = assignment?.task_assignment_sets as unknown as Record<string, unknown>;
+        if (taskAssignmentSets?.targets) {
+          const targets = taskAssignmentSets.targets as Record<string, { title: string; description: string; criteria: Record<string, string> }>;
+          const criteria = targets.book_room?.criteria;
+          
+          if (criteria) {
+            const { data: facilityData } = await supabase
+              .from("facilities")
+              .select("name")
+              .eq("id", facilityId)
+              .single();
+              
+            if (facilityData) {
+              const facilityName = facilityData.name;
+              isTargetMatch = 
+                (!criteria.facility_name || criteria.facility_name === facilityName) &&
+                (!criteria.start_time || criteria.start_time === startTime) &&
+                (!criteria.end_time || criteria.end_time === endTime);
+            } else {
+              isTargetMatch = false;
+            }
+          }
+        }
+
+        if (isTargetMatch) {
+          // Record task completion for task mode
+          await recordTaskCompletion(supabase, {
+            userId: studentId,
+            systemType: "chat_agent",
+            taskCode: "book_room",
+            successPayload: {
+              booking_id: data?.id ?? null,
+              facility_id: facilityId,
+              booking_date: bookingDate,
+            },
+          });
+        }
 
         return {
           content: [
@@ -480,16 +519,52 @@ export function registerFacilityTools(server: McpServer) {
           };
         }
 
-        // Record task completion for task mode
-        await recordTaskCompletion(supabase, {
-          userId: studentId,
-          systemType: "chat_agent",
-          taskCode: "cancel_booking",
-          successPayload: {
-            booking_id: data?.id ?? null,
-            facility_id: data?.facility_id ?? null,
-          },
-        });
+        // Check task assignment criteria
+        const { data: assignment } = await supabase
+          .from("task_user_assignments")
+          .select(`
+            task_assignment_sets (
+              targets
+            )
+          `)
+          .eq("user_id", studentId)
+          .maybeSingle();
+
+        let isTargetMatch = true;
+
+        const taskAssignmentSets = assignment?.task_assignment_sets as unknown as Record<string, unknown>;
+        if (taskAssignmentSets?.targets) {
+          const targets = taskAssignmentSets.targets as Record<string, { title: string; description: string; criteria: Record<string, string> }>;
+          const criteria = targets.cancel_booking?.criteria;
+          
+          if (criteria) {
+            const { data: facilityData } = await supabase
+              .from("facilities")
+              .select("name")
+              .eq("id", data?.facility_id ?? "")
+              .single();
+              
+            if (facilityData) {
+              const facilityName = facilityData.name;
+              isTargetMatch = !criteria.facility_name || criteria.facility_name === facilityName;
+            } else {
+              isTargetMatch = false;
+            }
+          }
+        }
+
+        if (isTargetMatch) {
+          // Record task completion for task mode
+          await recordTaskCompletion(supabase, {
+            userId: studentId,
+            systemType: "chat_agent",
+            taskCode: "cancel_booking",
+            successPayload: {
+              booking_id: data?.id ?? null,
+              facility_id: data?.facility_id ?? null,
+            },
+          });
+        }
 
         return {
           content: [

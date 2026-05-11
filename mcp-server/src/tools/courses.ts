@@ -265,16 +265,56 @@ export function registerCourseTools(server: McpServer) {
           };
         }
 
-        // Record task completion for task mode
-        await recordTaskCompletion(supabase, {
-          userId: studentId,
-          systemType: "chat_agent",
-          taskCode: "register_course",
-          successPayload: {
-            registration_id: data?.id ?? null,
-            section_id: sectionId,
-          },
-        });
+        // Check task assignment criteria
+        const { data: assignment } = await supabase
+          .from("task_user_assignments")
+          .select(`
+            task_assignment_sets (
+              targets
+            )
+          `)
+          .eq("user_id", studentId)
+          .maybeSingle();
+
+        let isTargetMatch = true; // default true if no assignment
+
+        const taskAssignmentSets = assignment?.task_assignment_sets as unknown as Record<string, unknown>;
+        if (taskAssignmentSets?.targets) {
+          const targets = taskAssignmentSets.targets as Record<string, { title: string; description: string; criteria: Record<string, string> }>;
+          const criteria = targets.register_course?.criteria;
+          
+          if (criteria) {
+            const { data: sectionData } = await supabase
+              .from("course_sections")
+              .select("section_number, courses(code)")
+              .eq("id", sectionId)
+              .single();
+              
+            if (sectionData) {
+              const courseCode = (sectionData.courses as unknown as { code: string })?.code;
+              const sectionNumber = sectionData.section_number;
+              
+              isTargetMatch = 
+                (!criteria.course_code || criteria.course_code === courseCode) &&
+                (!criteria.section_number || criteria.section_number === sectionNumber);
+            } else {
+              isTargetMatch = false;
+            }
+          }
+        }
+
+        if (isTargetMatch) {
+          // Record task completion for task mode
+          await recordTaskCompletion(supabase, {
+            userId: studentId,
+            systemType: "chat_agent",
+            taskCode: "register_course",
+            successPayload: {
+              registration_id: data?.id ?? null,
+              section_id: sectionId,
+            },
+          });
+        }
 
         return {
           content: [
@@ -418,16 +458,52 @@ export function registerCourseTools(server: McpServer) {
           };
         }
 
-        // Record task completion for task mode
-        await recordTaskCompletion(supabase, {
-          userId: studentId,
-          systemType: "chat_agent",
-          taskCode: "drop_course",
-          successPayload: {
-            registration_id: data?.id ?? null,
-            section_id: sectionId,
-          },
-        });
+        // Check task assignment criteria
+        const { data: assignment } = await supabase
+          .from("task_user_assignments")
+          .select(`
+            task_assignment_sets (
+              targets
+            )
+          `)
+          .eq("user_id", studentId)
+          .maybeSingle();
+
+        let isTargetMatch = true; // default true if no assignment
+
+        const taskAssignmentSets = assignment?.task_assignment_sets as unknown as Record<string, unknown>;
+        if (taskAssignmentSets?.targets) {
+          const targets = taskAssignmentSets.targets as Record<string, { title: string; description: string; criteria: Record<string, string> }>;
+          const criteria = targets.drop_course?.criteria;
+          
+          if (criteria) {
+            const { data: sectionData } = await supabase
+              .from("course_sections")
+              .select("courses(code)")
+              .eq("id", sectionId)
+              .single();
+              
+            if (sectionData) {
+              const courseCode = (sectionData.courses as unknown as { code: string })?.code;
+              isTargetMatch = !criteria.course_code || criteria.course_code === courseCode;
+            } else {
+              isTargetMatch = false;
+            }
+          }
+        }
+
+        if (isTargetMatch) {
+          // Record task completion for task mode
+          await recordTaskCompletion(supabase, {
+            userId: studentId,
+            systemType: "chat_agent",
+            taskCode: "drop_course",
+            successPayload: {
+              registration_id: data?.id ?? null,
+              section_id: sectionId,
+            },
+          });
+        }
 
         return {
           content: [

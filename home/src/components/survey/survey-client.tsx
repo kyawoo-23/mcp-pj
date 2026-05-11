@@ -50,6 +50,7 @@ interface SurveyPageClientProps {
   surveyResponses: SurveyResponseRow[];
   interviewQuestions: InterviewQuestionRow[];
   interviewResponses: UserInterviewResponseRow[];
+  assignment?: any;
 }
 
 type SectionKey =
@@ -70,6 +71,7 @@ export function SurveyPageClient({
   surveyResponses,
   interviewQuestions,
   interviewResponses,
+  assignment,
 }: SurveyPageClientProps) {
   const [activeSection, setActiveSection] = useState<SectionKey | null>(
     "intro",
@@ -80,6 +82,7 @@ export function SurveyPageClient({
     profileState,
     surveyResponsesState,
     interviewResponsesState,
+    assignmentState,
     savingDemographics,
     startingSurvey,
     requiresDemographics,
@@ -125,6 +128,7 @@ export function SurveyPageClient({
     surveyResponses,
     interviewQuestions,
     interviewResponses,
+    assignment,
   });
 
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -318,6 +322,7 @@ export function SurveyPageClient({
               activeTaskId={activeTask?.task_definition_id}
               onOpenTask={openTask}
               onResetTask={handleResetTask}
+              assignment={assignmentState}
             />
           </SurveySection>
 
@@ -360,6 +365,7 @@ export function SurveyPageClient({
               activeTaskId={activeTask?.task_definition_id}
               onOpenTask={openTask}
               onResetTask={handleResetTask}
+              assignment={assignmentState}
             />
           </SurveySection>
 

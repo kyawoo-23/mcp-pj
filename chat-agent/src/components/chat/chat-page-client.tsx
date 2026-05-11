@@ -49,7 +49,9 @@ function getInitialMessagesSignature(messages: MessageRow[]): string {
     .join("|");
 }
 
-function hasToolInvocationParts(messages: Array<{ parts?: unknown[] }>): boolean {
+function hasToolInvocationParts(
+  messages: Array<{ parts?: unknown[] }>,
+): boolean {
   return messages.some((message) =>
     message.parts?.some(
       (part) => messagePartFromUIPart(part)?.type === "tool-invocation",
@@ -164,7 +166,8 @@ export function ChatPageClient({
 
     const hydratedMessages = initialMessages.map(messageRowToUIMessage);
     const currentMessages = messagesRef.current;
-    const isSameConversation = activeConversationId === initialActiveConversationId;
+    const isSameConversation =
+      activeConversationId === initialActiveConversationId;
     const currentHasToolParts = hasToolInvocationParts(currentMessages);
     const incomingHasToolParts = hasToolInvocationParts(hydratedMessages);
 
@@ -250,7 +253,8 @@ export function ChatPageClient({
           window.history.replaceState(null, "", `/c/${responseConversationId}`);
         }
 
-        const targetConversationId = responseConversationId ?? activeConversationId;
+        const targetConversationId =
+          responseConversationId ?? activeConversationId;
         if (!targetConversationId) {
           return;
         }
@@ -327,9 +331,7 @@ export function ChatPageClient({
           setMessages([]);
           return;
         }
-        setMessages(
-          data.messages.map(messageRowToUIMessage),
-        );
+        setMessages(data.messages.map(messageRowToUIMessage));
       } catch (error) {
         console.error("Failed to load conversation:", error);
         setMessages([]);
@@ -344,15 +346,18 @@ export function ChatPageClient({
     setMessages,
   ]);
 
-  const handleSendMessage = React.useCallback(async (content: string) => {
-    await sendMessage(
-      {
-        role: "user",
-        parts: [{ type: "text", text: content }],
-      },
-      { conversationId: activeConversationId || undefined },
-    );
-  }, [sendMessage, activeConversationId]);
+  const handleSendMessage = React.useCallback(
+    async (content: string) => {
+      await sendMessage(
+        {
+          role: "user",
+          parts: [{ type: "text", text: content }],
+        },
+        { conversationId: activeConversationId || undefined },
+      );
+    },
+    [sendMessage, activeConversationId],
+  );
 
   const handleChatResultAction = React.useCallback(
     (action: ChatResultAction) => {
@@ -360,7 +365,11 @@ export function ChatPageClient({
         toast.info("Please wait for the current reply to finish first.");
         return;
       }
-      void handleSendMessage(action.prompt);
+      const fullPrompt =
+        action.data && Object.keys(action.data).length > 0
+          ? `${action.prompt}\n\n(ref: ${JSON.stringify(action.data)})`
+          : action.prompt;
+      void handleSendMessage(fullPrompt);
     },
     [isLoading, handleSendMessage],
   );
@@ -471,7 +480,7 @@ export function ChatPageClient({
         busyCaption={busyCaption}
       />
 
-      <div className='flex flex-1 flex-col min-h-0 overflow-hidden'>
+      <div className="flex flex-1 flex-col min-h-0 overflow-hidden">
         <ChatMessageList
           messages={transformedMessages}
           onPromptSelect={(prompt) => {

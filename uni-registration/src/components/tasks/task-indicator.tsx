@@ -85,10 +85,24 @@ export function TaskIndicator() {
       .eq("id", current.task_definition_id)
       .maybeSingle();
 
+    // Get assignment for specific title
+    const { data: assignment } = await supabase
+      .from("task_user_assignments")
+      .select("task_assignment_sets(targets)")
+      .eq("user_id", user.id)
+      .maybeSingle();
+
+    let specificTitle;
+    const taskAssignmentSets = assignment?.task_assignment_sets as any;
+    if (taskAssignmentSets?.targets) {
+      const targets = taskAssignmentSets.targets as Record<string, { title: string; description: string; criteria: Record<string, string> }>;
+      specificTitle = targets[definition?.task_code ?? ""]?.title;
+    }
+
     setActiveTask({
       taskCode: definition?.task_code ?? "unknown",
       title:
-        definition?.title ?? taskLabels[definition?.task_code ?? ""] ?? "Task",
+        specificTitle ?? definition?.title ?? taskLabels[definition?.task_code ?? ""] ?? "Task",
       sessionId: current.session_id,
       progressId: current.id,
       status: current.status as "in_progress" | "completed",

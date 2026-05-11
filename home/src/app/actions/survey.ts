@@ -97,6 +97,44 @@ export async function startSurveyAction(userId: string): Promise<ActionResult<vo
     };
   }
 
+  // Assign task set if not assigned
+  const { data: existingAssignment } = await supabase
+    .from("task_user_assignments")
+    .select("id")
+    .eq("user_id", userId)
+    .maybeSingle();
+
+  if (!existingAssignment) {
+    const { data: sets } = await supabase.from("task_assignment_sets").select("id");
+    if (sets && sets.length > 0) {
+      // Get assignment counts for balancing
+      const { data: counts } = await supabase
+        .from("task_user_assignments")
+        .select("assignment_set_id");
+        
+      // Count frequency of each set
+      const freq = new Map<string, number>();
+      sets.forEach(s => freq.set(s.id, 0));
+      (counts || []).forEach(c => {
+        if (freq.has(c.assignment_set_id)) {
+          freq.set(c.assignment_set_id, freq.get(c.assignment_set_id)! + 1);
+        }
+      });
+      
+      // Find the sets with minimum count
+      const minCount = Math.min(...Array.from(freq.values()));
+      const candidates = sets.filter(s => freq.get(s.id) === minCount);
+      
+      // Pick a random set among those with min count
+      const pickedSet = candidates[Math.floor(Math.random() * candidates.length)];
+      
+      await supabase.from("task_user_assignments").insert({
+        user_id: userId,
+        assignment_set_id: pickedSet.id,
+      });
+    }
+  }
+
   revalidatePath("/survey");
   return { ok: true, data: undefined };
 }

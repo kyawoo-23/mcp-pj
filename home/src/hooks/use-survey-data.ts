@@ -29,6 +29,7 @@ interface UseSurveyDataProps {
   surveyResponses: SurveyResponseRow[];
   interviewQuestions: InterviewQuestionRow[];
   interviewResponses: UserInterviewResponseRow[];
+  assignment?: any;
 }
 
 export function useSurveyData({
@@ -39,6 +40,7 @@ export function useSurveyData({
   surveyResponses,
   interviewQuestions,
   interviewResponses,
+  assignment,
 }: UseSurveyDataProps) {
   const supabase = useMemo(() => createClient(), []);
 
@@ -48,6 +50,7 @@ export function useSurveyData({
   const [taskProgressState, setTaskProgressState] = useState(taskProgress);
   const [surveyResponsesState, setSurveyResponsesState] = useState(surveyResponses);
   const [interviewResponsesState, setInterviewResponsesState] = useState(interviewResponses);
+  const [assignmentState, setAssignmentState] = useState(assignment);
   const [savingDemographics, setSavingDemographics] = useState(false);
   const [startingSurvey, setStartingSurvey] = useState(false);
 
@@ -136,7 +139,7 @@ export function useSurveyData({
 
     const latestSessionIds = latestSessions.map((session) => session.id);
     if (latestSessionIds.length) {
-      const [progressResult, surveyResponseResult, interviewResponseResult] = await Promise.all([
+      const [progressResult, surveyResponseResult, interviewResponseResult, assignmentResult] = await Promise.all([
         supabase
           .from("task_progress")
           .select("id, task_definition_id, status, started_at, completed_at, created_at, session_id, success_payload, updated_at")
@@ -149,11 +152,26 @@ export function useSurveyData({
           .from("task_interview_responses")
           .select("id, question_id, response_text, user_id, created_at")
           .eq("user_id", user.id),
+        supabase
+          .from("task_user_assignments")
+          .select(`
+            id,
+            task_assignment_sets (
+              id,
+              set_label,
+              targets
+            )
+          `)
+          .eq("user_id", user.id)
+          .maybeSingle(),
       ]);
 
       setTaskProgressState(progressResult.data || []);
       setSurveyResponsesState(surveyResponseResult.data || []);
       setInterviewResponsesState(interviewResponseResult.data || []);
+      if (assignmentResult.data) {
+        setAssignmentState(assignmentResult.data);
+      }
     }
   }, [supabase]);
 
@@ -328,6 +346,7 @@ export function useSurveyData({
     profileState,
     surveyResponsesState,
     interviewResponsesState,
+    assignmentState,
     savingDemographics,
     startingSurvey,
     requiresDemographics,

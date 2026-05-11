@@ -94,16 +94,31 @@ export default async function SurveyPage() {
     .select("id, question_id, response_text, user_id, created_at")
     .eq("user_id", user.id);
 
+  const assignmentPromise = supabase
+    .from("task_user_assignments")
+    .select(`
+      id,
+      task_assignment_sets (
+        id,
+        set_label,
+        targets
+      )
+    `)
+    .eq("user_id", user.id)
+    .maybeSingle();
+
   const [
     { data: taskProgress },
     { data: surveyQuestions },
     { data: surveyResponses },
     { data: interviewResponses },
+    { data: assignment },
   ] = await Promise.all([
     taskProgressPromise,
     surveyQuestionsPromise,
     surveyResponsesPromise,
     interviewResponsesPromise,
+    assignmentPromise,
   ]);
 
   return (
@@ -117,6 +132,7 @@ export default async function SurveyPage() {
       surveyResponses={surveyResponses || []}
       interviewQuestions={interviewQuestions || []}
       interviewResponses={interviewResponses || []}
+      assignment={assignment as any}
     />
   );
 }

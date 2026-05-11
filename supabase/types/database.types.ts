@@ -382,6 +382,27 @@ export type Database = {
           },
         ]
       }
+      task_assignment_sets: {
+        Row: {
+          created_at: string
+          id: string
+          set_label: string
+          targets: Json
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          set_label: string
+          targets?: Json
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          set_label?: string
+          targets?: Json
+        }
+        Relationships: []
+      }
       task_definitions: {
         Row: {
           created_at: string
@@ -709,6 +730,42 @@ export type Database = {
         }
         Relationships: []
       }
+      task_user_assignments: {
+        Row: {
+          assignment_set_id: string
+          created_at: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          assignment_set_id: string
+          created_at?: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          assignment_set_id?: string
+          created_at?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "task_user_assignments_assignment_set_id_fkey"
+            columns: ["assignment_set_id"]
+            isOneToOne: false
+            referencedRelation: "task_assignment_sets"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "task_user_assignments_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
@@ -723,6 +780,7 @@ export type Database = {
         Returns: string
       }
       get_never_logged_in_count: { Args: never; Returns: number }
+      get_total_auth_users_count: { Args: never; Returns: number }
       is_admin: { Args: { user_id: string }; Returns: boolean }
       show_limit: { Args: never; Returns: number }
       show_trgm: { Args: { "": string }; Returns: string[] }

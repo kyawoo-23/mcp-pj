@@ -64,10 +64,27 @@ export function normalizeStoredMessageParts(
 }
 
 export function messageRowToUIMessage(row: MessageRow): UIMessage {
+  const parts = normalizeStoredMessageParts(row.parts, row.content);
+  
+  const uiParts = parts.map((part) => {
+    if (part.type === "tool-invocation") {
+      return {
+        type: `tool-${part.toolName}`,
+        toolCallId: part.toolCallId,
+        toolName: part.toolName,
+        input: part.input,
+        state: part.state,
+        ...(part.output !== undefined && { output: part.output }),
+        ...(part.errorText !== undefined && { errorText: part.errorText }),
+      };
+    }
+    return part;
+  });
+
   return {
     id: row.id,
     role: row.role as MessageRole,
-    parts: normalizeStoredMessageParts(row.parts, row.content) as UIMessage["parts"],
+    parts: uiParts as UIMessage["parts"],
   } as UIMessage;
 }
 

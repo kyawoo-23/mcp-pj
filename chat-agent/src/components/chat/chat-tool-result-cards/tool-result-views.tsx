@@ -128,7 +128,8 @@ export function CourseResults({
                   action={{
                     kind: "select-course",
                     label: "View Sections",
-                    prompt: `Show me available sections for ${course.code} - ${course.title}. Course ID: ${course.id}.`,
+                    prompt: `Show me available sections for ${course.code} - ${course.title}.`,
+                    data: { courseId: course.id },
                   }}
                 />
               </CardFooter>
@@ -211,7 +212,8 @@ export function SectionResults({
                     kind: "confirm-registration",
                     label: "Confirm Registration",
                     variant: "default",
-                    prompt: `Yes, please register me for ${courseLabel}, section ${section.section_number}. Section ID: ${section.id}.`,
+                    prompt: `Yes, please register me for ${courseLabel}, section ${section.section_number}.`,
+                    data: { sectionId: section.id },
                   }}
                 />
               </CardFooter>
@@ -288,7 +290,8 @@ export function RegistrationResults({
                     kind: "confirm-drop",
                     label: "Confirm Drop",
                     variant: "destructive",
-                    prompt: `Yes, please drop ${title}. Section ID: ${registration.section_id}.`,
+                    prompt: `Yes, please drop ${title}.`,
+                    data: { sectionId: registration.section_id },
                   }}
                 />
               </CardFooter>
@@ -371,7 +374,8 @@ export function FacilityResults({
                   action={{
                     kind: "select-facility",
                     label: "Choose Facility",
-                    prompt: `I choose ${facility.name}. Facility ID: ${facility.id}. Please help me pick a booking date and time.`,
+                    prompt: `I choose ${facility.name}. Please help me pick a booking date and time.`,
+                    data: { facilityId: facility.id },
                   }}
                 />
                 <BookingRequestForm facility={facility} onAction={onAction} />
@@ -451,7 +455,8 @@ export function BookingResults({
                         kind: "confirm-cancel",
                         label: "Confirm Cancel",
                         variant: "destructive",
-                        prompt: `Yes, please cancel my booking for ${facilityName} on ${booking.booking_date}. Booking ID: ${booking.id}.`,
+                        prompt: `Yes, please cancel my booking for ${facilityName} on ${booking.booking_date}.`,
+                        data: { bookingId: booking.id },
                       }}
                     />
                   </CardFooter>

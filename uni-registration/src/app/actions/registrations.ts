@@ -87,15 +87,55 @@ export async function registerForSection(sectionId: string) {
 
 
 
-  await recordTaskCompletion(supabase, {
-    userId: user.id,
-    systemType: "traditional",
-    taskCode: "register_course",
-    successPayload: {
-      section_id: sectionId,
-      registration_id: registration?.id ?? null,
-    },
-  });
+  // Check task assignment criteria
+  const { data: assignment } = await supabase
+    .from("task_user_assignments")
+    .select(`
+      task_assignment_sets (
+        targets
+      )
+    `)
+    .eq("user_id", user.id)
+    .maybeSingle();
+
+  let isTargetMatch = true;
+
+  const taskAssignmentSets = assignment?.task_assignment_sets as any;
+  if (taskAssignmentSets?.targets) {
+    const targets = taskAssignmentSets.targets as Record<string, { title: string; description: string; criteria: Record<string, string> }>;
+    const criteria = targets.register_course?.criteria;
+    
+    if (criteria) {
+      const { data: sectionData } = await supabase
+        .from("course_sections")
+        .select("section_number, courses(code)")
+        .eq("id", sectionId)
+        .single();
+        
+      if (sectionData) {
+        const courseCode = (sectionData.courses as unknown as { code: string })?.code;
+        const sectionNumber = sectionData.section_number;
+        
+        isTargetMatch = 
+          (!criteria.course_code || criteria.course_code === courseCode) &&
+          (!criteria.section_number || criteria.section_number === sectionNumber);
+      } else {
+        isTargetMatch = false;
+      }
+    }
+  }
+
+  if (isTargetMatch) {
+    await recordTaskCompletion(supabase, {
+      userId: user.id,
+      systemType: "traditional",
+      taskCode: "register_course",
+      successPayload: {
+        section_id: sectionId,
+        registration_id: registration?.id ?? null,
+      },
+    });
+  }
 
   revalidatePath("/registrations");
   revalidatePath("/courses");
@@ -144,16 +184,52 @@ export async function dropRegistration(registrationId: string) {
 
 
 
-  await recordTaskCompletion(supabase, {
-    userId: user.id,
-    systemType: "traditional",
-    taskCode: "drop_course",
-    successPayload: {
-      registration_id: registrationId,
-      section_id: registration.section_id ?? null,
-      dropped_id: updatedRegistration?.id ?? null,
-    },
-  });
+  // Check task assignment criteria
+  const { data: assignment } = await supabase
+    .from("task_user_assignments")
+    .select(`
+      task_assignment_sets (
+        targets
+      )
+    `)
+    .eq("user_id", user.id)
+    .maybeSingle();
+
+  let isTargetMatch = true;
+
+  const taskAssignmentSets = assignment?.task_assignment_sets as any;
+  if (taskAssignmentSets?.targets) {
+    const targets = taskAssignmentSets.targets as Record<string, { title: string; description: string; criteria: Record<string, string> }>;
+    const criteria = targets.drop_course?.criteria;
+    
+    if (criteria) {
+      const { data: sectionData } = await supabase
+        .from("course_sections")
+        .select("courses(code)")
+        .eq("id", registration.section_id)
+        .single();
+        
+      if (sectionData) {
+        const courseCode = (sectionData.courses as unknown as { code: string })?.code;
+        isTargetMatch = !criteria.course_code || criteria.course_code === courseCode;
+      } else {
+        isTargetMatch = false;
+      }
+    }
+  }
+
+  if (isTargetMatch) {
+    await recordTaskCompletion(supabase, {
+      userId: user.id,
+      systemType: "traditional",
+      taskCode: "drop_course",
+      successPayload: {
+        registration_id: registrationId,
+        section_id: registration.section_id ?? null,
+        dropped_id: updatedRegistration?.id ?? null,
+      },
+    });
+  }
 
   revalidatePath("/registrations");
   revalidatePath("/courses");
