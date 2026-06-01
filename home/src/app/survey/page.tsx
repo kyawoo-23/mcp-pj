@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { SurveyPageClient } from "@/components/survey/survey-client";
+import type { UserAssignmentWithSet } from "@/lib/types";
 
 export default async function SurveyPage() {
   const supabase = await createClient();
@@ -132,7 +133,7 @@ export default async function SurveyPage() {
       surveyResponses={surveyResponses || []}
       interviewQuestions={interviewQuestions || []}
       interviewResponses={interviewResponses || []}
-      assignment={assignment as any}
+      assignment={assignment as unknown as UserAssignmentWithSet | null}
     />
   );
 }

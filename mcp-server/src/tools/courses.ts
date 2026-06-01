@@ -479,13 +479,16 @@ export function registerCourseTools(server: McpServer) {
           if (criteria) {
             const { data: sectionData } = await supabase
               .from("course_sections")
-              .select("courses(code)")
+              .select("section_number, courses(code)")
               .eq("id", sectionId)
               .single();
               
             if (sectionData) {
               const courseCode = (sectionData.courses as unknown as { code: string })?.code;
-              isTargetMatch = !criteria.course_code || criteria.course_code === courseCode;
+              const sectionNumber = sectionData.section_number;
+              isTargetMatch =
+                (!criteria.course_code || criteria.course_code === courseCode) &&
+                (!criteria.section_number || criteria.section_number === sectionNumber);
             } else {
               isTargetMatch = false;
             }

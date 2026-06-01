@@ -169,7 +169,8 @@ Use these whenever possible instead of running raw subcommands:
 
 - `make setup` — env-init + install + Supabase start + db reset + type-gen
 - `make install` — install all deps (`pnpm` × 4 + `bun install`)
-- `make dev` — runs all 6 services in parallel (`-j6`)
+- `make dev` — runs all 6 services in parallel (`-j6`); prints `LOCAL_IP` for LAN device testing
+- `make ip` — prints LAN IPv4 only (`LOCAL_IP`: macOS `ipconfig getifaddr en0` + fallbacks; Windows active adapter via PowerShell)
 - `make db-start` / `db-stop` / `db-status`
 - `make db-reset` — re-applies migrations + seeds (destructive locally)
 - `make db-gen` — regenerates `supabase/types/database.types.ts`
@@ -205,7 +206,7 @@ After any migration change, **always run `make db-reset` and
   (UI rendering for tool invocations) and `chat-agent/src/lib/tools.ts`
   (non-MCP fallback). Server tools live in `mcp-server/src/tools/`
   (`courses.ts`, `facilities.ts`).
-- Tool-invocation rendering in chat: `chat-agent/src/components/chat/chat-tool-invocation.tsx`.
+- Chat transcript is text-only (markdown bubbles); tool calls are not rendered in the UI.
 - "Task mode" (research-experiment scaffolding) is shared between
   client (`task-mode-client.ts`) and server (`task-mode-server.ts`,
   `mcp-server/src/lib/task-mode.ts`).

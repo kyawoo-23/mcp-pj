@@ -1,7 +1,13 @@
 "use client";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import type { StudentRegistrationWithDetails } from "@/lib/types";
+import type { Course, CourseSection, StudentRegistrationWithDetails } from "@/lib/types";
+
+interface ScheduleEntry {
+  course: Course;
+  section: CourseSection & { courses?: Course };
+  registration: StudentRegistrationWithDetails;
+}
 import { format } from "date-fns";
 
 interface ScheduleViewProps {
@@ -25,14 +31,14 @@ export function ScheduleView({ registrations }: ScheduleViewProps) {
   };
 
   const getSectionsByDay = () => {
-    const sectionsByDay: Record<string, any[]> = {};
+    const sectionsByDay: Record<string, ScheduleEntry[]> = {};
     
     DAYS_OF_WEEK.forEach((day) => {
       sectionsByDay[day] = [];
     });
 
     activeRegistrations.forEach((registration) => {
-      const section = registration.course_sections as any;
+      const section = registration.course_sections;
       const course = section?.courses;
 
       if (!section || !course || !section.schedule_days) return;

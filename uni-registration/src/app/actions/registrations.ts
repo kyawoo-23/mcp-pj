@@ -100,7 +100,7 @@ export async function registerForSection(sectionId: string) {
 
   let isTargetMatch = true;
 
-  const taskAssignmentSets = assignment?.task_assignment_sets as any;
+  const taskAssignmentSets = assignment?.task_assignment_sets as Record<string, unknown> | null;
   if (taskAssignmentSets?.targets) {
     const targets = taskAssignmentSets.targets as Record<string, { title: string; description: string; criteria: Record<string, string> }>;
     const criteria = targets.register_course?.criteria;
@@ -197,7 +197,7 @@ export async function dropRegistration(registrationId: string) {
 
   let isTargetMatch = true;
 
-  const taskAssignmentSets = assignment?.task_assignment_sets as any;
+  const taskAssignmentSets = assignment?.task_assignment_sets as Record<string, unknown> | null;
   if (taskAssignmentSets?.targets) {
     const targets = taskAssignmentSets.targets as Record<string, { title: string; description: string; criteria: Record<string, string> }>;
     const criteria = targets.drop_course?.criteria;
@@ -205,13 +205,16 @@ export async function dropRegistration(registrationId: string) {
     if (criteria) {
       const { data: sectionData } = await supabase
         .from("course_sections")
-        .select("courses(code)")
+        .select("section_number, courses(code)")
         .eq("id", registration.section_id)
         .single();
         
       if (sectionData) {
         const courseCode = (sectionData.courses as unknown as { code: string })?.code;
-        isTargetMatch = !criteria.course_code || criteria.course_code === courseCode;
+        const sectionNumber = sectionData.section_number;
+        isTargetMatch =
+          (!criteria.course_code || criteria.course_code === courseCode) &&
+          (!criteria.section_number || criteria.section_number === sectionNumber);
       } else {
         isTargetMatch = false;
       }

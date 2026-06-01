@@ -9,6 +9,7 @@ import type {
   TaskDefinitionRow,
   TaskProgressRow,
   TaskSessionRow,
+  UserAssignmentWithSet,
   UserInterviewResponseRow,
 } from "@/lib/types";
 import { toast } from "sonner";
@@ -29,7 +30,7 @@ interface UseSurveyDataProps {
   surveyResponses: SurveyResponseRow[];
   interviewQuestions: InterviewQuestionRow[];
   interviewResponses: UserInterviewResponseRow[];
-  assignment?: any;
+  assignment?: UserAssignmentWithSet | null;
 }
 
 export function useSurveyData({

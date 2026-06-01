@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
-import { absoluteUrl } from "@/lib/utils";
 import { Routes } from "@/lib/constants";
 import { EmailOtpType } from "@supabase/supabase-js";
 

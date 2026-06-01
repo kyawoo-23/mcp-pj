@@ -1,7 +1,23 @@
 import { z } from "zod";
 import { getSupabase } from "../lib/supabase.js";
 import { recordTaskCompletion } from "../lib/task-mode.js";
+import { matchesBookingTaskCriteria } from "../lib/task-criteria.js";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
+
+function escapeIlike(value: string): string {
+  return value.replace(/\\/g, "\\\\").replace(/%/g, "\\%").replace(/_/g, "\\_");
+}
+
+/** Match query against name, room number, building, and description. */
+function facilitySearchOrFilter(query: string): string {
+  const pattern = `%${escapeIlike(query.trim())}%`;
+  return [
+    `name.ilike.${pattern}`,
+    `room_number.ilike.${pattern}`,
+    `building.ilike.${pattern}`,
+    `description.ilike.${pattern}`,
+  ].join(",");
+}
 
 /**
  * Normalize time string to HH:MM:SS format
@@ -30,13 +46,13 @@ export function registerFacilityTools(server: McpServer) {
   // ============ search_facilities ============
   server.tool(
     "search_facilities",
-    "Search for facilities by name or type, or list all available facilities if no query provided",
+    "Search facilities by English name, room number, building, or description. Facility names in the database are English (e.g. 'Study Room 202'). Map the user's wording to the canonical English name or room number before calling. Omit query to list all (optionally filter with type).",
     {
       query: z
         .string()
         .optional()
         .describe(
-          "Search query for facility name. If omitted, returns all available facilities."
+          "Canonical search term: English facility name and/or room number (e.g. 'Study Room 202', '202'). Do not pass untranslated foreign-language labels. If omitted, returns all available facilities."
         ),
       type: z
         .enum([
@@ -60,8 +76,8 @@ export function registerFacilityTools(server: McpServer) {
           .select("id, name, facility_type, building, room_number, description")
           .eq("is_active", true);
 
-        if (query) {
-          dbQuery = dbQuery.ilike("name", `%${query}%`);
+        if (query?.trim()) {
+          dbQuery = dbQuery.or(facilitySearchOrFilter(query));
         }
 
         if (type) {
@@ -353,11 +369,12 @@ export function registerFacilityTools(server: McpServer) {
               .single();
               
             if (facilityData) {
-              const facilityName = facilityData.name;
-              isTargetMatch = 
-                (!criteria.facility_name || criteria.facility_name === facilityName) &&
-                (!criteria.start_time || criteria.start_time === startTime) &&
-                (!criteria.end_time || criteria.end_time === endTime);
+              isTargetMatch = matchesBookingTaskCriteria(criteria, {
+                facilityName: facilityData.name,
+                bookingDate,
+                startTime,
+                endTime,
+              });
             } else {
               isTargetMatch = false;
             }
@@ -537,16 +554,20 @@ export function registerFacilityTools(server: McpServer) {
           const targets = taskAssignmentSets.targets as Record<string, { title: string; description: string; criteria: Record<string, string> }>;
           const criteria = targets.cancel_booking?.criteria;
           
-          if (criteria) {
+          if (criteria && data) {
             const { data: facilityData } = await supabase
               .from("facilities")
               .select("name")
-              .eq("id", data?.facility_id ?? "")
+              .eq("id", data.facility_id ?? "")
               .single();
               
             if (facilityData) {
-              const facilityName = facilityData.name;
-              isTargetMatch = !criteria.facility_name || criteria.facility_name === facilityName;
+              isTargetMatch = matchesBookingTaskCriteria(criteria, {
+                facilityName: facilityData.name,
+                bookingDate: data.booking_date,
+                startTime: data.start_time,
+                endTime: data.end_time,
+              });
             } else {
               isTargetMatch = false;
             }

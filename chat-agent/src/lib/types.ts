@@ -88,28 +88,6 @@ export interface ToolInvocationPart {
 
 export type MessagePart = TextPart | ToolInvocationPart;
 
-export type ChatResultActionKind =
-  | "select-course"
-  | "select-section"
-  | "confirm-registration"
-  | "confirm-drop"
-  | "select-facility"
-  | "request-booking"
-  | "confirm-cancel"
-  | "send-message";
-
-export interface ChatResultAction {
-  kind: ChatResultActionKind;
-  label: string;
-  /** Human-readable prompt shown in chat (no raw UUIDs) */
-  prompt: string;
-  /** Hidden metadata (IDs, etc.) appended for the LLM */
-  data?: Record<string, string>;
-  variant?: "default" | "secondary" | "outline" | "destructive" | "ghost";
-}
-
-export type ChatResultActionHandler = (action: ChatResultAction) => void;
-
 // Input type for creating messages
 export interface CreateMessageInput {
   conversationId: string;

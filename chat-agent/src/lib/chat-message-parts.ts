@@ -1,4 +1,5 @@
 import { isToolUIPart, getToolName, type UIMessage } from "ai";
+import { stripAssistantIntent } from "@/lib/assistant-intent";
 import type {
   MessagePart,
   MessageRole,
@@ -126,9 +127,16 @@ export function stripDisplayOnlyPartsForModel(
 ): UIMessage[] {
   return messages.map((message) => ({
     ...message,
-    parts: (message.parts ?? []).filter((part) => {
-      if (isTextPart(part)) return true;
-      return isToolUIPart(part as Parameters<typeof isToolUIPart>[0]);
-    }) as UIMessage["parts"],
+    parts: (message.parts ?? [])
+      .filter((part) => {
+        if (isTextPart(part)) return true;
+        return isToolUIPart(part as Parameters<typeof isToolUIPart>[0]);
+      })
+      .map((part) => {
+        if (!isTextPart(part) || message.role !== "assistant") {
+          return part;
+        }
+        return { ...part, text: stripAssistantIntent(part.text) };
+      }) as UIMessage["parts"],
   }));
 }

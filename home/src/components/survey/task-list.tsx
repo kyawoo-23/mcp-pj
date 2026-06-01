@@ -16,6 +16,7 @@ import type {
   TaskDefinitionRow,
   TaskProgressRow,
   TaskSessionRow,
+  UserAssignmentWithSet,
 } from "@/lib/types";
 
 interface TaskListProps {
@@ -32,7 +33,7 @@ interface TaskListProps {
     task: TaskDefinitionRow,
     session: TaskSessionRow,
   ) => void | Promise<void>;
-  assignment?: any;
+  assignment?: UserAssignmentWithSet | null;
 }
 
 const statusVariantMap: Record<
@@ -69,7 +70,7 @@ export function TaskList({
         const canOpen = !!session && session.status !== "not_started";
         
         // Extract specific target info if available
-        const targets = assignment?.task_assignment_sets?.targets || {};
+        const targets = (assignment?.task_assignment_sets?.targets ?? {}) as Record<string, { title?: string; description?: string }>;
         const specificTarget = targets[task.task_code];
         const displayTitle = specificTarget?.title || task.title;
         const displayDesc = specificTarget?.description || task.description;

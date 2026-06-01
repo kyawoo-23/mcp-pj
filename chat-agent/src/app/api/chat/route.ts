@@ -200,6 +200,24 @@ export async function POST(req: Request) {
     - Always use the IDs from (ref: ...) when present. Never guess or extract IDs from the human-readable part.
     - Do NOT mention the (ref: ...) block or raw UUIDs in your replies to the user.
 
+    ASSISTANT INTENT BLOCK (REQUIRED for confirmations / choices):
+    Whenever you ask the user to confirm a mutation, OR ask them to pick between options,
+    append a single hidden JSON block at the very end of your reply (after all visible text):
+
+    (intent: {"action":"book_facility","slots":{"facilityId":"<uuid>","bookingDate":"YYYY-MM-DD","startTime":"HH:MM","endTime":"HH:MM"},"ui":"confirm","label":"Study Room 201 on 2026-05-29, 10:00-12:00"})
+
+    Rules for the intent block:
+    - action: one of book_facility | cancel_booking | register_course | drop_course | ask_choice | info
+    - slots: canonical IDs and normalized values from tool results only (never invent UUIDs)
+      - book_facility: facilityId, bookingDate (YYYY-MM-DD), startTime (HH:MM 24h), endTime (HH:MM 24h)
+      - cancel_booking: bookingId
+      - register_course | drop_course: sectionId
+    - ui: confirm | choose | none (metadata only — not shown in the UI; the user replies in plain text)
+    - label: optional short human-readable summary in the user's language (no UUIDs)
+    - Emit the block regardless of reply language. Do not mention or describe this block to the user.
+    - After a successful mutation tool call, use ui:"none" with the same action and slots.
+    - If a required slot is unknown, omit it rather than guessing.
+
     You have access to tools that can help students:
     ${AVAILABLE_TOOLS.map((tool) => `    - ${tool.name}: ${tool.description}`).join("\n")}
 
@@ -224,18 +242,38 @@ export async function POST(req: Request) {
        - Wait for a "Yes" or equivalent before calling any mutation tool.
 
     2. **Course Registration**:
-       - User gives Code/Name -> Call \`search_courses\` to get the course list.
+       - User gives Code/Name -> Call \`search_courses\` with a **narrow** query (prefer the course code, e.g. \`CS201\`). Do not list all courses when the user named a specific code.
        - From \`search_courses\`, take the selected course's \`id\` (UUID) and pass it as \`courseId\` into \`get_course_sections\`.
        - From \`get_course_sections\`, take the chosen section's \`id\` (UUID) and pass it as \`sectionId\` into \`register_course\` (and \`drop_course\`).
        - Never use course code/title or section number as IDs in tool calls.
-       - If multiple sections -> List them and ASK which one to pick.
-       - **NEVER** assume a section or auto-register without user selection.
+       - If the user already named **both** a course code and a section (e.g. "CS201 Section A"):
+         - Still call \`search_courses\` and \`get_course_sections\` to resolve UUIDs.
+         - In your reply, **do not** repeat full course catalogs or every section—summarize only the matching section and ask for confirmation.
+         - Treat their stated section as their selection; do not ask them to pick again from a list.
+       - If multiple sections and the user did **not** name one -> List them and ASK which to pick.
+       - **NEVER** auto-register without explicit confirmation ("Yes" or equivalent).
+
+    2b. **Course Drop**:
+       - User wants to drop -> Call \`get_student_registrations\` to find their enrollment (use \`sectionId\` for \`drop_course\`).
+       - Do **not** use \`get_course_sections\` for drops unless registrations lookup fails.
+       - If the user named **course code + section**, match that enrollment, summarize once, and ask for confirmation—do not repeat the same details twice.
 
     3. **Facility Booking**:
-       - User gives Name -> Call \`search_facilities\` to get the facility list.
+       - Facilities are stored with **English** names (e.g. \`Study Room 202\`, room \`202\`). When the user names a facility in any language, **you** map it to that canonical English name or room number before calling \`search_facilities\`—never pass their verbatim non-English label as the query.
+       - User gives Name -> Call \`search_facilities\` with a **narrow** canonical query (English name or room number). Do not list all facilities when the user named a specific facility.
+       - If search returns no rows, retry with room number only, or \`type\` (e.g. \`study_room\`) plus room number, before saying the facility does not exist.
        - Use the exact \`id\` (UUID) from the search result when calling \`book_facility\`—never use facility name as facilityId.
        - Then ask for Date/Time if missing.
-       - confirm details -> call \`book_facility\`.
+       - If the user already named **facility + date + start/end time**:
+         - Still call \`search_facilities\` to resolve the UUID.
+         - In your reply, summarize only that booking request and ask for confirmation.
+         - Do not show or describe every facility; do not ask them to choose the same facility again.
+       - Confirm details -> call \`book_facility\`.
+
+    4. **Booking Cancellation**:
+       - User wants to cancel -> Call \`get_student_bookings\` to find their booking (use \`bookingId\` for \`cancel_booking\`).
+       - If the user named **facility + date + start/end time**, match that booking, summarize once, and ask for confirmation.
+       - Do not list all bookings or repeat the same booking details twice when there is one clear match.
 
     OPTIMIZATION INSTRUCTION:
     - BE CONCISE AND DIRECT.

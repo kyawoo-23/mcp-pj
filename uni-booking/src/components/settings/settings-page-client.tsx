@@ -4,21 +4,15 @@ import * as React from "react";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, Save, Eye, EyeOff } from "lucide-react";
 import { toast } from "sonner";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Spinner } from "@/components/ui/spinner";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { createClient } from "@/lib/supabase/client";
+import { createClient } from "../../lib/supabase/client";
+import { Button } from "../ui/button";
+import { Input } from "../ui/input";
+import { Label } from "../ui/label";
+import { Spinner } from "../ui/spinner";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../ui/card";
 
 const passwordSchema = z
   .object({
@@ -52,7 +46,6 @@ export function SettingsPageClient() {
   const [showNewPassword, setShowNewPassword] = React.useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = React.useState(false);
 
-  // Profile Form
   const {
     register: registerProfile,
     handleSubmit: handleProfileSubmit,
@@ -62,7 +55,6 @@ export function SettingsPageClient() {
     resolver: zodResolver(profileSchema),
   });
 
-  // Password Form
   const {
     register: registerPassword,
     handleSubmit: handlePasswordSubmitForm,
@@ -167,35 +159,32 @@ export function SettingsPageClient() {
 
   if (isLoading) {
     return (
-      <div className='flex items-center justify-center h-screen'>
+      <div className="flex items-center justify-center h-screen">
         <Spinner
-          variant='circle'
-          size='lg'
-          className='text-muted-foreground'
-          aria-label='Loading settings'
+          variant="circle"
+          size="lg"
+          className="text-muted-foreground"
+          aria-label="Loading settings"
         />
       </div>
     );
   }
 
   return (
-    <div className='flex flex-col h-full'>
-      {/* Header */}
-      <div className='px-4 py-4 container mx-auto'>
+    <div className="flex flex-col h-full">
+      <div className="px-4 py-4 container mx-auto">
         <Button
-          variant='ghost'
-          size='icon'
+          variant="ghost"
+          size="icon"
           onClick={() => router.back()}
-          className='cursor-pointer'
+          className="cursor-pointer"
         >
-          <ArrowLeft className='h-5 w-5' />
+          <ArrowLeft className="h-5 w-5" />
         </Button>
       </div>
 
-      {/* Content */}
-      <div className='flex-1 overflow-y-auto p-4 md:p-6'>
-        <div className='mx-auto max-w-2xl space-y-6'>
-          {/* Profile Section */}
+      <div className="flex-1 overflow-y-auto p-4 md:p-6">
+        <div className="mx-auto max-w-2xl space-y-6">
           <Card>
             <CardHeader>
               <CardTitle>Profile</CardTitle>
@@ -206,62 +195,59 @@ export function SettingsPageClient() {
             <CardContent>
               <form
                 onSubmit={handleProfileSubmit(onProfileSubmit)}
-                className='space-y-6'
+                className="space-y-6"
               >
-                {/* Name */}
-                <div className='space-y-2'>
-                  <Label htmlFor='full_name'>
-                    Full Name <span className='text-destructive'>*</span>
+                <div className="space-y-2">
+                  <Label htmlFor="full_name">
+                    Full Name <span className="text-destructive">*</span>
                   </Label>
                   <Input
-                    id='full_name'
-                    placeholder='Enter your full name'
+                    id="full_name"
+                    placeholder="Enter your full name"
                     {...registerProfile("full_name")}
                   />
                   {profileErrors.full_name && (
-                    <p className='text-sm text-destructive'>
+                    <p className="text-sm text-destructive">
                       {profileErrors.full_name.message}
                     </p>
                   )}
                 </div>
 
-                {/* Email */}
-                <div className='space-y-2'>
-                  <Label htmlFor='email'>Email</Label>
+                <div className="space-y-2">
+                  <Label htmlFor="email">Email</Label>
                   <Input
-                    id='email'
-                    type='email'
+                    id="email"
+                    type="email"
                     disabled
-                    className='bg-muted'
+                    className="bg-muted"
                     {...registerProfile("email")}
                   />
                 </div>
 
-                {/* Student ID */}
-                <div className='space-y-2'>
-                  <Label htmlFor='student_id'>
-                    Student ID <span className='text-destructive'>*</span>
+                <div className="space-y-2">
+                  <Label htmlFor="student_id">
+                    Student ID <span className="text-destructive">*</span>
                   </Label>
                   <Input
-                    id='student_id'
-                    type='text'
-                    placeholder='Enter Student ID'
+                    id="student_id"
+                    type="text"
+                    placeholder="Enter Student ID"
                     {...registerProfile("student_id")}
                   />
                   {profileErrors.student_id && (
-                    <p className='text-sm text-destructive'>
+                    <p className="text-sm text-destructive">
                       {profileErrors.student_id.message}
                     </p>
                   )}
                 </div>
 
-                <div className='flex justify-end'>
-                  <Button type='submit' disabled={isSaving}>
+                <div className="flex justify-end">
+                  <Button type="submit" disabled={isSaving}>
                     {isSaving ? (
                       "Saving..."
                     ) : (
                       <>
-                        <Save className='mr-2 h-4 w-4' />
+                        <Save className="mr-2 h-4 w-4" />
                         Save Changes
                       </>
                     )}
@@ -271,7 +257,6 @@ export function SettingsPageClient() {
             </CardContent>
           </Card>
 
-          {/* Change Password Section */}
           <Card>
             <CardHeader>
               <CardTitle>Change Password</CardTitle>
@@ -282,32 +267,32 @@ export function SettingsPageClient() {
             <CardContent>
               <form
                 onSubmit={handlePasswordSubmitForm(onPasswordSubmit)}
-                className='space-y-6'
+                className="space-y-6"
               >
-                <div className='space-y-2'>
-                  <Label htmlFor='currentPassword'>Current Password</Label>
-                  <div className='relative'>
+                <div className="space-y-2">
+                  <Label htmlFor="currentPassword">Current Password</Label>
+                  <div className="relative">
                     <Input
-                      id='currentPassword'
+                      id="currentPassword"
                       type={showCurrentPassword ? "text" : "password"}
-                      placeholder='Enter current password'
+                      placeholder="Enter current password"
                       {...registerPassword("currentPassword")}
                     />
                     <Button
-                      type='button'
-                      variant='ghost'
-                      size='sm'
-                      className='absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent'
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
                       onClick={() =>
                         setShowCurrentPassword(!showCurrentPassword)
                       }
                     >
                       {showCurrentPassword ? (
-                        <EyeOff className='h-4 w-4 text-muted-foreground' />
+                        <EyeOff className="h-4 w-4 text-muted-foreground" />
                       ) : (
-                        <Eye className='h-4 w-4 text-muted-foreground' />
+                        <Eye className="h-4 w-4 text-muted-foreground" />
                       )}
-                      <span className='sr-only'>
+                      <span className="sr-only">
                         {showCurrentPassword
                           ? "Hide password"
                           : "Show password"}
@@ -315,71 +300,71 @@ export function SettingsPageClient() {
                     </Button>
                   </div>
                   {passwordErrors.currentPassword && (
-                    <p className='text-sm text-destructive'>
+                    <p className="text-sm text-destructive">
                       {passwordErrors.currentPassword.message}
                     </p>
                   )}
                 </div>
 
-                <div className='space-y-2'>
-                  <Label htmlFor='newPassword'>New Password</Label>
-                  <div className='relative'>
+                <div className="space-y-2">
+                  <Label htmlFor="newPassword">New Password</Label>
+                  <div className="relative">
                     <Input
-                      id='newPassword'
+                      id="newPassword"
                       type={showNewPassword ? "text" : "password"}
-                      placeholder='Enter new password'
+                      placeholder="Enter new password"
                       {...registerPassword("newPassword")}
                     />
                     <Button
-                      type='button'
-                      variant='ghost'
-                      size='sm'
-                      className='absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent'
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
                       onClick={() => setShowNewPassword(!showNewPassword)}
                     >
                       {showNewPassword ? (
-                        <EyeOff className='h-4 w-4 text-muted-foreground' />
+                        <EyeOff className="h-4 w-4 text-muted-foreground" />
                       ) : (
-                        <Eye className='h-4 w-4 text-muted-foreground' />
+                        <Eye className="h-4 w-4 text-muted-foreground" />
                       )}
-                      <span className='sr-only'>
+                      <span className="sr-only">
                         {showNewPassword ? "Hide password" : "Show password"}
                       </span>
                     </Button>
                   </div>
                   {passwordErrors.newPassword && (
-                    <p className='text-sm text-destructive'>
+                    <p className="text-sm text-destructive">
                       {passwordErrors.newPassword.message}
                     </p>
                   )}
                 </div>
 
-                <div className='space-y-2'>
-                  <Label htmlFor='confirmNewPassword'>
+                <div className="space-y-2">
+                  <Label htmlFor="confirmNewPassword">
                     Confirm New Password
                   </Label>
-                  <div className='relative'>
+                  <div className="relative">
                     <Input
-                      id='confirmNewPassword'
+                      id="confirmNewPassword"
                       type={showConfirmPassword ? "text" : "password"}
-                      placeholder='Confirm new password'
+                      placeholder="Confirm new password"
                       {...registerPassword("confirmPassword")}
                     />
                     <Button
-                      type='button'
-                      variant='ghost'
-                      size='sm'
-                      className='absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent'
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
                       onClick={() =>
                         setShowConfirmPassword(!showConfirmPassword)
                       }
                     >
                       {showConfirmPassword ? (
-                        <EyeOff className='h-4 w-4 text-muted-foreground' />
+                        <EyeOff className="h-4 w-4 text-muted-foreground" />
                       ) : (
-                        <Eye className='h-4 w-4 text-muted-foreground' />
+                        <Eye className="h-4 w-4 text-muted-foreground" />
                       )}
-                      <span className='sr-only'>
+                      <span className="sr-only">
                         {showConfirmPassword
                           ? "Hide password"
                           : "Show password"}
@@ -387,19 +372,19 @@ export function SettingsPageClient() {
                     </Button>
                   </div>
                   {passwordErrors.confirmPassword && (
-                    <p className='text-sm text-destructive'>
+                    <p className="text-sm text-destructive">
                       {passwordErrors.confirmPassword.message}
                     </p>
                   )}
                 </div>
 
-                <div className='flex justify-end'>
-                  <Button type='submit' disabled={isPasswordSaving}>
+                <div className="flex justify-end">
+                  <Button type="submit" disabled={isPasswordSaving}>
                     {isPasswordSaving ? (
                       "Updating..."
                     ) : (
                       <>
-                        <Save className='mr-2 h-4 w-4' />
+                        <Save className="mr-2 h-4 w-4" />
                         Update Password
                       </>
                     )}

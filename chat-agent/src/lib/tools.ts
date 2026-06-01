@@ -4,6 +4,7 @@ import { TOOL_DEFINITIONS } from "@/lib/tool-definitions";
 import { SupabaseClient } from "@supabase/supabase-js";
 import { Database } from "../../../supabase/types/database.types";
 import { recordTaskCompletion } from "@/lib/task-mode-server";
+import { matchesBookingTaskCriteria } from "@/lib/task-criteria";
 
 /**
  * AI SDK Tool Definitions Factory
@@ -134,15 +135,45 @@ export const createTools = (supabase: SupabaseClient<Database>) => {
         };
       }
 
-      await recordTaskCompletion(supabase, {
-        userId: params.studentId,
-        systemType: "chat_agent",
-        taskCode: "register_course",
-        successPayload: {
-          registration_id: data?.id ?? null,
-          section_id: params.sectionId,
-        },
-      });
+      const { data: assign } = await supabase
+        .from("task_user_assignments")
+        .select(`task_assignment_sets(targets)`)
+        .eq("user_id", params.studentId)
+        .maybeSingle();
+
+      let isTargetMatch = true;
+      const taskAssignmentSets = assign?.task_assignment_sets as unknown as Record<string, unknown>;
+      if (taskAssignmentSets?.targets) {
+        const targets = taskAssignmentSets.targets as Record<string, { title: string; description: string; criteria: Record<string, string> }>;
+        const criteria = targets.register_course?.criteria;
+        if (criteria) {
+          const { data: sec } = await supabase
+            .from("course_sections")
+            .select("section_number, courses(code)")
+            .eq("id", params.sectionId)
+            .single();
+          if (sec) {
+            const courseCode = (sec.courses as unknown as { code: string })?.code;
+            isTargetMatch =
+              (!criteria.course_code || criteria.course_code === courseCode) &&
+              (!criteria.section_number || criteria.section_number === sec.section_number);
+          } else {
+            isTargetMatch = false;
+          }
+        }
+      }
+
+      if (isTargetMatch) {
+        await recordTaskCompletion(supabase, {
+          userId: params.studentId,
+          systemType: "chat_agent",
+          taskCode: "register_course",
+          successPayload: {
+            registration_id: data?.id ?? null,
+            section_id: params.sectionId,
+          },
+        });
+      }
 
       return {
         registration: data,
@@ -214,15 +245,45 @@ export const createTools = (supabase: SupabaseClient<Database>) => {
         return { error: `Error dropping course: ${error.message}` };
       }
 
-      await recordTaskCompletion(supabase, {
-        userId: params.studentId,
-        systemType: "chat_agent",
-        taskCode: "drop_course",
-        successPayload: {
-          registration_id: data?.id ?? null,
-          section_id: params.sectionId,
-        },
-      });
+      const { data: assign } = await supabase
+        .from("task_user_assignments")
+        .select(`task_assignment_sets(targets)`)
+        .eq("user_id", params.studentId)
+        .maybeSingle();
+
+      let isTargetMatch = true;
+      const taskAssignmentSets = assign?.task_assignment_sets as unknown as Record<string, unknown>;
+      if (taskAssignmentSets?.targets) {
+        const targets = taskAssignmentSets.targets as Record<string, { title: string; description: string; criteria: Record<string, string> }>;
+        const criteria = targets.drop_course?.criteria;
+        if (criteria) {
+          const { data: sec } = await supabase
+            .from("course_sections")
+            .select("section_number, courses(code)")
+            .eq("id", params.sectionId)
+            .single();
+          if (sec) {
+            const courseCode = (sec.courses as unknown as { code: string })?.code;
+            isTargetMatch =
+              (!criteria.course_code || criteria.course_code === courseCode) &&
+              (!criteria.section_number || criteria.section_number === sec.section_number);
+          } else {
+            isTargetMatch = false;
+          }
+        }
+      }
+
+      if (isTargetMatch) {
+        await recordTaskCompletion(supabase, {
+          userId: params.studentId,
+          systemType: "chat_agent",
+          taskCode: "drop_course",
+          successPayload: {
+            registration_id: data?.id ?? null,
+            section_id: params.sectionId,
+          },
+        });
+      }
 
       return {
         registration: data,
@@ -245,10 +306,28 @@ export const createTools = (supabase: SupabaseClient<Database>) => {
     ])
     .optional();
 
+  const escapeIlike = (value: string) =>
+    value.replace(/\\/g, "\\\\").replace(/%/g, "\\%").replace(/_/g, "\\_");
+
+  const facilitySearchOrFilter = (query: string) => {
+    const pattern = `%${escapeIlike(query.trim())}%`;
+    return [
+      `name.ilike.${pattern}`,
+      `room_number.ilike.${pattern}`,
+      `building.ilike.${pattern}`,
+      `description.ilike.${pattern}`,
+    ].join(",");
+  };
+
   const searchFacilities = tool({
     description: TOOL_DEFINITIONS.search_facilities.description,
     inputSchema: z.object({
-      query: z.string().optional().describe("Search query for facility name. If omitted, returns all available facilities."),
+      query: z
+        .string()
+        .optional()
+        .describe(
+          "Canonical search term: English facility name and/or room number (e.g. 'Study Room 202', '202'). Map user wording first; do not pass untranslated foreign-language labels. Omit to list all.",
+        ),
       type: facilityTypeSchema.describe("Filter by facility type"),
     }),
     execute: async (params) => {
@@ -257,8 +336,8 @@ export const createTools = (supabase: SupabaseClient<Database>) => {
         .select("*")
         .eq("is_active", true);
 
-      if (params.query) {
-        dbQuery = dbQuery.ilike("name", `%${params.query}%`);
+      if (params.query?.trim()) {
+        dbQuery = dbQuery.or(facilitySearchOrFilter(params.query));
       }
 
       if (params.type) {
@@ -442,16 +521,48 @@ export const createTools = (supabase: SupabaseClient<Database>) => {
         };
       }
 
-      await recordTaskCompletion(supabase, {
-        userId: params.studentId,
-        systemType: "chat_agent",
-        taskCode: "book_room",
-        successPayload: {
-          booking_id: data?.id ?? null,
-          facility_id: params.facilityId,
-          booking_date: params.bookingDate,
-        },
-      });
+      const { data: assign } = await supabase
+        .from("task_user_assignments")
+        .select(`task_assignment_sets(targets)`)
+        .eq("user_id", params.studentId)
+        .maybeSingle();
+
+      let isTargetMatch = true;
+      const taskAssignmentSets = assign?.task_assignment_sets as unknown as Record<string, unknown>;
+      if (taskAssignmentSets?.targets) {
+        const targets = taskAssignmentSets.targets as Record<string, { title: string; description: string; criteria: Record<string, string> }>;
+        const criteria = targets.book_room?.criteria;
+        if (criteria) {
+          const { data: fac } = await supabase
+            .from("facilities")
+            .select("name")
+            .eq("id", params.facilityId)
+            .single();
+          if (fac) {
+            isTargetMatch = matchesBookingTaskCriteria(criteria, {
+              facilityName: fac.name,
+              bookingDate: params.bookingDate,
+              startTime: params.startTime,
+              endTime: params.endTime,
+            });
+          } else {
+            isTargetMatch = false;
+          }
+        }
+      }
+
+      if (isTargetMatch) {
+        await recordTaskCompletion(supabase, {
+          userId: params.studentId,
+          systemType: "chat_agent",
+          taskCode: "book_room",
+          successPayload: {
+            booking_id: data?.id ?? null,
+            facility_id: params.facilityId,
+            booking_date: params.bookingDate,
+          },
+        });
+      }
 
       return { booking: data, message: "Successfully booked facility" };
     },
@@ -523,15 +634,47 @@ export const createTools = (supabase: SupabaseClient<Database>) => {
         return { error: `Error cancelling booking: ${error.message}` };
       }
 
-      await recordTaskCompletion(supabase, {
-        userId: params.studentId,
-        systemType: "chat_agent",
-        taskCode: "cancel_booking",
-        successPayload: {
-          booking_id: data?.id ?? null,
-          facility_id: data?.facility_id ?? null,
-        },
-      });
+      const { data: assign } = await supabase
+        .from("task_user_assignments")
+        .select(`task_assignment_sets(targets)`)
+        .eq("user_id", params.studentId)
+        .maybeSingle();
+
+      let isTargetMatch = true;
+      const taskAssignmentSets = assign?.task_assignment_sets as unknown as Record<string, unknown>;
+      if (taskAssignmentSets?.targets) {
+        const targets = taskAssignmentSets.targets as Record<string, { title: string; description: string; criteria: Record<string, string> }>;
+        const criteria = targets.cancel_booking?.criteria;
+        if (criteria && data) {
+          const { data: fac } = await supabase
+            .from("facilities")
+            .select("name")
+            .eq("id", data.facility_id ?? "")
+            .single();
+          if (fac) {
+            isTargetMatch = matchesBookingTaskCriteria(criteria, {
+              facilityName: fac.name,
+              bookingDate: data.booking_date,
+              startTime: data.start_time,
+              endTime: data.end_time,
+            });
+          } else {
+            isTargetMatch = false;
+          }
+        }
+      }
+
+      if (isTargetMatch) {
+        await recordTaskCompletion(supabase, {
+          userId: params.studentId,
+          systemType: "chat_agent",
+          taskCode: "cancel_booking",
+          successPayload: {
+            booking_id: data?.id ?? null,
+            facility_id: data?.facility_id ?? null,
+          },
+        });
+      }
 
       return {
         booking: data,

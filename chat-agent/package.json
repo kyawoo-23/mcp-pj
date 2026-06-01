@@ -7,7 +7,8 @@
     "dev": "next dev --port 4000 --inspect",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "test": "jest"
   },
   "dependencies": {
     "@ai-sdk/google": "^3.0.1",

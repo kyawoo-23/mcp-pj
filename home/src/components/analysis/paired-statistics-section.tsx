@@ -456,7 +456,7 @@ export function PairedStatisticsSection({
               Detailed Statistics Table
             </div>
             <span className='text-xs text-muted-foreground hidden sm:inline-block'>
-              Means, SDs, raw t-values, and Cohen's d
+              Means, SDs, raw t-values, and Cohen&rsquo;s d
             </span>
           </div>
         </CollapsibleTrigger>

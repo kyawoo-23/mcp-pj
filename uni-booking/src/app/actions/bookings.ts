@@ -9,6 +9,7 @@ import type {
 import { hasTimeConflict, validateTimeRange } from "@/lib/utils/booking";
 import { getFacilityAvailability } from "./facilities";
 import { recordTaskCompletion } from "@/lib/task-mode-server";
+import { matchesBookingTaskCriteria } from "@/lib/task-criteria";
 
 export async function createBooking(formData: BookingFormData) {
   const supabase = await createClient();
@@ -98,7 +99,7 @@ export async function createBooking(formData: BookingFormData) {
 
   let isTargetMatch = true;
 
-  const taskAssignmentSets = assignment?.task_assignment_sets as any;
+  const taskAssignmentSets = assignment?.task_assignment_sets as Record<string, unknown> | null;
   if (taskAssignmentSets?.targets) {
     const targets = taskAssignmentSets.targets as Record<string, { title: string; description: string; criteria: Record<string, string> }>;
     const criteria = targets.book_room?.criteria;
@@ -111,11 +112,12 @@ export async function createBooking(formData: BookingFormData) {
         .single();
         
       if (facilityData) {
-        const facilityName = facilityData.name;
-        isTargetMatch = 
-          (!criteria.facility_name || criteria.facility_name === facilityName) &&
-          (!criteria.start_time || criteria.start_time === formData.start_time) &&
-          (!criteria.end_time || criteria.end_time === formData.end_time);
+        isTargetMatch = matchesBookingTaskCriteria(criteria, {
+          facilityName: facilityData.name,
+          bookingDate: formData.booking_date,
+          startTime: formData.start_time,
+          endTime: formData.end_time,
+        });
       } else {
         isTargetMatch = false;
       }
@@ -258,21 +260,25 @@ export async function cancelBooking(id: string) {
 
   let isTargetMatch = true;
 
-  const taskAssignmentSets = assignment?.task_assignment_sets as any;
+  const taskAssignmentSets = assignment?.task_assignment_sets as Record<string, unknown> | null;
   if (taskAssignmentSets?.targets) {
     const targets = taskAssignmentSets.targets as Record<string, { title: string; description: string; criteria: Record<string, string> }>;
     const criteria = targets.cancel_booking?.criteria;
     
-    if (criteria) {
+    if (criteria && data) {
       const { data: facilityData } = await supabase
         .from("facilities")
         .select("name")
-        .eq("id", data?.facility_id ?? "")
+        .eq("id", data.facility_id ?? "")
         .single();
         
       if (facilityData) {
-        const facilityName = facilityData.name;
-        isTargetMatch = !criteria.facility_name || criteria.facility_name === facilityName;
+        isTargetMatch = matchesBookingTaskCriteria(criteria, {
+          facilityName: facilityData.name,
+          bookingDate: data.booking_date,
+          startTime: data.start_time,
+          endTime: data.end_time,
+        });
       } else {
         isTargetMatch = false;
       }

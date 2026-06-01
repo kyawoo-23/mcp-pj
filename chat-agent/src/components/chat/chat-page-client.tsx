@@ -16,7 +16,6 @@ import type {
   MessagePart,
   MessageRow,
   ConversationWithCount,
-  ChatResultAction,
 } from "@/lib/types";
 import {
   createConversationAction,
@@ -249,7 +248,7 @@ export function ChatPageClient({
         ) {
           setActiveConversationId(responseConversationId);
           // Avoid a full route refresh here: it can race message persistence and
-          // briefly reload text-only rows, making streamed interactive cards vanish.
+          // briefly reload text-only rows and disturb in-flight streaming UI.
           window.history.replaceState(null, "", `/c/${responseConversationId}`);
         }
 
@@ -357,21 +356,6 @@ export function ChatPageClient({
       );
     },
     [sendMessage, activeConversationId],
-  );
-
-  const handleChatResultAction = React.useCallback(
-    (action: ChatResultAction) => {
-      if (isLoading) {
-        toast.info("Please wait for the current reply to finish first.");
-        return;
-      }
-      const fullPrompt =
-        action.data && Object.keys(action.data).length > 0
-          ? `${action.prompt}\n\n(ref: ${JSON.stringify(action.data)})`
-          : action.prompt;
-      void handleSendMessage(fullPrompt);
-    },
-    [isLoading, handleSendMessage],
   );
 
   const handleNewChat = async () => {
@@ -487,7 +471,6 @@ export function ChatPageClient({
             chatInputRef.current?.setInput(prompt);
             chatInputRef.current?.focus();
           }}
-          onAction={handleChatResultAction}
           isLoading={isLoading}
           status={status}
           pendingCaption={busyCaption}

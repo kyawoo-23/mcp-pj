@@ -1,4 +1,11 @@
-.PHONY: all dev install setup env-init chat-agent uni-booking uni-registration home mcp-server edge-functions db-start db-stop db-status db-reset db-gen
+.PHONY: all dev install setup env-init chat-agent uni-booking uni-registration home mcp-server edge-functions db-start db-stop db-status db-reset db-gen ip
+
+# LAN IP for device testing on the same network (macOS: en0/en1, Windows: active adapter)
+ifeq ($(OS),Windows_NT)
+LOCAL_IP := $(shell powershell -NoProfile -Command "(Get-NetIPConfiguration | Where-Object { $$_.IPv4DefaultGateway -ne $$null -and $$_.NetAdapter.Status -ne 'Disconnected' } | Select-Object -First 1 -ExpandProperty IPv4Address | Select-Object -ExpandProperty IPAddress)")
+else
+LOCAL_IP := $(shell sh -c 'for iface in en0 en1 en2; do ip=$$(ipconfig getifaddr $$iface 2>/dev/null); if [ -n "$$ip" ]; then echo $$ip; exit 0; fi; done; ip=$$(hostname -I 2>/dev/null | awk "{print \$$1}"); if [ -n "$$ip" ]; then echo $$ip; else echo 127.0.0.1; fi')
+endif
 
 # Default target
 all: dev
@@ -22,9 +29,14 @@ install:
 	cd home && pnpm install
 	cd mcp-server && bun install
 
+# Print this machine's LAN IP (same as LOCAL_IP)
+ip:
+	@echo $(LOCAL_IP)
+
 # Run all projects in parallel
 dev:
 	@echo "Starting all projects..."
+	@echo "LAN IP: $(LOCAL_IP)  (make ip)"
 	$(MAKE) -j6 chat-agent uni-booking uni-registration home mcp-server edge-functions
 
 # Individual project targets

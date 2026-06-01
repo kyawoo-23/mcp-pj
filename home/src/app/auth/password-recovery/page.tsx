@@ -55,9 +55,9 @@ export default function PasswordRecovery() {
       }
 
       toast.success("Check your email for the reset link!");
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error(error);
-      toast.error(error.message || "Something went wrong.");
+      toast.error(error instanceof Error ? error.message : "Something went wrong.");
     } finally {
       setLoading(false);
     }

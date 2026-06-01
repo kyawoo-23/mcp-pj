@@ -10,6 +10,7 @@ import type {
   TaskDefinitionRow,
   TaskProgressRow,
   TaskSessionRow,
+  UserAssignmentWithSet,
   UserInterviewResponseRow,
 } from "@/lib/types";
 import { Button } from "@/components/ui/button";
@@ -50,7 +51,7 @@ interface SurveyPageClientProps {
   surveyResponses: SurveyResponseRow[];
   interviewQuestions: InterviewQuestionRow[];
   interviewResponses: UserInterviewResponseRow[];
-  assignment?: any;
+  assignment?: UserAssignmentWithSet | null;
 }
 
 type SectionKey =

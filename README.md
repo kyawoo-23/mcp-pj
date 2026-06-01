@@ -118,6 +118,25 @@ Ports are configured in [`supabase/config.toml`](supabase/config.toml):
 - **Postgres**: `127.0.0.1:34567`
 - **Supabase Studio**: `http://127.0.0.1:56789`
 
+### Same-network device testing (phone/tablet)
+
+`localhost` only works on the machine running the dev servers. To open the apps from another device on the same Wi‑Fi/LAN, use your machine’s LAN IP:
+
+```bash
+make ip
+```
+
+This prints the host’s IPv4 address (macOS: `ipconfig getifaddr en0` with fallbacks on `en1`/`en2`; Windows: active adapter via PowerShell). `make dev` prints the same value when services start.
+
+Example URLs (replace with the printed IP):
+
+- Chat agent: `http://<LAN_IP>:4000`
+- Facility booking: `http://<LAN_IP>:4001`
+- Course registration: `http://<LAN_IP>:4002`
+- Home: `http://<LAN_IP>:4003`
+
+You may need to allow incoming connections in the OS firewall. MCP and Supabase URLs in `.env.local` are still typically `localhost` unless you reconfigure them for LAN access.
+
 ## Environment variables
 
 ### Google Gemini API key (required for `chat-agent`)
@@ -172,7 +191,8 @@ This repo ships with a root [`Makefile`](Makefile) to make local dev repeatable.
 
 - **`make setup`**: installs dependencies for all projects, starts Supabase locally, resets + seeds the DB, and regenerates TypeScript DB types (`supabase/types/database.types.ts`)
 - **`make install`**: installs `pnpm` dependencies in each project
-- **`make dev`**: runs all apps/services in parallel (Next.js apps + MCP server + Supabase edge functions)
+- **`make dev`**: runs all apps/services in parallel (Next.js apps + MCP server + Supabase edge functions); prints the LAN IP for same-network device testing
+- **`make ip`**: prints this machine’s LAN IPv4 (`LOCAL_IP` in the Makefile; macOS + Windows compatible)
 - **`make db-start`**: starts the local Supabase stack (Docker)
 - **`make db-stop`**: stops the local Supabase stack
 - **`make db-status`**: prints local Supabase URLs/keys
