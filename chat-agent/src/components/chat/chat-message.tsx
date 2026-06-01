@@ -1,7 +1,7 @@
 import * as React from "react";
+import dynamic from "next/dynamic";
 import { cn } from "@/lib/utils";
 import { UserAvatar, AssistantAvatar, SystemIcon } from "./icons/message-icons";
-import ReactMarkdown from "react-markdown";
 import { Loader2 } from "lucide-react";
 import {
   THINKING_LABEL,
@@ -14,6 +14,25 @@ import type {
   ChatMessageData,
 } from "@/lib/types";
 import { stripAssistantIntent, stripHiddenRef } from "@/lib/assistant-intent";
+import { OPENUI_RENDERING_ENABLED } from "@/lib/openui/openui-config";
+import { MarkdownContent } from "./markdown-content";
+
+/** Lazy-load OpenUI (~heavy); only registered when the feature flag is on. */
+const OpenUIAwareContent = OPENUI_RENDERING_ENABLED
+  ? dynamic(
+      () =>
+        import("./openui-aware-content").then((m) => m.OpenUIAwareContent),
+      {
+        ssr: false,
+        loading: () => (
+          <div
+            className="h-8 animate-pulse rounded-lg bg-muted/40"
+            aria-hidden
+          />
+        ),
+      },
+    )
+  : null;
 
 interface ChatMessageProps {
   message: ChatMessageData;
@@ -69,14 +88,6 @@ function dedupeAssistantParagraphs(text: string): string {
     kept.push(p);
   }
   return kept.join("\n\n");
-}
-
-function MarkdownContent({ text }: { text: string }) {
-  return (
-    <div className="prose prose-sm dark:prose-invert max-w-none whitespace-pre-wrap leading-relaxed">
-      <ReactMarkdown>{text}</ReactMarkdown>
-    </div>
-  );
 }
 
 export function ChatMessage({
@@ -158,7 +169,14 @@ export function ChatMessage({
                 : "bg-muted/60 text-foreground border border-border/50 rounded-tl-sm",
             )}
           >
-            <MarkdownContent text={displayText} />
+            {!isUser && OpenUIAwareContent ? (
+              <OpenUIAwareContent
+                text={displayText}
+                isStreaming={isStreaming}
+              />
+            ) : (
+              <MarkdownContent text={displayText} />
+            )}
             {isStreaming && (
               <span className="animate-pulse inline-block h-4 w-1.5 align-middle bg-foreground/50 ml-1" />
             )}

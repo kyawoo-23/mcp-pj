@@ -114,18 +114,19 @@
 /* Hero stripe background - uses theme colors (foreground to primary) */
 .hero-stripe-bg {
   position: relative;
-  background: linear-gradient(90deg, 
-    oklch(0.08 0.02 350) 0%, 
+  background: linear-gradient(
+    90deg,
+    oklch(0.08 0.02 350) 0%,
     oklch(0.25 0.12 350) 50%,
     oklch(0.45 0.18 350) 100%
   );
 }
 
 .hero-stripe-bg::before {
-  content: '';
+  content: "";
   position: absolute;
   inset: 0;
-  background: 
+  background:
     repeating-linear-gradient(
       90deg,
       transparent 0px,
@@ -148,7 +149,8 @@
 
 /* Double chevron bounce animation */
 @keyframes chevron-bounce {
-  0%, 100% {
+  0%,
+  100% {
     transform: translateY(0);
     opacity: 0.6;
   }

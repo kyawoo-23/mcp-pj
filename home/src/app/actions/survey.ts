@@ -12,7 +12,7 @@ export async function saveDemographicsAction(
   userId: string,
   ageRange: ProfileRow["age_range"],
   gender: ProfileRow["gender"],
-  technicalProficiency: ProfileRow["technical_proficiency"],
+  programmingExperience: ProfileRow["programming_experience"],
   aiToolFrequency: ProfileRow["ai_tool_frequency"]
 ): Promise<ActionResult<TaskSessionRow>> {
   const supabase = await createClient();
@@ -24,7 +24,7 @@ export async function saveDemographicsAction(
     .update({
       age_range: ageRange,
       gender,
-      technical_proficiency: technicalProficiency,
+      programming_experience: programmingExperience,
       ai_tool_frequency: aiToolFrequency,
       updated_at: now,
     })

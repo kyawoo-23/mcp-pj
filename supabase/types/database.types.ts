@@ -291,6 +291,9 @@ export type Database = {
           full_name: string | null
           gender: Database["public"]["Enums"]["gender_identity"] | null
           id: string
+          programming_experience:
+            | Database["public"]["Enums"]["programming_experience"]
+            | null
           role: Database["public"]["Enums"]["user_role"]
           student_id: string | null
           technical_proficiency:
@@ -308,6 +311,9 @@ export type Database = {
           full_name?: string | null
           gender?: Database["public"]["Enums"]["gender_identity"] | null
           id: string
+          programming_experience?:
+            | Database["public"]["Enums"]["programming_experience"]
+            | null
           role?: Database["public"]["Enums"]["user_role"]
           student_id?: string | null
           technical_proficiency?:
@@ -325,6 +331,9 @@ export type Database = {
           full_name?: string | null
           gender?: Database["public"]["Enums"]["gender_identity"] | null
           id?: string
+          programming_experience?:
+            | Database["public"]["Enums"]["programming_experience"]
+            | null
           role?: Database["public"]["Enums"]["user_role"]
           student_id?: string | null
           technical_proficiency?:
@@ -806,6 +815,11 @@ export type Database = {
         | "other"
       gender_identity: "female" | "male" | "prefer_not_say"
       message_role: "user" | "assistant" | "system"
+      programming_experience:
+        | "none"
+        | "under_1_year"
+        | "one_to_two_years"
+        | "three_plus_years"
       registration_status: "active" | "dropped" | "completed" | "waitlisted"
       survey_construct:
         | "Usability"
@@ -973,6 +987,12 @@ export const Constants = {
       ],
       gender_identity: ["female", "male", "prefer_not_say"],
       message_role: ["user", "assistant", "system"],
+      programming_experience: [
+        "none",
+        "under_1_year",
+        "one_to_two_years",
+        "three_plus_years",
+      ],
       registration_status: ["active", "dropped", "completed", "waitlisted"],
       survey_construct: [
         "Usability",

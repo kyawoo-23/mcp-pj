@@ -13,6 +13,7 @@ export type FacilityBookingInsert = Database["public"]["Tables"]["facility_booki
 export type FacilityBookingUpdate = Database["public"]["Tables"]["facility_bookings"]["Update"];
 
 export type Profile = Database["public"]["Tables"]["profiles"]["Row"];
+export type ProfileRow = Profile;
 export type ProfileInsert = Database["public"]["Tables"]["profiles"]["Insert"];
 export type ProfileUpdate = Database["public"]["Tables"]["profiles"]["Update"];
 

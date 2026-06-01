@@ -12,9 +12,9 @@ export function TechStack() {
             System Design
           </h2>
           <p className='text-foreground/90 max-w-2xl mx-auto text-base'>
-            Two web applications and a conversational agent share one backend. The
-            same database powers both interaction paths, so we can compare how
-            modality affects experience—not functionality.
+            Two web applications and a conversational agent share one backend.
+            The same database powers both interaction paths, so we can compare
+            how modality affects experience—not functionality.
           </p>
         </div>
 
@@ -34,9 +34,7 @@ export function TechStack() {
                 <p className='p-2.5 bg-muted rounded font-medium'>
                   Course Registration
                 </p>
-                <p className='p-2.5 bg-muted rounded font-medium'>
-                  Chat Agent
-                </p>
+                <p className='p-2.5 bg-muted rounded font-medium'>Chat Agent</p>
               </div>
             </div>
 
@@ -53,9 +51,7 @@ export function TechStack() {
                 <p className='p-2.5 bg-muted rounded font-medium'>
                   MCP Tool Invocation
                 </p>
-                <p className='p-2.5 bg-muted rounded font-medium'>
-                  Backend
-                </p>
+                <p className='p-2.5 bg-muted rounded font-medium'>Backend</p>
               </div>
             </div>
 
@@ -84,7 +80,9 @@ export function TechStack() {
         <div className='grid md:grid-cols-3 gap-6'>
           <div className='p-6 rounded-xl bg-card border-2 border-border'>
             <GitBranch className='w-6 h-6 text-foreground mb-3' />
-            <h3 className='font-semibold mb-2 text-base'>Functional Equivalence</h3>
+            <h3 className='font-semibold mb-2 text-base'>
+              Functional Equivalence
+            </h3>
             <p className='text-base text-foreground/85'>
               Same backend; differences come from modality, not functionality.
             </p>

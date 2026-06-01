@@ -26,7 +26,9 @@ shared Supabase backend**, so that experimental differences come from the
 
 - **Traditional modality**: standard web UIs (forms, buttons, navigation).
 - **Conversational modality**: a Gemini-powered chat agent that executes
-  actions through **MCP tools** exposed by an MCP server.
+  actions through **MCP tools** exposed by an MCP server. Optionally, it can
+  render **OpenUI Lang** blocks in assistant replies as structured UI
+  (feature-flagged via `NEXT_PUBLIC_OPENUI_RENDERING`, off by default).
 
 Experimental tasks: register course, drop course, book facility, cancel
 booking. The same Postgres schema, business logic, and seed data back
@@ -42,7 +44,7 @@ four core tasks against the same Supabase data.
 
 ```
 mcp-pj/
-├── chat-agent/          Next.js 16 chat UI + /api/chat (MCP client, Gemini)
+├── chat-agent/          Next.js 16 chat UI + /api/chat (MCP client, Gemini, optional OpenUI Lang)
 ├── mcp-server/          Bun MCP server exposing university tools (port 4004)
 ├── uni-booking/         Next.js traditional UI — facility booking (port 4001)
 ├── uni-registration/    Next.js traditional UI — course registration (port 4002)
@@ -101,7 +103,8 @@ architecture + MCP request sequence).
 - **Frontends**: Next.js 16, React 19, TypeScript, TailwindCSS v4,
   shadcn/ui (Radix primitives), `react-hook-form` + `zod`, `next-themes`,
   Sentry. The chat agent additionally uses `@ai-sdk/react`, `zustand`,
-  `react-markdown`, and `sonner`.
+  `react-markdown`, `sonner`, and (when OpenUI rendering is enabled)
+  `@openuidev/react-lang`.
 - **AI / MCP**: Vercel AI SDK (`ai` v6), `@ai-sdk/google`, `@ai-sdk/mcp`
   (HTTP transport), `@modelcontextprotocol/sdk` on the server.
 - **Backend**: Supabase (Postgres + Auth + edge functions). Generated
@@ -147,6 +150,9 @@ Required:
     `MCP_AUTH_TOKEN=...`
   - Optional model override: `NEXT_PUBLIC_GOOGLE_GENERATIVE_MODEL_ID`
     (default `gemini-2.5-flash`)
+  - Optional OpenUI rendering: `NEXT_PUBLIC_OPENUI_RENDERING=true`
+    (default off; when on, assistant replies may include fenced OpenUI Lang
+    blocks rendered as structured UI)
 - `uni-booking/`, `uni-registration/`, `home/` `.env.local`:
   - `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`
 - `mcp-server/.env`:
@@ -206,7 +212,10 @@ After any migration change, **always run `make db-reset` and
   (UI rendering for tool invocations) and `chat-agent/src/lib/tools.ts`
   (non-MCP fallback). Server tools live in `mcp-server/src/tools/`
   (`courses.ts`, `facilities.ts`).
-- Chat transcript is text-only (markdown bubbles); tool calls are not rendered in the UI.
+- Chat transcript is Markdown by default. Tool calls are not rendered in the UI.
+  When `NEXT_PUBLIC_OPENUI_RENDERING=true`, assistant replies may additionally
+  include fenced OpenUI Lang blocks rendered as structured UI via
+  `@openuidev/react-lang` (see §9a).
 - "Task mode" (research-experiment scaffolding) is shared between
   client (`task-mode-client.ts`) and server (`task-mode-server.ts`,
   `mcp-server/src/lib/task-mode.ts`).
@@ -222,6 +231,40 @@ When adding a new MCP tool:
    tool calls render meaningfully in the transcript.
 4. If the tool changes user-visible task state, ensure the equivalent
    action exists in the corresponding traditional UI app.
+
+---
+
+## 9a. OpenUI Lang (chat-agent — optional generative UI)
+
+The chat agent includes an **optional, render-only** [OpenUI Lang](https://www.openui.com/)
+integration. It is **off by default** (`NEXT_PUBLIC_OPENUI_RENDERING=false`) so
+the original Markdown-only study behavior is preserved unless explicitly enabled.
+
+When enabled:
+
+- The API route appends a generated OpenUI instruction block to the system
+  prompt (`getOpenUISystemPrompt()` in `src/lib/openui/openui-system-prompt.ts`).
+- The model may emit at most one fenced code block tagged `openui` per reply; surrounding
+  text stays Markdown.
+- `OpenUIAwareContent` splits assistant text into Markdown + OpenUI segments;
+  `OpenUIMessage` renders OpenUI Lang via `@openuidev/react-lang`'s `Renderer`.
+
+Key paths:
+
+- `src/lib/openui/chat-library.tsx` — Zod-schemas + React renderers (`defineComponent`)
+- `src/lib/openui/extract-openui-block.ts` — fence parsing (incl. streaming)
+- `src/lib/openui/openui-config.ts` — feature flag + fence lang constant
+- `scripts/generate-openui-prompt.mts` → `src/generated/openui-system-prompt.ts`
+  (build-time prompt; run `pnpm generate:openui-prompt` after library changes)
+
+Rules for agents:
+
+- **Do not enable OpenUI by default** in env examples or deploy config unless
+  the user asks — it changes the conversational modality's presentation layer.
+- OpenUI is **presentation only**; task mutations still go through MCP tools
+  (or the non-MCP fallback). Do not add direct Supabase writes via OpenUI actions.
+- Regenerate the system prompt after changing `chatOpenUILibrary` or prompt options.
+- Canonical OpenUI docs: https://www.openui.com/ (see `.claude/skills/openui/SKILL.md`).
 
 ---
 
@@ -320,6 +363,10 @@ other four apps.
   produces a real diff after schema work; commit it with the migration.
 - **Render deploy** is configured by `render.yaml` — changes to ports,
   start commands, or env vars likely need a matching update there.
+- **OpenUI is feature-flagged** — `NEXT_PUBLIC_OPENUI_RENDERING` defaults
+  off; the OpenUI bundle is lazy-loaded only when the flag is on. Changing
+  `chatOpenUILibrary` requires `pnpm generate:openui-prompt` (also runs in
+  `prebuild`).
 
 ---
 

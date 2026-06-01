@@ -113,7 +113,7 @@ function SUSBarChart({ data }: { data: EmpiricalData }) {
         chat: Number(chatRow?.allMean ?? 0).toFixed(1),
       },
       {
-        population: "Advanced Technical",
+        population: "3+ Yrs Programming",
         traditional: Number(tradRow?.advancedMean ?? 0).toFixed(1),
         chat: Number(chatRow?.advancedMean ?? 0).toFixed(1),
       },
@@ -210,7 +210,7 @@ function SUSSection({ data }: { data: EmpiricalData }) {
                         </span>
                       </th>
                       <th className='text-right py-3 px-4 font-medium text-muted-foreground'>
-                        Advanced Technical
+                        3+ Yrs Programming
                         <span className='block text-[10px] font-normal'>
                           N = {data.advancedCount}
                         </span>
@@ -262,9 +262,10 @@ function SUSSection({ data }: { data: EmpiricalData }) {
 
       <FindingCallout>
         While the Traditional UI received higher overall usability ratings,
-        technically advanced users preferred the Chat-Agent, which reached
-        acceptable usability thresholds for this group. Experienced users appear
-        better equipped to leverage intent-driven conversational workflows.
+        participants with 3+ years of programming experience preferred the
+        Chat-Agent, which reached acceptable usability thresholds for this
+        group. Experienced programmers appear better equipped to leverage
+        intent-driven conversational workflows.
       </FindingCallout>
     </SectionBlock>
   );
@@ -363,7 +364,7 @@ function TLXSection({ data }: { data: EmpiricalData }) {
         />
         <TLXRadar
           data={data.tlx.advanced}
-          title={`Advanced Technical (N = ${data.advancedCount})`}
+          title={`3+ Yrs Programming (N = ${data.advancedCount})`}
         />
       </div>
 
@@ -473,7 +474,7 @@ function SDTSection({ data }: { data: EmpiricalData }) {
         />
         <SDTRadar
           data={data.sdt.advanced}
-          title={`Advanced Technical (N = ${data.advancedCount})`}
+          title={`3+ Yrs Programming (N = ${data.advancedCount})`}
         />
       </div>
 
@@ -741,7 +742,7 @@ export function EmpiricalComparison({ payload }: EmpiricalComparisonProps) {
           </span>{" "}
           and a specialized subgroup with{" "}
           <span className='text-foreground font-semibold'>
-            advanced technical proficiency (N={data.advancedCount})
+            3+ years of programming experience (N={data.advancedCount})
           </span>
           .
         </p>

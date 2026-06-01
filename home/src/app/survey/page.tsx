@@ -15,7 +15,7 @@ export default async function SurveyPage() {
 
   const profilePromise = supabase
     .from("profiles")
-    .select("id, age_range, gender, technical_proficiency, ai_tool_frequency")
+    .select("id, age_range, gender, programming_experience, ai_tool_frequency")
     .eq("id", user.id)
     .maybeSingle();
 

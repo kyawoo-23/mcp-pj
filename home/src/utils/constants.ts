@@ -16,11 +16,21 @@ export const GENDER_OPTIONS: Array<{ value: ProfileRow["gender"]; label: string 
   { value: "prefer_not_say", label: "Prefer not to say" },
 ];
 
-export const TECHNICAL_PROFICIENCY_OPTIONS: Array<{ value: ProfileRow["technical_proficiency"]; label: string }> = [
+export const TECHNICAL_PROFICIENCY_OPTIONS: Array<{
+  value: ProfileRow["technical_proficiency"];
+  label: string;
+}> = [
   { value: "none", label: "None" },
   { value: "limited", label: "Limited" },
   { value: "moderate", label: "Moderate" },
   { value: "advanced", label: "Advanced" },
+];
+
+export const PROGRAMMING_EXPERIENCE_OPTIONS: Array<{ value: ProfileRow["programming_experience"]; label: string }> = [
+  { value: "none", label: "Never programmed before" },
+  { value: "under_1_year", label: "Less than 1 year" },
+  { value: "one_to_two_years", label: "1–2 years" },
+  { value: "three_plus_years", label: "3 years or more" },
 ];
 
 export const AI_TOOL_FREQUENCY_OPTIONS: Array<{ value: ProfileRow["ai_tool_frequency"]; label: string }> = [
@@ -42,6 +52,10 @@ export const TECHNICAL_PROFICIENCY_LABELS: Record<string, string> =
   Object.fromEntries(
     TECHNICAL_PROFICIENCY_OPTIONS.map((o) => [o.value, o.label]),
   );
+export const PROGRAMMING_EXPERIENCE_LABELS: Record<string, string> =
+  Object.fromEntries(
+    PROGRAMMING_EXPERIENCE_OPTIONS.map((o) => [o.value, o.label]),
+  );
 export const AI_TOOL_FREQUENCY_LABELS: Record<string, string> =
   Object.fromEntries(
     AI_TOOL_FREQUENCY_OPTIONS.map((o) => [o.value, o.label]),
@@ -55,6 +69,9 @@ export function getGenderLabel(value: string): string {
 }
 export function getTechnicalProficiencyLabel(value: string): string {
   return TECHNICAL_PROFICIENCY_LABELS[value] ?? value;
+}
+export function getProgrammingExperienceLabel(value: string): string {
+  return PROGRAMMING_EXPERIENCE_LABELS[value] ?? value;
 }
 export function getAiToolFrequencyLabel(value: string): string {
   return AI_TOOL_FREQUENCY_LABELS[value] ?? value;

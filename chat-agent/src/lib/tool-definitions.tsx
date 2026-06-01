@@ -59,7 +59,7 @@ export const TOOL_DEFINITIONS: Record<string, ToolDefinition> = {
   search_facilities: {
     name: "search_facilities",
     description:
-      "Search facilities by English name, room number, building, or description. Names in the database are English (e.g. 'Study Room 202'). Map the user's facility wording to the canonical English name or room number before calling. Omit query to list all (optionally filter with type).",
+      "Search for facilities by name or type, or list all available facilities if no query provided",
     icon: Building2,
     displayName: "Searching facilities",
   },

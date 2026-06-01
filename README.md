@@ -51,12 +51,12 @@ Both systems share the same database and business logic so that any differences 
 This diagram summarizes how the prototype is wired:
 
 - **Traditional UI path (left, blue)**: the two web apps (booking + registration) call backend APIs (REST/GraphQL) that read/write the shared database.
-- **Conversational path (right, red)**: the chat agent interprets user intent, then uses **MCP** to invoke tools/actions that read/write the same database (via the MCP server).
+- **Conversational path (right, red)**: the chat agent interprets user intent, then uses **MCP** to invoke tools/actions that read/write the same database (via the MCP server). When enabled, assistant replies may also include **OpenUI Lang** blocks that render as structured UI (cards, lists, confirmations) alongside Markdown.
 - **Shared data + analytics (bottom)**: task time, progress logs, and survey responses are recorded for analysis so both modalities can be compared under the same task scenarios.
 
 ## What’s in this repo
 
-- **`chat-agent/`**: Next.js chat UI + API route that talks to Gemini and (optionally) calls MCP tools
+- **`chat-agent/`**: Next.js chat UI + API route that talks to Gemini and (optionally) calls MCP tools; optional **OpenUI Lang** rendering for structured assistant replies (feature-flagged, off by default)
 - **`uni-booking/`**: Next.js traditional UI for facility booking
 - **`uni-registration/`**: Next.js traditional UI for course registration
 - **`home/`**: Next.js landing / research UI (survey, analysis pages, etc.)
@@ -173,6 +173,22 @@ By default, the chat agent can run without MCP (direct tools). To enable MCP too
 - `USE_MCP=true`
 - `MCP_SERVER_URL=http://localhost:4004/mcp`
 - `MCP_AUTH_TOKEN=...` (optional; required if you enable auth on the MCP server)
+
+### OpenUI rendering (optional)
+
+The chat agent supports optional **render-only OpenUI Lang** integration via [`@openuidev/react-lang`](https://www.openui.com/). When disabled (the default), assistant replies are Markdown-only — behavior is unchanged from the original study setup. When enabled, the model may emit a fenced code block tagged `openui` in its reply; the chat UI parses and renders it as structured components (summaries, detail rows, choice lists) while keeping surrounding text as Markdown.
+
+Set in `chat-agent/.env.local`:
+
+- `NEXT_PUBLIC_OPENUI_RENDERING=true` — enable OpenUI Lang rendering in the chat UI and append OpenUI instructions to the system prompt
+
+After changing the OpenUI component library, regenerate the system-prompt block:
+
+```bash
+cd chat-agent && pnpm generate:openui-prompt
+```
+
+(`pnpm build` runs this automatically via `prebuild`.)
 
 ### MCP server environment (`mcp-server/.env`)
 

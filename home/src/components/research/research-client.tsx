@@ -38,7 +38,7 @@ export function ResearchClient({ data }: ResearchClientProps) {
   const advancedPayload = useMemo(
     () =>
       filterPayloadByDemographics(completedPayload, [
-        { dimension: "technical_proficiency", values: ["advanced"] },
+        { dimension: "programming_experience", values: ["three_plus_years"] },
       ]),
     [completedPayload],
   );
@@ -72,7 +72,7 @@ export function ResearchClient({ data }: ResearchClientProps) {
               All Participants (N={completedPayload.profiles.length})
             </TabsTrigger>
             <TabsTrigger value="advanced">
-              Advanced Tech Skills (N={advancedPayload.profiles.length})
+              3+ Years Programming (N={advancedPayload.profiles.length})
             </TabsTrigger>
           </TabsList>
           <TabsContent value="all" className="mt-0">

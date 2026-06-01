@@ -4,12 +4,55 @@
 - **Package Manager**: Use `pnpm` for all package management commands.
 - **UI Components**: Use `shadcn/ui` for UI components.
 - **Forms**: Use `react-hook-form` combined with `zod` for validation.
+- **Generative UI (optional)**: [`@openuidev/react-lang`](https://www.openui.com/) for render-only OpenUI Lang blocks in assistant replies. Gated by `NEXT_PUBLIC_OPENUI_RENDERING` (default off).
 
 ## UI/UX Guidelines
 - **Consistency**: Ensure the UI is consistent across the entire `chat-agent` project. Follow existing patterns and styles.
+- **OpenUI is optional**: With the feature flag off, assistant messages are Markdown-only. Do not assume OpenUI blocks are present in every reply.
 
 ## Database & Types
 - **Type Definitions**: Always reference `database.types.ts` for database schema and type definitions. Ensure strict type safety matching the Supabase schema.
+
+---
+
+# OpenUI Lang (optional generative UI)
+
+## Overview
+
+OpenUI Lang lets the assistant emit **structured UI** (cards, detail rows, lists)
+inside chat replies, alongside normal Markdown. This is a **render-only**
+integration: the model outputs a fenced code block tagged `openui`; the client parses
+and renders it with `@openuidev/react-lang`. Task mutations still go through
+MCP tools (or the non-MCP fallback) — OpenUI does not replace tool execution.
+
+**Default**: disabled (`NEXT_PUBLIC_OPENUI_RENDERING=false`). Enable only when
+you explicitly want structured UI in assistant replies.
+
+## Canonical documentation
+
+**Primary reference**: https://www.openui.com/
+
+For agent workflows, see also `.claude/skills/openui/SKILL.md` in the repo root.
+
+## Key files
+
+| Path | Role |
+| ---- | ---- |
+| `src/lib/openui/openui-config.ts` | Feature flag + fence lang constant |
+| `src/lib/openui/chat-library.tsx` | Component library (`defineComponent` + renderers) |
+| `src/lib/openui/extract-openui-block.ts` | Split Markdown vs fenced OpenUI (incl. streaming) |
+| `src/lib/openui/openui-system-prompt.ts` | Loads generated prompt block |
+| `scripts/generate-openui-prompt.mts` | Build-time prompt generator |
+| `src/generated/openui-system-prompt.ts` | Generated prompt (do not hand-edit) |
+| `src/components/chat/openui-aware-content.tsx` | Markdown + OpenUI segment renderer |
+| `src/components/chat/openui-message.tsx` | OpenUI `Renderer` wrapper + fallbacks |
+
+## Workflow for agents
+
+1. **Changing components**: edit `chatOpenUILibrary` in `chat-library.tsx`, then run `pnpm generate:openui-prompt` (also runs automatically in `prebuild`).
+2. **Changing prompt instructions**: edit options in `scripts/generate-openui-prompt.mts`, regenerate.
+3. **Testing**: co-located tests in `src/lib/__tests__/extract-openui-block.test.ts` and `src/components/chat/__tests__/openui-message.test.tsx`.
+4. **Research hygiene**: enabling OpenUI changes how the conversational modality presents information. Flag this when altering default env or system-prompt behavior for the study.
 
 ---
 

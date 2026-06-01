@@ -29,7 +29,7 @@ export function ChatLayout({
                 sidebar as React.ReactElement<{ isInSheet?: boolean }>,
                 {
                   isInSheet: true,
-                }
+                },
               )
             : sidebar}
         </SheetContent>

@@ -18,10 +18,10 @@ export function getCompletedPayload(payload: AnalysisPayload): AnalysisPayload {
   return filterPayloadToCompletedUsers(payload);
 }
 
-/** Filter payload to advanced technical_proficiency users only */
+/** Filter payload to participants with 3+ years of programming experience */
 export function getAdvancedPayload(payload: AnalysisPayload): AnalysisPayload {
   return filterPayloadByDemographics(payload, [
-    { dimension: "technical_proficiency", values: ["advanced"] },
+    { dimension: "programming_experience", values: ["three_plus_years"] },
   ]);
 }
 

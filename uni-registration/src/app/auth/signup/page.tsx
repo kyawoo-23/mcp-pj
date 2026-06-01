@@ -136,10 +136,6 @@ export default function SignupPage() {
                 placeholder='you@example.com'
                 {...register("email")}
               />
-              <p className='text-xs text-muted-foreground'>
-                Note: Verification emails to @student.chula.ac.th may be
-                delayed.
-              </p>
               {errors.email && (
                 <p className='text-sm text-destructive'>
                   {errors.email.message}

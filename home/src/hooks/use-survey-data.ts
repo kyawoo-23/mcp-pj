@@ -23,7 +23,7 @@ import {
 } from "@/app/actions/survey";
 
 interface UseSurveyDataProps {
-  profile: Pick<ProfileRow, "id" | "age_range" | "gender" | "technical_proficiency" | "ai_tool_frequency"> | null;
+  profile: Pick<ProfileRow, "id" | "age_range" | "gender" | "programming_experience" | "ai_tool_frequency"> | null;
   sessions: TaskSessionRow[];
   taskDefinitions: TaskDefinitionRow[];
   taskProgress: TaskProgressRow[];
@@ -122,7 +122,15 @@ export function useSurveyData({
   const isChatSurveyLocked = !chatSurveyAvailable;
   const isInterviewLocked = !interviewAvailable;
 
-  const requiresDemographics = !profileState?.age_range || !profileState?.gender || !profileState?.technical_proficiency || !profileState?.ai_tool_frequency;
+  const hasBaseProfile = !!(
+    profileState?.age_range &&
+    profileState?.gender &&
+    profileState?.ai_tool_frequency
+  );
+  const requiresProgrammingExperience =
+    hasBaseProfile && !profileState?.programming_experience;
+  const requiresDemographics =
+    !hasBaseProfile || requiresProgrammingExperience;
 
   // Refresh data
   const refreshTaskData = useCallback(async () => {
@@ -226,17 +234,17 @@ export function useSurveyData({
   const saveDemographics = async (
     ageRange: ProfileRow["age_range"],
     gender: ProfileRow["gender"],
-    technicalProficiency: ProfileRow["technical_proficiency"],
+    programmingExperience: ProfileRow["programming_experience"],
     aiToolFrequency: ProfileRow["ai_tool_frequency"]
   ) => {
-    if (!profileState || !ageRange || !gender || !technicalProficiency || !aiToolFrequency) return;
+    if (!profileState || !ageRange || !gender || !programmingExperience || !aiToolFrequency) return;
     setSavingDemographics(true);
     try {
       const result = await saveDemographicsAction(
         profileState.id,
         ageRange,
         gender,
-        technicalProficiency,
+        programmingExperience,
         aiToolFrequency,
       );
 
@@ -251,7 +259,7 @@ export function useSurveyData({
         ...profileState,
         age_range: ageRange,
         gender,
-        technical_proficiency: technicalProficiency,
+        programming_experience: programmingExperience,
         ai_tool_frequency: aiToolFrequency,
       });
       setSessionsState([upserted]); // Since we return single upserted
@@ -263,6 +271,24 @@ export function useSurveyData({
     } finally {
       setSavingDemographics(false);
     }
+  };
+
+  const saveProgrammingExperience = async (
+    programmingExperience: ProfileRow["programming_experience"],
+  ) => {
+    if (
+      !profileState?.age_range ||
+      !profileState?.gender ||
+      !profileState?.ai_tool_frequency
+    ) {
+      return;
+    }
+    await saveDemographics(
+      profileState.age_range,
+      profileState.gender,
+      programmingExperience,
+      profileState.ai_tool_frequency,
+    );
   };
 
   const startSurvey = async () => {
@@ -351,6 +377,8 @@ export function useSurveyData({
     savingDemographics,
     startingSurvey,
     requiresDemographics,
+    requiresProgrammingExperience,
+    saveProgrammingExperience,
 
     // Derived data
     tasksBySystem,

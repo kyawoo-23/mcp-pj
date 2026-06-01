@@ -79,7 +79,7 @@ Deno.serve(async (req) => {
     ] = await Promise.all([
       supabase
         .from("profiles")
-        .select("id, age_range, gender, technical_proficiency, ai_tool_frequency, created_at")
+        .select("id, age_range, gender, technical_proficiency, programming_experience, ai_tool_frequency, created_at")
         .limit(100000),
       supabase
         .from("task_sessions")

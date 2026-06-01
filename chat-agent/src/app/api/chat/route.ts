@@ -16,6 +16,8 @@ import {
   messagePartFromUIPart,
   stripDisplayOnlyPartsForModel,
 } from "@/lib/chat-message-parts";
+import { OPENUI_RENDERING_ENABLED } from "@/lib/openui/openui-config";
+import { getOpenUISystemPrompt } from "@/lib/openui/openui-system-prompt";
 
 // Allow streaming responses up to 30 seconds
 export const maxDuration = 30;
@@ -281,6 +283,12 @@ export async function POST(req: Request) {
     - Think efficiently.
   `;
 
+  // Render-only OpenUI: append the OpenUI Lang instructions only when the
+  // feature flag is on. Tool execution stays on the normal chat + MCP path.
+  const finalSystemPrompt = OPENUI_RENDERING_ENABLED
+    ? `${systemPrompt}\n\n${getOpenUISystemPrompt()}`
+    : systemPrompt;
+
   const result = streamText({
     model: google(
       `models/${process.env.NEXT_PUBLIC_GOOGLE_GENERATIVE_MODEL_ID || "gemini-2.5-flash"}`,
@@ -293,7 +301,7 @@ export async function POST(req: Request) {
         },
       } satisfies GoogleGenerativeAIProviderOptions,
     },
-    system: systemPrompt,
+    system: finalSystemPrompt,
     messages: coreMessages,
     tools: allTools,
     stopWhen: stepCountIs(5), // Allow up to 5 tool call steps

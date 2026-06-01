@@ -18,7 +18,7 @@ import {
 import {
   getAgeRangeLabel,
   getGenderLabel,
-  getTechnicalProficiencyLabel,
+  getProgrammingExperienceLabel,
   getAiToolFrequencyLabel,
 } from "@/utils/constants";
 
@@ -34,7 +34,7 @@ const COLORS = [
 interface DemographicsData {
   ageRange: Array<{ label: string; count: number; percentage: number }>;
   gender: Array<{ label: string; count: number; percentage: number }>;
-  technicalProficiency: Array<{
+  programmingExperience: Array<{
     label: string;
     count: number;
     percentage: number;
@@ -65,9 +65,9 @@ export function DemographicsCharts({ demographics }: DemographicsChartsProps) {
     percentage: item.percentage,
   }));
 
-  const techData = excludeUnknown(demographics.technicalProficiency).map(
+  const techData = excludeUnknown(demographics.programmingExperience).map(
     (item) => ({
-      label: getTechnicalProficiencyLabel(item.label),
+      label: getProgrammingExperienceLabel(item.label),
       count: item.count,
       percentage: item.percentage,
     }),
@@ -170,12 +170,12 @@ export function DemographicsCharts({ demographics }: DemographicsChartsProps) {
         </CardContent>
       </Card>
 
-      {/* Technical Proficiency */}
+      {/* Programming Experience */}
       <Card>
         <CardHeader>
-          <CardTitle>Technical Proficiency</CardTitle>
+          <CardTitle>Programming Experience</CardTitle>
           <CardDescription>
-            Distribution of users by technical skill level
+            Distribution of users by years of programming experience
           </CardDescription>
         </CardHeader>
         <CardContent>
