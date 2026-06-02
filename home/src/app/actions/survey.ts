@@ -2,6 +2,7 @@
 
 import { createClient } from "@/lib/supabase/server";
 import type { ProfileRow, TaskSessionRow } from "@/lib/types";
+import { CURRENT_STUDY_PROTOCOL_VERSION } from "@/utils/study-protocol";
 import { revalidatePath } from "next/cache";
 
 type SuccessResult<T> = { ok: true; data: T };
@@ -153,7 +154,8 @@ export async function openTaskAction(
     .select("status")
     .eq("session_id", sessionId)
     .eq("task_definition_id", taskDefinitionId)
-    .single();
+    .eq("protocol_version", CURRENT_STUDY_PROTOCOL_VERSION)
+    .maybeSingle();
 
   if (existingProgress?.status === "in_progress") {
     // Task is already open and in progress; no need to update status again.
@@ -176,6 +178,7 @@ export async function openTaskAction(
       .from("task_progress")
       .update({ status: "not_started", updated_at: now })
       .in("session_id", allSessionIds)
+      .eq("protocol_version", CURRENT_STUDY_PROTOCOL_VERSION)
       .eq("status", "in_progress");
 
     if (resetError) {
@@ -189,7 +192,8 @@ export async function openTaskAction(
     .from("task_progress")
     .update({ status: "in_progress", started_at: now, updated_at: now })
     .eq("session_id", sessionId)
-    .eq("task_definition_id", taskDefinitionId);
+    .eq("task_definition_id", taskDefinitionId)
+    .eq("protocol_version", CURRENT_STUDY_PROTOCOL_VERSION);
 
   if (updateError) {
     console.error("Failed to open task:", updateError);
@@ -218,7 +222,8 @@ export async function resetTaskAction(
     .select("status")
     .eq("session_id", sessionId)
     .eq("task_definition_id", taskDefinitionId)
-    .single();
+    .eq("protocol_version", CURRENT_STUDY_PROTOCOL_VERSION)
+    .maybeSingle();
 
   if (fetchError) {
     console.error("Failed to fetch task progress:", fetchError);
@@ -236,7 +241,8 @@ export async function resetTaskAction(
     .from("task_progress")
     .delete()
     .eq("session_id", sessionId)
-    .eq("task_definition_id", taskDefinitionId);
+    .eq("task_definition_id", taskDefinitionId)
+    .eq("protocol_version", CURRENT_STUDY_PROTOCOL_VERSION);
 
   if (progressError) {
     console.error("Failed to delete progress:", progressError);
@@ -265,7 +271,8 @@ export async function resetTaskAction(
   const { error: surveyError } = await supabase
     .from("task_survey_responses")
     .delete()
-    .eq("session_id", sessionId);
+    .eq("session_id", sessionId)
+    .eq("protocol_version", CURRENT_STUDY_PROTOCOL_VERSION);
 
   if (surveyError) {
     console.error("Failed to delete survey responses:", surveyError);
@@ -293,13 +300,40 @@ export async function resetTaskAction(
   const { error: interviewError } = await supabase
     .from("task_interview_responses")
     .delete()
-    .eq("user_id", userId);
+    .eq("user_id", userId)
+    .eq("protocol_version", CURRENT_STUDY_PROTOCOL_VERSION);
 
   if (interviewError) {
     console.error("Failed to delete interview responses:", interviewError);
     return {
       ok: false,
       error: "Failed to clear interview responses. Please try again.",
+    };
+  }
+
+  revalidatePath("/survey");
+  return { ok: true, data: undefined };
+}
+
+export async function dismissCriteriaMigrationNoticeAction(
+  userId: string
+): Promise<ActionResult<void>> {
+  const supabase = await createClient();
+  const now = new Date().toISOString();
+
+  const { error } = await supabase
+    .from("profiles")
+    .update({
+      criteria_migration_notice_dismissed_at: now,
+      updated_at: now,
+    })
+    .eq("id", userId);
+
+  if (error) {
+    console.error("Failed to dismiss migration notice:", error);
+    return {
+      ok: false,
+      error: "Failed to save your preference. Please try again.",
     };
   }
 
@@ -319,10 +353,14 @@ export async function ensureProgressAction(
   }
 
   const supabase = await createClient();
+  const rows = items.map((item) => ({
+    ...item,
+    protocol_version: CURRENT_STUDY_PROTOCOL_VERSION,
+  }));
   const { error } = await supabase
     .from("task_progress")
-    .upsert(items, {
-      onConflict: "session_id,task_definition_id",
+    .upsert(rows, {
+      onConflict: "session_id,task_definition_id,protocol_version",
       ignoreDuplicates: true,
     });
 

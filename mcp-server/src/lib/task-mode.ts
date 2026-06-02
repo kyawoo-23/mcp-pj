@@ -1,5 +1,6 @@
 import { SupabaseClient } from "@supabase/supabase-js";
 import { Database, Json } from "../../../supabase/types/database.types";
+import { CURRENT_STUDY_PROTOCOL_VERSION } from "./study-protocol.js";
 
 type SystemType = Database["public"]["Enums"]["system_type"];
 type TaskEventType = Database["public"]["Enums"]["task_event_type"];
@@ -75,6 +76,7 @@ export async function recordTaskCompletion(
     .select("status, started_at")
     .eq("session_id", session.id)
     .eq("task_definition_id", taskDefinition.id)
+    .eq("protocol_version", CURRENT_STUDY_PROTOCOL_VERSION)
     .maybeSingle();
 
   // Only mark as completed if task is currently in progress
@@ -103,7 +105,8 @@ export async function recordTaskCompletion(
       updated_at: now,
     })
     .eq("session_id", session.id)
-    .eq("task_definition_id", taskDefinition.id);
+    .eq("task_definition_id", taskDefinition.id)
+    .eq("protocol_version", CURRENT_STUDY_PROTOCOL_VERSION);
 
   await recordTaskEvent(supabase, session.id, "system", "task_completed", {
     task_code: taskCode,

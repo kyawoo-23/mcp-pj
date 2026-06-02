@@ -8,6 +8,7 @@ import type {
   TaskEventType,
   TaskProgressStatus,
 } from "@/lib/types";
+import { CURRENT_STUDY_PROTOCOL_VERSION } from "@/lib/study-protocol";
 
 export async function getTaskSessionByUser(
   supabase: SupabaseClient<Database>,
@@ -74,6 +75,7 @@ export async function recordTaskCompletion(
     .select("status, started_at")
     .eq("session_id", session.id)
     .eq("task_definition_id", taskDefinition.id)
+    .eq("protocol_version", CURRENT_STUDY_PROTOCOL_VERSION)
     .maybeSingle();
 
   if (existingProgress?.status !== "in_progress") {
@@ -100,7 +102,8 @@ export async function recordTaskCompletion(
       updated_at: now,
     })
     .eq("session_id", session.id)
-    .eq("task_definition_id", taskDefinition.id);
+    .eq("task_definition_id", taskDefinition.id)
+    .eq("protocol_version", CURRENT_STUDY_PROTOCOL_VERSION);
 
   await recordTaskEvent(supabase, session.id, "system", "task_completed", {
     task_code: taskCode,

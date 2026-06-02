@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { SurveyPageClient } from "@/components/survey/survey-client";
 import type { UserAssignmentWithSet } from "@/lib/types";
+import { CURRENT_STUDY_PROTOCOL_VERSION } from "@/utils/study-protocol";
 
 export default async function SurveyPage() {
   const supabase = await createClient();
@@ -15,7 +16,9 @@ export default async function SurveyPage() {
 
   const profilePromise = supabase
     .from("profiles")
-    .select("id, age_range, gender, programming_experience, ai_tool_frequency")
+    .select(
+      "id, age_range, gender, programming_experience, ai_tool_frequency, migrated_from_simple_tasks_at, criteria_migration_notice_dismissed_at",
+    )
     .eq("id", user.id)
     .maybeSingle();
 
@@ -66,9 +69,10 @@ export default async function SurveyPage() {
     ? supabase
         .from("task_progress")
         .select(
-          "id, task_definition_id, status, started_at, completed_at, created_at, session_id, success_payload, updated_at",
+          "id, task_definition_id, status, started_at, completed_at, created_at, session_id, success_payload, updated_at, protocol_version",
         )
         .in("session_id", sessionIds)
+        .eq("protocol_version", CURRENT_STUDY_PROTOCOL_VERSION)
     : Promise.resolve({ data: [] });
 
   const surveyQuestionsPromise = surveyIds.length
@@ -85,15 +89,25 @@ export default async function SurveyPage() {
     ? supabase
         .from("task_survey_responses")
         .select(
-          "id, question_id, response_value, response_text, session_id, created_at",
+          "id, question_id, response_value, response_text, session_id, created_at, protocol_version",
         )
         .in("session_id", sessionIds)
+        .eq("protocol_version", CURRENT_STUDY_PROTOCOL_VERSION)
     : Promise.resolve({ data: [] });
 
   const interviewResponsesPromise = supabase
     .from("task_interview_responses")
-    .select("id, question_id, response_text, user_id, created_at")
-    .eq("user_id", user.id);
+    .select("id, question_id, response_text, user_id, created_at, protocol_version")
+    .eq("user_id", user.id)
+    .eq("protocol_version", CURRENT_STUDY_PROTOCOL_VERSION);
+
+  const priorProtocolProgressCountPromise = sessionIds.length
+    ? supabase
+        .from("task_progress")
+        .select("id", { count: "exact", head: true })
+        .in("session_id", sessionIds)
+        .neq("protocol_version", CURRENT_STUDY_PROTOCOL_VERSION)
+    : Promise.resolve({ count: 0 });
 
   const assignmentPromise = supabase
     .from("task_user_assignments")
@@ -114,13 +128,22 @@ export default async function SurveyPage() {
     { data: surveyResponses },
     { data: interviewResponses },
     { data: assignment },
+    { count: priorProtocolProgressCount },
   ] = await Promise.all([
     taskProgressPromise,
     surveyQuestionsPromise,
     surveyResponsesPromise,
     interviewResponsesPromise,
     assignmentPromise,
+    priorProtocolProgressCountPromise,
   ]);
+
+  const showMigrationNotice =
+    !!profile?.migrated_from_simple_tasks_at &&
+    !profile?.criteria_migration_notice_dismissed_at;
+  const hasStudyHistory =
+    (priorProtocolProgressCount ?? 0) > 0 ||
+    !!profile?.migrated_from_simple_tasks_at;
 
   return (
     <SurveyPageClient
@@ -134,6 +157,9 @@ export default async function SurveyPage() {
       interviewQuestions={interviewQuestions || []}
       interviewResponses={interviewResponses || []}
       assignment={assignment as unknown as UserAssignmentWithSet | null}
+      showMigrationNotice={showMigrationNotice}
+      hasStudyHistory={hasStudyHistory}
+      userId={user.id}
     />
   );
 }

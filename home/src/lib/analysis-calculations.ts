@@ -9,6 +9,9 @@ import type {
   UserInterviewResponseRow,
 } from "./types";
 
+// Analysis payloads from the edge function include only protocol_version
+// v2_criteria rows (post–criteria-migration study). v1_simple is excluded.
+
 // ============================================================================
 // Completed Users (canonical definition)
 // ============================================================================

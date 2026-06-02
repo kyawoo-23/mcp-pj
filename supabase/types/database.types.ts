@@ -287,15 +287,18 @@ export type Database = {
             | Database["public"]["Enums"]["ai_tool_frequency"]
             | null
           created_at: string
+          criteria_migration_notice_dismissed_at: string | null
           email: string | null
           full_name: string | null
           gender: Database["public"]["Enums"]["gender_identity"] | null
           id: string
+          migrated_from_simple_tasks_at: string | null
           programming_experience:
             | Database["public"]["Enums"]["programming_experience"]
             | null
           role: Database["public"]["Enums"]["user_role"]
           student_id: string | null
+          study_protocol_version: Database["public"]["Enums"]["study_protocol_version"]
           technical_proficiency:
             | Database["public"]["Enums"]["technical_proficiency"]
             | null
@@ -307,15 +310,18 @@ export type Database = {
             | Database["public"]["Enums"]["ai_tool_frequency"]
             | null
           created_at?: string
+          criteria_migration_notice_dismissed_at?: string | null
           email?: string | null
           full_name?: string | null
           gender?: Database["public"]["Enums"]["gender_identity"] | null
           id: string
+          migrated_from_simple_tasks_at?: string | null
           programming_experience?:
             | Database["public"]["Enums"]["programming_experience"]
             | null
           role?: Database["public"]["Enums"]["user_role"]
           student_id?: string | null
+          study_protocol_version?: Database["public"]["Enums"]["study_protocol_version"]
           technical_proficiency?:
             | Database["public"]["Enums"]["technical_proficiency"]
             | null
@@ -327,15 +333,18 @@ export type Database = {
             | Database["public"]["Enums"]["ai_tool_frequency"]
             | null
           created_at?: string
+          criteria_migration_notice_dismissed_at?: string | null
           email?: string | null
           full_name?: string | null
           gender?: Database["public"]["Enums"]["gender_identity"] | null
           id?: string
+          migrated_from_simple_tasks_at?: string | null
           programming_experience?:
             | Database["public"]["Enums"]["programming_experience"]
             | null
           role?: Database["public"]["Enums"]["user_role"]
           student_id?: string | null
+          study_protocol_version?: Database["public"]["Enums"]["study_protocol_version"]
           technical_proficiency?:
             | Database["public"]["Enums"]["technical_proficiency"]
             | null
@@ -505,6 +514,7 @@ export type Database = {
         Row: {
           created_at: string
           id: string
+          protocol_version: Database["public"]["Enums"]["study_protocol_version"]
           question_id: string
           response_text: string
           user_id: string
@@ -512,6 +522,7 @@ export type Database = {
         Insert: {
           created_at?: string
           id?: string
+          protocol_version?: Database["public"]["Enums"]["study_protocol_version"]
           question_id: string
           response_text: string
           user_id: string
@@ -519,6 +530,7 @@ export type Database = {
         Update: {
           created_at?: string
           id?: string
+          protocol_version?: Database["public"]["Enums"]["study_protocol_version"]
           question_id?: string
           response_text?: string
           user_id?: string
@@ -545,6 +557,7 @@ export type Database = {
           completed_at: string | null
           created_at: string
           id: string
+          protocol_version: Database["public"]["Enums"]["study_protocol_version"]
           session_id: string
           started_at: string | null
           status: Database["public"]["Enums"]["task_progress_status"]
@@ -556,6 +569,7 @@ export type Database = {
           completed_at?: string | null
           created_at?: string
           id?: string
+          protocol_version?: Database["public"]["Enums"]["study_protocol_version"]
           session_id: string
           started_at?: string | null
           status?: Database["public"]["Enums"]["task_progress_status"]
@@ -567,6 +581,7 @@ export type Database = {
           completed_at?: string | null
           created_at?: string
           id?: string
+          protocol_version?: Database["public"]["Enums"]["study_protocol_version"]
           session_id?: string
           started_at?: string | null
           status?: Database["public"]["Enums"]["task_progress_status"]
@@ -680,6 +695,7 @@ export type Database = {
         Row: {
           created_at: string
           id: string
+          protocol_version: Database["public"]["Enums"]["study_protocol_version"]
           question_id: string
           response_text: string | null
           response_value: number | null
@@ -688,6 +704,7 @@ export type Database = {
         Insert: {
           created_at?: string
           id?: string
+          protocol_version?: Database["public"]["Enums"]["study_protocol_version"]
           question_id: string
           response_text?: string | null
           response_value?: number | null
@@ -696,6 +713,7 @@ export type Database = {
         Update: {
           created_at?: string
           id?: string
+          protocol_version?: Database["public"]["Enums"]["study_protocol_version"]
           question_id?: string
           response_text?: string | null
           response_value?: number | null
@@ -821,6 +839,7 @@ export type Database = {
         | "one_to_two_years"
         | "three_plus_years"
       registration_status: "active" | "dropped" | "completed" | "waitlisted"
+      study_protocol_version: "v1_simple" | "v2_criteria"
       survey_construct:
         | "Usability"
         | "Workload"
@@ -994,6 +1013,7 @@ export const Constants = {
         "three_plus_years",
       ],
       registration_status: ["active", "dropped", "completed", "waitlisted"],
+      study_protocol_version: ["v1_simple", "v2_criteria"],
       survey_construct: [
         "Usability",
         "Workload",

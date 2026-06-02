@@ -17,6 +17,7 @@ const taskLabels: Record<string, string> = {
 import { useTaskStore } from "@/lib/store";
 import Link from "next/link";
 import { getSurveyUrl } from "@/lib/constants";
+import { CURRENT_STUDY_PROTOCOL_VERSION } from "@/lib/study-protocol";
 
 export function TaskIndicator() {
   const supabase = useMemo(() => createClient(), []);
@@ -54,6 +55,7 @@ export function TaskIndicator() {
         .from("task_progress")
         .select("id, task_definition_id, session_id, status, updated_at")
         .in("session_id", sessionIds)
+        .eq("protocol_version", CURRENT_STUDY_PROTOCOL_VERSION)
         .in("status", ["in_progress", "completed"])
         .order("updated_at", { ascending: false })
         .limit(1);

@@ -23,6 +23,7 @@ import { DemographicsForm } from "@/components/survey/demographics-form";
 import { ProgrammingExperiencePrompt } from "@/components/survey/programming-experience-prompt";
 import { useSurveyData } from "@/hooks/use-survey-data";
 import { SurveyNavbar } from "@/components/survey/survey-navbar";
+import { CriteriaMigrationNotice } from "@/components/survey/criteria-migration-notice";
 import { toast } from "sonner";
 import {
   AlertDialog,
@@ -53,6 +54,9 @@ interface SurveyPageClientProps {
   interviewQuestions: InterviewQuestionRow[];
   interviewResponses: UserInterviewResponseRow[];
   assignment?: UserAssignmentWithSet | null;
+  showMigrationNotice?: boolean;
+  hasStudyHistory?: boolean;
+  userId?: string;
 }
 
 type SectionKey =
@@ -74,6 +78,9 @@ export function SurveyPageClient({
   interviewQuestions,
   interviewResponses,
   assignment,
+  showMigrationNotice = false,
+  hasStudyHistory = false,
+  userId,
 }: SurveyPageClientProps) {
   const [activeSection, setActiveSection] = useState<SectionKey | null>(
     "intro",
@@ -239,7 +246,14 @@ export function SurveyPageClient({
   if (requiresDemographics) {
     return (
       <div className='min-h-screen'>
-        <SurveyNavbar onRefresh={handleRefresh} isRefreshing={isRefreshing} />
+        <SurveyNavbar
+          onRefresh={handleRefresh}
+          isRefreshing={isRefreshing}
+          hasStudyHistory={hasStudyHistory}
+        />
+        {showMigrationNotice && userId ? (
+          <CriteriaMigrationNotice open userId={userId} />
+        ) : null}
         <div className='p-6'>
           <div className='mx-auto w-full max-w-5xl'>
             {requiresProgrammingExperience ? (
@@ -267,7 +281,14 @@ export function SurveyPageClient({
 
   return (
     <div className='min-h-screen'>
-      <SurveyNavbar onRefresh={handleRefresh} isRefreshing={isRefreshing} />
+      <SurveyNavbar
+        onRefresh={handleRefresh}
+        isRefreshing={isRefreshing}
+        hasStudyHistory={hasStudyHistory}
+      />
+      {showMigrationNotice && userId ? (
+        <CriteriaMigrationNotice open userId={userId} />
+      ) : null}
       <div className='p-6'>
         <div className='mx-auto flex w-full max-w-5xl flex-col gap-6'>
           {/* Intro Section */}

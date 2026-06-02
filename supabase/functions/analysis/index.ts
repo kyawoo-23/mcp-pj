@@ -87,7 +87,8 @@ Deno.serve(async (req) => {
         .limit(100000),
       supabase
         .from("task_progress")
-        .select("id, session_id, task_definition_id, status, started_at, completed_at")
+        .select("id, session_id, task_definition_id, status, started_at, completed_at, protocol_version")
+        .eq("protocol_version", "v2_criteria")
         .limit(100000),
       supabase
         .from("task_definitions")
@@ -104,7 +105,8 @@ Deno.serve(async (req) => {
         .limit(100000),
       supabase
         .from("task_survey_responses")
-        .select("id, session_id, question_id, response_value, response_text")
+        .select("id, session_id, question_id, response_value, response_text, protocol_version")
+        .eq("protocol_version", "v2_criteria")
         .limit(100000),
       supabase
         .from("task_interview_questions")
@@ -113,7 +115,8 @@ Deno.serve(async (req) => {
         .limit(100000),
       supabase
         .from("task_interview_responses")
-        .select("id, user_id, question_id, response_text")
+        .select("id, user_id, question_id, response_text, protocol_version")
+        .eq("protocol_version", "v2_criteria")
         .limit(100000),
     ])
 

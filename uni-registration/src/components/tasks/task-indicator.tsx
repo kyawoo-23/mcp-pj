@@ -8,6 +8,7 @@ import { Button } from "../ui/button";
 import { Badge } from "../ui/badge";
 import { Card, CardContent } from "../ui/card";
 import { getSurveyUrl } from "../../lib/constants";
+import { CURRENT_STUDY_PROTOCOL_VERSION } from "@/lib/study-protocol";
 
 const taskLabels: Record<string, string> = {
   register_course: "Register for a course",
@@ -58,6 +59,7 @@ export function TaskIndicator() {
         .from("task_progress")
         .select("id, task_definition_id, session_id, status, updated_at")
         .in("session_id", sessionIds)
+        .eq("protocol_version", CURRENT_STUDY_PROTOCOL_VERSION)
         .in("status", ["in_progress", "completed"])
         .order("updated_at", { ascending: false })
         .limit(1);

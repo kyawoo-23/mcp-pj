@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/client";
 import type { Database, Json } from "../../../supabase/types/database.types";
+import { CURRENT_STUDY_PROTOCOL_VERSION } from "@/lib/study-protocol";
 
 export const TASK_MODE_STORAGE_KEY = "task_mode_session";
 
@@ -54,5 +55,6 @@ export async function markTaskInProgress(
     .from("task_progress")
     .update({ status: "in_progress", started_at: now, updated_at: now })
     .eq("session_id", sessionId)
-    .eq("task_definition_id", taskDefinitionId);
+    .eq("task_definition_id", taskDefinitionId)
+    .eq("protocol_version", CURRENT_STUDY_PROTOCOL_VERSION);
 }

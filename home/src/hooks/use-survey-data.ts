@@ -14,6 +14,7 @@ import type {
 } from "@/lib/types";
 import { toast } from "sonner";
 import { TASK_ORDER, getTaskUrl } from "../utils/constants";
+import { CURRENT_STUDY_PROTOCOL_VERSION } from "@/utils/study-protocol";
 import {
   ensureProgressAction,
   openTaskAction,
@@ -151,16 +152,19 @@ export function useSurveyData({
       const [progressResult, surveyResponseResult, interviewResponseResult, assignmentResult] = await Promise.all([
         supabase
           .from("task_progress")
-          .select("id, task_definition_id, status, started_at, completed_at, created_at, session_id, success_payload, updated_at")
-          .in("session_id", latestSessionIds),
+          .select("id, task_definition_id, status, started_at, completed_at, created_at, session_id, success_payload, updated_at, protocol_version")
+          .in("session_id", latestSessionIds)
+          .eq("protocol_version", CURRENT_STUDY_PROTOCOL_VERSION),
         supabase
           .from("task_survey_responses")
-          .select("id, question_id, response_value, response_text, session_id, created_at")
-          .in("session_id", latestSessionIds),
+          .select("id, question_id, response_value, response_text, session_id, created_at, protocol_version")
+          .in("session_id", latestSessionIds)
+          .eq("protocol_version", CURRENT_STUDY_PROTOCOL_VERSION),
         supabase
           .from("task_interview_responses")
-          .select("id, question_id, response_text, user_id, created_at")
-          .eq("user_id", user.id),
+          .select("id, question_id, response_text, user_id, created_at, protocol_version")
+          .eq("user_id", user.id)
+          .eq("protocol_version", CURRENT_STUDY_PROTOCOL_VERSION),
         supabase
           .from("task_user_assignments")
           .select(`
