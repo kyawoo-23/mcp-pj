@@ -39,33 +39,55 @@ export async function saveDemographicsAction(
     };
   }
 
-  // 2. Upsert task session (init traditional session)
-  const { data: upserted, error: sessionError } = await supabase
+  // 2. Ensure traditional session exists (do not reset status on profile updates)
+  const { data: existingSession, error: fetchSessionError } = await supabase
     .from("task_sessions")
-    .upsert(
-      [
-        {
-          user_id: userId,
-          system_type: "traditional",
-          status: "not_started",
-          updated_at: now,
-        },
-      ],
-      { onConflict: "user_id,system_type" }
+    .select(
+      "id, status, system_type, started_at, completed_at, user_id, created_at, updated_at",
     )
-    .select()
-    .single();
+    .eq("user_id", userId)
+    .eq("system_type", "traditional")
+    .maybeSingle();
 
-  if (sessionError || !upserted) {
-    console.error("Failed to create session:", sessionError);
+  if (fetchSessionError) {
+    console.error("Failed to load session:", fetchSessionError);
     return {
       ok: false,
-      error: "Failed to create your session. Please try again.",
+      error: "Failed to load your session. Please try again.",
     };
   }
 
+  let session: TaskSessionRow;
+
+  if (existingSession) {
+    session = existingSession;
+  } else {
+    const { data: inserted, error: insertError } = await supabase
+      .from("task_sessions")
+      .insert({
+        user_id: userId,
+        system_type: "traditional",
+        status: "not_started",
+        updated_at: now,
+      })
+      .select(
+        "id, status, system_type, started_at, completed_at, user_id, created_at, updated_at",
+      )
+      .single();
+
+    if (insertError || !inserted) {
+      console.error("Failed to create session:", insertError);
+      return {
+        ok: false,
+        error: "Failed to create your session. Please try again.",
+      };
+    }
+
+    session = inserted;
+  }
+
   revalidatePath("/survey");
-  return { ok: true, data: upserted };
+  return { ok: true, data: session };
 }
 
 export async function startSurveyAction(userId: string): Promise<ActionResult<void>> {

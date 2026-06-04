@@ -266,7 +266,10 @@ export function useSurveyData({
         programming_experience: programmingExperience,
         ai_tool_frequency: aiToolFrequency,
       });
-      setSessionsState([upserted]); // Since we return single upserted
+      setSessionsState((prev) => {
+        const rest = prev.filter((s) => s.system_type !== "traditional");
+        return [...rest, upserted];
+      });
       toast.success("Demographics saved");
       await refreshTaskData();
     } catch (error) {
