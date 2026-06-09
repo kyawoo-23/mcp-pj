@@ -95,7 +95,7 @@ export async function recordTaskCompletion(
   const nextStatus: TaskProgressStatus = "completed";
 
   // Use UPDATE (not upsert) so Supabase Realtime emits a clear UPDATE event.
-  await supabase
+  const { error: updateError } = await supabase
     .from("task_progress")
     .update({
       status: nextStatus,
@@ -107,6 +107,14 @@ export async function recordTaskCompletion(
     .eq("session_id", session.id)
     .eq("task_definition_id", taskDefinition.id)
     .eq("protocol_version", CURRENT_STUDY_PROTOCOL_VERSION);
+
+  if (updateError) {
+    console.error(
+      `📋 [TaskMode] Failed to mark ${taskCode} completed:`,
+      updateError.message,
+    );
+    return { skipped: true, reason: "update_failed" };
+  }
 
   await recordTaskEvent(supabase, session.id, "system", "task_completed", {
     task_code: taskCode,

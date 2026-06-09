@@ -95,6 +95,11 @@ export function useSurveyData({
     [sessionsState],
   );
 
+  const hasInProgressTask = useMemo(
+    () => taskProgressState.some((row) => row.status === "in_progress"),
+    [taskProgressState],
+  );
+
   // Sessions by system type
   const chatSession = sessionsBySystem.get("chat_agent");
   const traditionalSession = sessionsBySystem.get("traditional");
@@ -187,6 +192,77 @@ export function useSurveyData({
       }
     }
   }, [supabase]);
+
+  // Live updates when tasks complete in chat-agent / traditional apps (other tabs).
+  useEffect(() => {
+    if (!sessionIds.length) return;
+
+    let cancelled = false;
+    let channel: ReturnType<typeof supabase.channel> | null = null;
+
+    const handleProgressUpdate = () => {
+      void refreshTaskData();
+    };
+
+    const syncAuth = (accessToken: string | undefined) => {
+      if (accessToken) {
+        supabase.realtime.setAuth(accessToken);
+      }
+    };
+
+    void (async () => {
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+      if (cancelled || !session) return;
+
+      syncAuth(session.access_token);
+
+      channel = supabase
+        .channel(`survey_task_progress:${sessionIds.join("-")}`)
+        .on(
+          "postgres_changes",
+          {
+            event: "UPDATE",
+            schema: "public",
+            table: "task_progress",
+          },
+          handleProgressUpdate,
+        )
+        .subscribe();
+
+      if (cancelled && channel) {
+        void supabase.removeChannel(channel);
+        channel = null;
+      }
+    })();
+
+    const {
+      data: { subscription: authSubscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      syncAuth(session?.access_token);
+    });
+
+    let pollId: ReturnType<typeof setInterval> | undefined;
+    if (hasInProgressTask) {
+      pollId = setInterval(() => {
+        void refreshTaskData();
+      }, 3000);
+    }
+
+    const onFocus = () => {
+      void refreshTaskData();
+    };
+    window.addEventListener("focus", onFocus);
+
+    return () => {
+      cancelled = true;
+      authSubscription.unsubscribe();
+      if (pollId) clearInterval(pollId);
+      window.removeEventListener("focus", onFocus);
+      if (channel) void supabase.removeChannel(channel);
+    };
+  }, [sessionIds, hasInProgressTask, supabase, refreshTaskData]);
 
   // Ensure progress rows exist
   useEffect(() => {

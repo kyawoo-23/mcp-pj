@@ -21,7 +21,7 @@ import { CURRENT_STUDY_PROTOCOL_VERSION } from "@/lib/study-protocol";
 
 export function TaskIndicator() {
   const supabase = useMemo(() => createClient(), []);
-  const { activeTask, setActiveTask } = useTaskStore();
+  const { activeTask, setActiveTask, taskRefreshNonce } = useTaskStore();
   const [loading, setLoading] = useState(true);
   const [isVisible, setIsVisible] = useState(true);
   const [isExpanded, setIsExpanded] = useState(true);
@@ -151,9 +151,15 @@ export function TaskIndicator() {
   }, [refreshActiveTask, supabase]);
 
   useEffect(() => {
+    if (taskRefreshNonce === 0) return;
+    void refreshActiveTask({ silent: true });
+  }, [taskRefreshNonce, refreshActiveTask]);
+
+  useEffect(() => {
     const progressId = activeTask?.progressId;
-    const taskInProgress = activeTask?.status === "in_progress";
-    if (!progressId) return;
+    const sessionId = activeTask?.sessionId;
+    const awaitingCompletion = activeTask?.status === "in_progress";
+    if (!progressId || !sessionId) return;
 
     let cancelled = false;
     let channel: ReturnType<typeof supabase.channel> | null = null;
@@ -162,11 +168,18 @@ export function TaskIndicator() {
     const handleProgressPayload = (payload: {
       new: Record<string, unknown>;
     }) => {
-      const row = payload.new as { status?: string };
+      const row = payload.new as { id?: string; status?: string };
+      if (row.id && row.id !== progressId) return;
       if (row.status) {
         applyProgressRow(progressId, row.status);
       }
       void refreshActiveTask({ silent: true });
+    };
+
+    const syncAuth = (accessToken: string | undefined) => {
+      if (accessToken) {
+        supabase.realtime.setAuth(accessToken);
+      }
     };
 
     void (async () => {
@@ -175,18 +188,27 @@ export function TaskIndicator() {
       } = await supabase.auth.getSession();
       if (cancelled || !session) return;
 
-      // Required for RLS-protected postgres_changes on hosted Supabase (see supabase-js#1304).
-      supabase.realtime.setAuth(session.access_token);
+      syncAuth(session.access_token);
 
       channel = supabase
         .channel(`task_progress:${progressId}`)
         .on(
           "postgres_changes",
           {
-            event: "*",
+            event: "UPDATE",
             schema: "public",
             table: "task_progress",
             filter: `id=eq.${progressId}`,
+          },
+          handleProgressPayload,
+        )
+        .on(
+          "postgres_changes",
+          {
+            event: "UPDATE",
+            schema: "public",
+            table: "task_progress",
+            filter: `session_id=eq.${sessionId}`,
           },
           handleProgressPayload,
         )
@@ -206,10 +228,16 @@ export function TaskIndicator() {
       }
     })();
 
-    if (taskInProgress) {
+    const {
+      data: { subscription: authSubscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      syncAuth(session?.access_token);
+    });
+
+    if (awaitingCompletion) {
       pollId = setInterval(() => {
         void refreshActiveTask({ silent: true });
-      }, 3000);
+      }, 2000);
     }
 
     const onVisible = () => {
@@ -217,16 +245,23 @@ export function TaskIndicator() {
         void refreshActiveTask({ silent: true });
       }
     };
+    const onFocus = () => {
+      void refreshActiveTask({ silent: true });
+    };
     document.addEventListener("visibilitychange", onVisible);
+    window.addEventListener("focus", onFocus);
 
     return () => {
       cancelled = true;
+      authSubscription.unsubscribe();
       if (pollId) clearInterval(pollId);
       document.removeEventListener("visibilitychange", onVisible);
+      window.removeEventListener("focus", onFocus);
       if (channel) void supabase.removeChannel(channel);
     };
   }, [
     activeTask?.progressId,
+    activeTask?.sessionId,
     activeTask?.status,
     supabase,
     refreshActiveTask,

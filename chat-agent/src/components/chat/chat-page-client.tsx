@@ -23,6 +23,7 @@ import {
 } from "@/app/actions/conversations";
 import { toast } from "sonner";
 import { getBusyCaptionFromChatMessages } from "@/lib/chat-activity";
+import { useTaskStore } from "@/lib/store";
 import {
   messagePartFromUIPart,
   messageRowToUIMessage,
@@ -140,6 +141,20 @@ export function ChatPageClient({
   }, [taskPrompt]);
 
   const isLoading = status === "submitted" || status === "streaming";
+  const requestTaskRefresh = useTaskStore((state) => state.requestTaskRefresh);
+  const prevChatStatusRef = React.useRef(status);
+
+  // Refresh task indicator after tool calls finish (realtime may not deliver on hosted Supabase).
+  React.useEffect(() => {
+    const prev = prevChatStatusRef.current;
+    prevChatStatusRef.current = status;
+    if (
+      (prev === "streaming" || prev === "submitted") &&
+      status === "ready"
+    ) {
+      requestTaskRefresh();
+    }
+  }, [status, requestTaskRefresh]);
 
   // Show toast when error status occurs
   React.useEffect(() => {
