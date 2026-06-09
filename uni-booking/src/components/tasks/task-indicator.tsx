@@ -9,6 +9,17 @@ import { Badge } from "../ui/badge";
 import { Card, CardContent } from "../ui/card";
 import { getSurveyUrl } from "../../lib/constants";
 import { CURRENT_STUDY_PROTOCOL_VERSION } from "@/lib/study-protocol";
+import { getTomorrowInStudyTZ, STUDY_TZ } from "@/lib/task-criteria";
+
+function resolveTitle(title: string): string {
+  const tomorrowYMD = getTomorrowInStudyTZ();
+  const label = new Intl.DateTimeFormat("en", {
+    timeZone: STUDY_TZ,
+    month: "short",
+    day: "numeric",
+  }).format(new Date(tomorrowYMD + "T00:00:00"));
+  return title.replace(/\btomorrow\b/gi, `${label} (tomorrow)`);
+}
 
 const taskLabels: Record<string, string> = {
   register_course: "Register for a course",
@@ -253,7 +264,7 @@ export function TaskIndicator() {
           </div>
           {isExpanded && (
             <>
-              <div className="text-sm">{activeTask.title}</div>
+              <div className="text-sm">{resolveTitle(activeTask.title)}</div>
               <div className="flex flex-col gap-2">
                 <Button variant="outline" size="sm" asChild>
                   <Link href={surveyLink}>Return to survey</Link>
