@@ -3,9 +3,11 @@ import type { Metadata } from "next";
 import { Outfit, Geist_Mono } from "next/font/google";
 import { Analytics } from "@vercel/analytics/next";
 import Providers from "@/components/providers";
+import { PreviewEnvironmentBanner } from "@/components/preview-environment-banner";
 import { Toaster } from "@/components/ui/sonner";
 import { ThemeProvider } from "@/components/theme-provider";
 import { cn } from "@/lib/utils";
+import { isPreviewEnvironment } from "@/lib/preview-environment";
 import "./globals.css";
 
 const outfit = Outfit({ variable: "--font-outfit", subsets: ["latin"] });
@@ -70,6 +72,8 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const isPreview = isPreviewEnvironment();
+
   return (
     <html lang='en' suppressHydrationWarning>
       <body
@@ -79,6 +83,7 @@ export default function RootLayout({
           _geistMono.variable,
         )}
       >
+        <PreviewEnvironmentBanner show={isPreview} />
         <ThemeProvider
           attribute='class'
           defaultTheme='system'
