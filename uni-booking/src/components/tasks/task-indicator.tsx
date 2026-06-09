@@ -167,6 +167,9 @@ export function TaskIndicator() {
       } = await supabase.auth.getSession();
       if (cancelled || !session) return;
 
+      // Required for RLS-protected postgres_changes on hosted Supabase (see supabase-js#1304).
+      supabase.realtime.setAuth(session.access_token);
+
       channel = supabase
         .channel(`task_progress:${progressId}`)
         .on(
@@ -181,7 +184,11 @@ export function TaskIndicator() {
         )
         .subscribe((status, err) => {
           if (status === "CHANNEL_ERROR") {
-            console.error("[task_progress realtime]", err);
+            console.error(
+              "[task_progress realtime]",
+              status,
+              err ?? "no error detail (check Realtime publication + RLS)",
+            );
           }
         });
 
