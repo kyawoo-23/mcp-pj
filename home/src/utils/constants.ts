@@ -1,4 +1,8 @@
 import type { ProfileRow, TaskDefinitionRow } from "@/lib/types";
+import {
+  isPreviewEnvironment,
+  toPreviewOrigin,
+} from "@/lib/preview-environment";
 
 export const AGE_OPTIONS: Array<{ value: ProfileRow["age_range"]; label: string }> = [
   { value: "under_18", label: "Under 18" },
@@ -84,84 +88,98 @@ export const TASK_ORDER: Record<string, number> = {
   cancel_booking: 4,
 };
 
+function isDevMode(): boolean {
+  return process.env.NEXT_PUBLIC_DEV_MODE === "true";
+}
+
+function isLegacyVercelDeployment(): boolean {
+  return (
+    typeof window !== "undefined" &&
+    window.location.hostname.includes("vercel")
+  );
+}
+
+function resolveAppOrigin(
+  localOrigin: string,
+  productionOrigin: string,
+  legacyVercelOrigin: string,
+): string {
+  if (isDevMode()) {
+    return localOrigin;
+  }
+
+  if (isPreviewEnvironment()) {
+    return toPreviewOrigin(productionOrigin);
+  }
+
+  if (isLegacyVercelDeployment()) {
+    return legacyVercelOrigin;
+  }
+
+  return productionOrigin;
+}
+
 export function getTaskUrl(
   systemType: TaskDefinitionRow["system_type"],
   taskCode: string,
 ): string {
-  const isDevMode = process.env.NEXT_PUBLIC_DEV_MODE === "true";
-  const isVercel = typeof window !== "undefined" && window.location.hostname.includes("vercel");
-
   if (systemType === "chat_agent") {
-    if (isDevMode) {
-      return `http://localhost:4000/c?task_code=${taskCode}`;
-    }
-    return isVercel
-      ? `https://mcp-pj-chat-agent.vercel.app/c?task_code=${taskCode}`
-      : `https://chat-agent.mcp-project.app/c?task_code=${taskCode}`;
+    const base = resolveAppOrigin(
+      "http://localhost:4000",
+      "https://chat-agent.mcp-project.app",
+      "https://mcp-pj-chat-agent.vercel.app",
+    );
+    return `${base}/c?task_code=${taskCode}`;
   }
 
   if (taskCode === "register_course" || taskCode === "drop_course") {
-    if (isDevMode) {
-      return `http://localhost:4002?task_code=${taskCode}`;
-    }
-    return isVercel
-      ? `https://mcp-pj-uni-registration.vercel.app?task_code=${taskCode}`
-      : `https://uni-registration.mcp-project.app?task_code=${taskCode}`;
+    const base = resolveAppOrigin(
+      "http://localhost:4002",
+      "https://uni-registration.mcp-project.app",
+      "https://mcp-pj-uni-registration.vercel.app",
+    );
+    return `${base}?task_code=${taskCode}`;
   }
 
-  if (isDevMode) {
-    return `http://localhost:4001?task_code=${taskCode}`;
-  }
-  return isVercel
-    ? `https://mcp-pj-uni-booking.vercel.app/auth/login?task_code=${taskCode}`
-    : `https://uni-booking.mcp-project.app?task_code=${taskCode}`;
+  const base = resolveAppOrigin(
+    "http://localhost:4001",
+    "https://uni-booking.mcp-project.app",
+    "https://mcp-pj-uni-booking.vercel.app",
+  );
+  const loginPath =
+    isLegacyVercelDeployment() && !isPreviewEnvironment() ? "/auth/login" : "";
+  return `${base}${loginPath}?task_code=${taskCode}`;
 }
 
 export function getSurveyUrl(): string {
-  const isDevMode = process.env.NEXT_PUBLIC_DEV_MODE === "true";
-  const isVercel = typeof window !== "undefined" && window.location.hostname.includes("vercel");
-
-  if (isDevMode) {
-    return "http://localhost:4003/survey";
-  }
-
-  return isVercel
-    ? "https://mcp-pj.vercel.app/survey"
-    : "https://mcp-project.app/survey";
+  const base = resolveAppOrigin(
+    "http://localhost:4003",
+    "https://mcp-project.app",
+    "https://mcp-pj.vercel.app",
+  );
+  return `${base}/survey`;
 }
 
 export function getChatAgentBaseUrl(): string {
-  const isDevMode = process.env.NEXT_PUBLIC_DEV_MODE === "true";
-  const isVercel = typeof window !== "undefined" && window.location.hostname.includes("vercel");
-
-  if (isDevMode) {
-    return "http://localhost:4000";
-  }
-  return isVercel
-    ? "https://mcp-pj-chat-agent.vercel.app"
-    : "https://chat-agent.mcp-project.app";
+  return resolveAppOrigin(
+    "http://localhost:4000",
+    "https://chat-agent.mcp-project.app",
+    "https://mcp-pj-chat-agent.vercel.app",
+  );
 }
 
 export function getUniBookingBaseUrl(): string {
-  const isDevMode = process.env.NEXT_PUBLIC_DEV_MODE === "true";
-  const isVercel = typeof window !== "undefined" && window.location.hostname.includes("vercel");
-
-  if (isDevMode) {
-    return "http://localhost:4001";
-  }
-  return isVercel
-    ? "https://mcp-pj-uni-booking.vercel.app"
-    : "https://uni-booking.mcp-project.app";
+  return resolveAppOrigin(
+    "http://localhost:4001",
+    "https://uni-booking.mcp-project.app",
+    "https://mcp-pj-uni-booking.vercel.app",
+  );
 }
 
 export function getUniRegistrationBaseUrl(): string {
-  const isDevMode = process.env.NEXT_PUBLIC_DEV_MODE === "true";
-  const isVercel = typeof window !== "undefined" && window.location.hostname.includes("vercel");
-
-  if (isDevMode) {
-    return "http://localhost:4002";
-  }
-  return isVercel
-    ? "https://mcp-pj-uni-registration.vercel.app"
-    : "https://uni-registration.mcp-project.app";
+  return resolveAppOrigin(
+    "http://localhost:4002",
+    "https://uni-registration.mcp-project.app",
+    "https://mcp-pj-uni-registration.vercel.app",
+  );
 }
