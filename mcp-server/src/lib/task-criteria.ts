@@ -40,11 +40,22 @@ export function matchesTaskTime(
   return criteriaHHMM === actualHHMM;
 }
 
-function formatLocalDateYYYYMMDD(date: Date): string {
-  const y = date.getFullYear();
-  const m = String(date.getMonth() + 1).padStart(2, "0");
-  const d = String(date.getDate()).padStart(2, "0");
-  return `${y}-${m}-${d}`;
+/** IANA timezone for the study site (Chulalongkorn University, Bangkok). */
+export const STUDY_TZ = "Asia/Bangkok";
+
+/** Format a Date as YYYY-MM-DD in the study timezone. */
+export function formatInStudyTZ(date: Date): string {
+  return new Intl.DateTimeFormat("en-CA", {
+    timeZone: STUDY_TZ,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).format(date);
+}
+
+/** Return tomorrow's date as YYYY-MM-DD in the study timezone. */
+export function getTomorrowInStudyTZ(): string {
+  return formatInStudyTZ(new Date(Date.now() + 86_400_000));
 }
 
 /** Compare criteria booking_date with an actual YYYY-MM-DD date. Supports "tomorrow". */
@@ -54,13 +65,11 @@ export function matchesTaskBookingDate(
 ): boolean {
   if (!criteriaDate) return true;
   if (criteriaDate === "tomorrow") {
-    // Wording is "book/cancel for tomorrow" relative to when the participant started.
-    // At cancel time, that booking is often *today* (same calendar day as the slot).
-    const now = new Date();
-    const today = formatLocalDateYYYYMMDD(now);
-    const tomorrow = formatLocalDateYYYYMMDD(
-      new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1)
-    );
+    // Resolve "tomorrow" in the study timezone (Bangkok, UTC+7) so that participants
+    // booking after midnight ICT are not penalised by the UTC-server date boundary.
+    // At cancel time the booking date is often already "today" in Bangkok — both are accepted.
+    const today = formatInStudyTZ(new Date());
+    const tomorrow = getTomorrowInStudyTZ();
     return actualDate === today || actualDate === tomorrow;
   }
   return criteriaDate === actualDate;
