@@ -144,3 +144,19 @@ sequenceDiagram
    - Instead of routing complex business logic throughout various backend wrappers, `mcp-server` hits Supabase Postgres tables directly.
    - Operations from conversational interfaces execute robustly under a simplified authorization context while preserving the shared source of truth.
    - Traditional UIs operate over standard Supabase client libraries (REST/GraphQL endpoints) with anonymous/user keys.
+
+## Experimental task layer (above MCP tools)
+
+Task completion in this study is gated by **task mode** — session and
+progress tracking in Supabase — not by the MCP protocol itself. The chat
+agent and traditional UIs both record progress through shared task-mode
+logic before and after the underlying register/book/drop/cancel actions.
+
+Under the current study protocol (`v2_criteria`), MCP tool handlers in
+`mcp-server` also verify each action against the participant's **task
+assignment set** (specific course, section, facility, and booking time)
+before recording task success. The traditional UIs perform equivalent
+criteria checks in their server actions so that modality parity holds.
+
+Domain terms are defined in [`CONTEXT.md`](CONTEXT.md). Operational
+detail (env vars, file paths, invariants) is in root `AGENTS.md` §14.

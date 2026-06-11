@@ -268,6 +268,30 @@ export function protocolsWithParticipationData(
 
 export type HistoryModalityFilter = "all" | SystemType;
 
+/** User-facing labels for the study-history modality filter. */
+export const HISTORY_MODALITY_FILTER_LABELS: Record<
+  HistoryModalityFilter,
+  string
+> = {
+  all: "Traditional + Chat",
+  traditional: HISTORY_SYSTEM_LABELS.traditional,
+  chat_agent: HISTORY_SYSTEM_LABELS.chat_agent,
+};
+
+export const HISTORY_MODALITY_FILTER_HEADING = "Show results for";
+
+export const HISTORY_MODALITY_FILTER_INFO = {
+  title: "How you used the study",
+  description:
+    "You could complete tasks through a standard web interface (Traditional portal) or an AI chat assistant (Chat agent). Filter results by interface, or combine both.",
+  options: {
+    all: "Combined metrics from Traditional portal and Chat agent sessions.",
+    traditional:
+      "Only results from the standard web forms and buttons interface.",
+    chat_agent: "Only results from the conversational chat assistant.",
+  } satisfies Record<HistoryModalityFilter, string>,
+} as const;
+
 type HistoryRowWithSystem = {
   task_sessions: Pick<TaskSessionRow, "system_type">;
 };
@@ -976,6 +1000,10 @@ const SECTION_LABEL_BY_METRIC_ID = new Map(
   SECTION_COMPARE_GROUPS.map((section) => [section.metricId, section.label]),
 );
 
+const SECTION_DESCRIPTION_BY_METRIC_ID = new Map(
+  SECTION_COMPARE_GROUPS.map((section) => [section.metricId, section.description]),
+);
+
 /** Prefer section compare label; fall back to the compare-row label. */
 export function getCompareMetricDisplayLabel(
   metricId: string,
@@ -984,7 +1012,25 @@ export function getCompareMetricDisplayLabel(
   return SECTION_LABEL_BY_METRIC_ID.get(metricId) ?? rowLabel;
 }
 
-export type InsightContentPart = string | { text: string };
+/** Prefer section compare description; fall back to the compare-row description. */
+export function getCompareMetricDescription(
+  metricId: string,
+  rowDescription: string,
+): string {
+  return SECTION_DESCRIPTION_BY_METRIC_ID.get(metricId) ?? rowDescription;
+}
+
+export type InsightMetricInfo = {
+  label: string;
+  description: string;
+  context: string;
+};
+
+export type InsightEmphasis = "simple" | "criteria" | "metric";
+
+export type InsightContentPart =
+  | string
+  | { text: string; emphasis?: InsightEmphasis };
 
 export function insightContentToText(content: InsightContentPart[]): string {
   return content
@@ -998,6 +1044,7 @@ export function getBiggestChangeInsightParts(row: CompareRow): {
   text: string;
   content: InsightContentPart[];
   trend: InsightTrend;
+  metricInfo: InsightMetricInfo;
 } | null {
   if (row.delta.direction !== "better" && row.delta.direction !== "worse") {
     return null;
@@ -1007,14 +1054,51 @@ export function getBiggestChangeInsightParts(row: CompareRow): {
   }
 
   const label = getCompareMetricDisplayLabel(row.id, row.label);
+  const description = getCompareMetricDescription(row.id, row.description);
   const isBetter = row.delta.direction === "better";
   const prefix = isBetter ? "Biggest improvement in " : "Largest decline in ";
   const suffix = ".";
+  const context = isBetter
+    ? "This metric had the largest positive gap between Criteria Task and Simple Task among all compared metrics."
+    : "This metric had the largest negative gap between Criteria Task and Simple Task among all compared metrics.";
 
   return {
     text: `${prefix}${label}${suffix}`,
-    content: [prefix, { text: label }, suffix],
+    content: [prefix, { text: label, emphasis: "metric" }, suffix],
     trend: row.delta.direction,
+    metricInfo: { label, description, context },
+  };
+}
+
+export function getOutperformsInsightParts(): {
+  text: string;
+  content: InsightContentPart[];
+} {
+  const criteria = COMPARE_PROTOCOL_LABELS.criteria;
+  const simple = COMPARE_PROTOCOL_LABELS.simple;
+  return {
+    text: `${criteria} outperforms ${simple} in most key metrics.`,
+    content: [
+      { text: criteria, emphasis: "criteria" },
+      " outperforms ",
+      { text: simple, emphasis: "simple" },
+      " in most key metrics.",
+    ],
+  };
+}
+
+export function getCompetenceInsightParts(): {
+  text: string;
+  content: InsightContentPart[];
+} {
+  const criteria = COMPARE_PROTOCOL_LABELS.criteria;
+  return {
+    text: `Users report higher competence with ${criteria}.`,
+    content: [
+      "Users report higher competence with ",
+      { text: criteria, emphasis: "criteria" },
+      ".",
+    ],
   };
 }
 
@@ -1042,11 +1126,11 @@ export function getSusChangeInsightParts(row: CompareRow): {
   return {
     text: `${metricLabel}${middle}${deltaLabel}${trailing}${protocolLabel}${suffix}`,
     content: [
-      { text: metricLabel },
+      { text: metricLabel, emphasis: "metric" },
       middle,
-      { text: deltaLabel },
+      { text: deltaLabel, emphasis: "metric" },
       trailing,
-      { text: protocolLabel },
+      { text: protocolLabel, emphasis: "criteria" },
       suffix,
     ],
     trend,
