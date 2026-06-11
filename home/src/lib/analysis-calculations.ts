@@ -9,8 +9,8 @@ import type {
   UserInterviewResponseRow,
 } from "./types";
 
-// Analysis payloads from the edge function include only protocol_version
-// v2_criteria rows (post–criteria-migration study). v1_simple is excluded.
+// Analysis payloads include all protocol_version rows from the edge function.
+// Callers filter by version via filterPayloadByProtocolVersion before metrics.
 
 // ============================================================================
 // Completed Users (canonical definition)
@@ -935,6 +935,75 @@ export function calculatePreferenceResponses(payload: AnalysisPayload) {
       })),
     };
   });
+}
+
+// ============================================================================
+// Filter Payload by Study Protocol Version
+// ============================================================================
+
+export type StudyProtocolVersion = "v1_simple" | "v2_criteria";
+
+function rowMatchesProtocolVersion(
+  protocolVersion: string | null | undefined,
+  version: StudyProtocolVersion,
+): boolean {
+  const effective = protocolVersion ?? "v1_simple";
+  return effective === version;
+}
+
+/**
+ * Filters the analysis payload to rows for a single study protocol version.
+ * Rows missing protocol_version are treated as v1_simple (pre-migration snapshots).
+ */
+export function filterPayloadByProtocolVersion(
+  payload: AnalysisPayload,
+  version: StudyProtocolVersion,
+): AnalysisPayload {
+  const filteredTaskProgress = payload.task_progress.filter((tp) =>
+    rowMatchesProtocolVersion(tp.protocol_version, version),
+  );
+  const filteredTaskSurveyResponses = payload.task_survey_responses.filter(
+    (r) => rowMatchesProtocolVersion(r.protocol_version, version),
+  );
+  const filteredTaskInterviewResponses =
+    payload.task_interview_responses.filter((r) =>
+      rowMatchesProtocolVersion(r.protocol_version, version),
+    );
+
+  const activeSessionIds = new Set<string>();
+  for (const row of filteredTaskProgress) {
+    activeSessionIds.add(row.session_id);
+  }
+  for (const row of filteredTaskSurveyResponses) {
+    activeSessionIds.add(row.session_id);
+  }
+
+  const filteredTaskSessions = payload.task_sessions.filter((s) =>
+    activeSessionIds.has(s.id),
+  );
+
+  const activeUserIds = new Set(filteredTaskSessions.map((s) => s.user_id));
+  for (const row of filteredTaskInterviewResponses) {
+    activeUserIds.add(row.user_id);
+  }
+
+  const filteredProfiles = payload.profiles.filter((p) =>
+    activeUserIds.has(p.id),
+  );
+
+  return {
+    profiles: filteredProfiles,
+    task_sessions: filteredTaskSessions,
+    task_progress: filteredTaskProgress,
+    task_definitions: payload.task_definitions,
+    task_surveys: payload.task_surveys,
+    task_survey_questions: payload.task_survey_questions,
+    task_survey_responses: filteredTaskSurveyResponses,
+    task_interview_questions: payload.task_interview_questions,
+    task_interview_responses: filteredTaskInterviewResponses,
+    never_logged_in_count: payload.never_logged_in_count,
+    total_auth_users_count: payload.total_auth_users_count,
+  };
 }
 
 // ============================================================================

@@ -1,7 +1,6 @@
 "use client";
 
 import { useMemo, useState, useEffect, useTransition } from "react";
-import Link from "next/link";
 import { useRouter, useSearchParams, usePathname } from "next/navigation";
 import type { AnalysisPayload } from "@/lib/types";
 import {
@@ -11,6 +10,8 @@ import {
   calculateTaskDurations,
   filterPayloadToCompletedUsers,
   filterPayloadByDemographics,
+  filterPayloadByProtocolVersion,
+  type StudyProtocolVersion,
 } from "@/lib/analysis-calculations";
 import { revalidateAnalysisAction } from "@/app/actions/analysis";
 import { TaskDurationCharts } from "@/components/analysis/task-duration-charts";
@@ -31,7 +32,7 @@ import {
   DemographicFilterBar,
   type DemographicFilterValue,
 } from "@/components/analysis/demographic-filter-bar";
-import { CircleCheck, Database, Info, ArrowRight } from "lucide-react";
+import { CircleCheck, Database, Info } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import {
   Popover,
@@ -39,6 +40,7 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 type AnalysisClientProps = {
+  protocolVersion: StudyProtocolVersion;
   initialData: AnalysisPayload | null;
   initialError: string | null;
   metrics: {
@@ -136,6 +138,7 @@ function DashboardContent({ payload }: { payload: AnalysisPayload }) {
 }
 
 export function AnalysisClient({
+  protocolVersion,
   initialData: data,
   initialError: error,
   metrics,
@@ -159,9 +162,16 @@ export function AnalysisClient({
     window.history.replaceState(null, "", `${pathname}?${params.toString()}`);
   };
 
+  const protocolData = useMemo(
+    () =>
+      data ? filterPayloadByProtocolVersion(data, protocolVersion) : null,
+    [data, protocolVersion],
+  );
+
   const filteredData = useMemo(
-    () => (data ? filterPayloadToCompletedUsers(data) : null),
-    [data],
+    () =>
+      protocolData ? filterPayloadToCompletedUsers(protocolData) : null,
+    [protocolData],
   );
 
   const [demographicFilters, setDemographicFilters] = useState<
@@ -169,7 +179,8 @@ export function AnalysisClient({
   >([]);
 
   const effectivePayload = useMemo(() => {
-    const base = activeTab === "completed" ? filteredData! : data!;
+    const base =
+      activeTab === "completed" ? filteredData! : protocolData!;
     const validFilters = demographicFilters.filter(
       (f) => f.dimension && f.values?.length > 0,
     );
@@ -177,7 +188,7 @@ export function AnalysisClient({
       return filterPayloadByDemographics(base, validFilters);
     }
     return base;
-  }, [activeTab, data, filteredData, demographicFilters]);
+  }, [activeTab, protocolData, filteredData, demographicFilters]);
 
   if (error) {
     return (
@@ -204,7 +215,7 @@ export function AnalysisClient({
     );
   }
 
-  if (!data || !metrics) {
+  if (!data || !protocolData || !metrics) {
     return (
       <Card>
         <CardHeader>

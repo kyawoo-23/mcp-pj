@@ -178,12 +178,25 @@ Use these whenever possible instead of running raw subcommands:
 - `make dev` — runs all 6 services in parallel (`-j6`); prints `LOCAL_IP` for LAN device testing
 - `make ip` — prints LAN IPv4 only (`LOCAL_IP`: macOS `ipconfig getifaddr en0` + fallbacks; Windows active adapter via PowerShell)
 - `make db-start` / `db-stop` / `db-status`
-- `make db-reset` — re-applies migrations + seeds (destructive locally)
+- `make db-reset` — **destructive**: drops DB, reapplies all migrations +
+  seeds (use only when you need a clean slate or edited an old migration)
 - `make db-gen` — regenerates `supabase/types/database.types.ts`
 - `make edge-functions` — `supabase functions serve`
 
-After any migration change, **always run `make db-reset` and
-`make db-gen`** so the generated types stay in sync with the schema.
+### Applying migrations (prefer incremental)
+
+After adding a **new** migration file, apply it incrementally and regenerate
+types. **Do not** default to `make db-reset` — that wipes local data and
+re-seeds unnecessarily.
+
+| Situation | Local | Remote (linked project) | Then |
+| --------- | ----- | --------------------- | ---- |
+| New migration file (additive SQL) | `supabase migration up --local` | `supabase migration up --linked` or `supabase db push --linked` | `make db-gen` |
+| Edited an already-applied migration, broken migration history, or need fresh seeds | `make db-reset` | repair manually / new migration on remote | `make db-gen` |
+
+**Always run `make db-gen`** after the schema changes so
+`supabase/types/database.types.ts` stays in sync. Commit the generated types
+with the migration.
 
 ---
 
@@ -341,7 +354,8 @@ other four apps.
   with the unit under test or under `__tests__/`.
 - Type-check: `tsc` runs as part of `next build`. After non-trivial
   edits, run `pnpm build` (or at minimum `pnpm lint`) in the affected app.
-- After schema changes: `make db-reset && make db-gen` before pushing.
+- After schema changes: `supabase migration up --local` (or `make db-reset`
+  only when a full re-seed is required), then `make db-gen`, before pushing.
 
 ---
 
@@ -361,6 +375,9 @@ other four apps.
   (v3). Don't share schemas across the boundary; serialize over MCP.
 - **Generated types are committed.** `database.types.ts` regeneration
   produces a real diff after schema work; commit it with the migration.
+- **New migration ≠ `make db-reset`.** Use `supabase migration up --local`
+  for additive migrations; reserve `make db-reset` for when you need seeds
+  reapplied or migration history is inconsistent.
 - **Render deploy** is configured by `render.yaml` — changes to ports,
   start commands, or env vars likely need a matching update there.
 - **OpenUI is feature-flagged** — `NEXT_PUBLIC_OPENUI_RENDERING` defaults
