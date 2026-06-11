@@ -2,8 +2,10 @@
 
 import type { CompareRow } from "@/lib/study-history";
 import { DeltaBadge } from "./delta-badge";
-import type { HistoryModalityFilter } from "@/lib/study-history";
-import { HISTORY_SYSTEM_LABELS } from "@/lib/study-history";
+import {
+  HISTORY_MODALITY_FILTER_LABELS,
+  type HistoryModalityFilter,
+} from "@/lib/study-history";
 import { MetricBar } from "./metric-bar";
 import {
   CompareTableColGroup,
@@ -19,8 +21,7 @@ interface ComparisonMatrixProps {
 }
 
 function modalitySubtitle(modality: HistoryModalityFilter): string {
-  if (modality === "all") return "All modalities";
-  return HISTORY_SYSTEM_LABELS[modality];
+  return HISTORY_MODALITY_FILTER_LABELS[modality];
 }
 
 export function ComparisonMatrix({

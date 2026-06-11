@@ -1,6 +1,7 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { Suspense, useEffect, useMemo, useState } from "react";
+import { usePathname, useSearchParams } from "next/navigation";
 import {
   buildProtocolMetrics,
   buildUnifiedCompareQuestions,
@@ -33,19 +34,70 @@ import { QuestionCompareTable } from "./question-compare-table";
 import { SectionCompareList } from "./section-compare-list";
 import { TaskCompareSection } from "./task-compare-section";
 
+type ViewMode = "compare" | "detailed";
+
+function parseViewMode(value: string | null): ViewMode {
+  return value === "detailed" ? "detailed" : "compare";
+}
+
 interface StudyHistoryCompareViewProps {
   tasks: StudyHistoryTask[];
   surveyResponses: StudyHistorySurveyResponse[];
   interviewResponses: StudyHistoryInterview[];
 }
 
-export function StudyHistoryCompareView({
+export function StudyHistoryCompareView(props: StudyHistoryCompareViewProps) {
+  return (
+    <Suspense fallback={<StudyHistoryCompareViewFallback />}>
+      <StudyHistoryCompareViewContent {...props} />
+    </Suspense>
+  );
+}
+
+function StudyHistoryCompareViewFallback() {
+  return (
+    <div className='space-y-8' aria-busy='true' aria-label='Loading study results'>
+      <div className='space-y-3'>
+        <div className='flex flex-wrap items-center justify-between gap-3'>
+          <div className='h-5 w-full max-w-xl animate-pulse rounded bg-muted' />
+          <div className='h-9 w-52 animate-pulse rounded-lg bg-muted' />
+        </div>
+        <div className='flex flex-wrap gap-2'>
+          <div className='h-9 w-32 animate-pulse rounded-lg bg-muted' />
+          <div className='h-9 w-28 animate-pulse rounded-lg bg-muted' />
+          <div className='h-9 w-28 animate-pulse rounded-lg bg-muted' />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function StudyHistoryCompareViewContent({
   tasks,
   surveyResponses,
   interviewResponses,
 }: StudyHistoryCompareViewProps) {
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const viewFromUrl = parseViewMode(searchParams.get("view"));
+
   const [modality, setModality] = useState<HistoryModalityFilter>("all");
-  const [viewMode, setViewMode] = useState<"compare" | "detailed">("compare");
+  const [viewMode, setViewMode] = useState<ViewMode>(viewFromUrl);
+
+  useEffect(() => {
+    setViewMode(viewFromUrl);
+  }, [viewFromUrl]);
+
+  const handleViewModeChange = (mode: ViewMode) => {
+    setViewMode(mode);
+    const params = new URLSearchParams(searchParams.toString());
+    params.set("view", mode);
+    window.history.replaceState(
+      null,
+      "",
+      `${pathname}?${params.toString()}`,
+    );
+  };
 
   const grouped = useMemo(
     () => groupHistoryByProtocol(tasks, surveyResponses, interviewResponses),
@@ -174,7 +226,7 @@ export function StudyHistoryCompareView({
 
   const emptyModalityMessage =
     modality !== "all" && !modalityHasMeaningfulData
-      ? `No results for this modality in your study records. Try "All modalities".`
+      ? `No results for this interface in your study records. Try "Traditional + Chat".`
       : null;
 
   return (
@@ -192,7 +244,7 @@ export function StudyHistoryCompareView({
             <button
               type='button'
               aria-pressed={viewMode === "compare"}
-              onClick={() => setViewMode("compare")}
+              onClick={() => handleViewModeChange("compare")}
               className={cn(
                 "rounded-md px-3 py-1.5 text-sm font-medium transition-colors cursor-pointer",
                 "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1",
@@ -206,7 +258,7 @@ export function StudyHistoryCompareView({
             <button
               type='button'
               aria-pressed={viewMode === "detailed"}
-              onClick={() => setViewMode("detailed")}
+              onClick={() => handleViewModeChange("detailed")}
               className={cn(
                 "rounded-md px-3 py-1.5 text-sm font-medium transition-colors cursor-pointer",
                 "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1",

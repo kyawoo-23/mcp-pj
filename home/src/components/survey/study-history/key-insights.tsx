@@ -1,12 +1,21 @@
 "use client";
 
-import { ArrowDown, ArrowUp, CheckCircle2, Plus } from "lucide-react";
+import { ArrowDown, ArrowUp, CheckCircle2, Info, Plus } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import {
   getBiggestChangeInsightParts,
+  getCompetenceInsightParts,
+  getOutperformsInsightParts,
   getSusChangeInsightParts,
   type CompareRow,
   type InsightContentPart,
+  type InsightEmphasis,
+  type InsightMetricInfo,
   type InsightTrend,
 } from "@/lib/study-history";
 import { COMPARE_THEME } from "@/lib/study-protocol-labels";
@@ -21,6 +30,7 @@ type InsightCard = {
   icon: "check" | "arrow" | "plus";
   content?: InsightContentPart[];
   trend?: InsightTrend;
+  metricInfo?: InsightMetricInfo;
 };
 
 function buildInsights(rows: CompareRow[]): InsightCard[] {
@@ -34,8 +44,10 @@ function buildInsights(rows: CompareRow[]): InsightCard[] {
     betterCount >= Math.ceil(comparable.length * 0.6) &&
     comparable.length >= 3
   ) {
+    const outperformParts = getOutperformsInsightParts();
     insights.push({
-      text: "Criteria Task outperforms Simple Task in most key metrics.",
+      text: outperformParts.text,
+      content: outperformParts.content,
       icon: "check",
     });
   }
@@ -60,6 +72,7 @@ function buildInsights(rows: CompareRow[]): InsightCard[] {
         text: parts.text,
         content: parts.content,
         trend: parts.trend,
+        metricInfo: parts.metricInfo,
         icon: "arrow",
       });
     }
@@ -73,8 +86,10 @@ function buildInsights(rows: CompareRow[]): InsightCard[] {
     competence?.simpleValue !== undefined &&
     competence.criteriaValue > competence.simpleValue
   ) {
+    const competenceParts = getCompetenceInsightParts();
     insights.push({
-      text: "Users report higher competence with Criteria Task.",
+      text: competenceParts.text,
+      content: competenceParts.content,
       icon: "plus",
     });
   }
@@ -107,10 +122,45 @@ const insightIconClass = cn(
   COMPARE_THEME.criteria.accentClass,
 );
 
-const insightEmphasisClass = cn(
-  "font-semibold",
-  COMPARE_THEME.criteria.strongClass,
-);
+function MetricInfoPopover({ metricInfo }: { metricInfo: InsightMetricInfo }) {
+  return (
+    <Popover>
+      <PopoverTrigger asChild>
+        <button
+          type='button'
+          className='-mt-px ml-0.5 inline-flex shrink-0 align-middle items-center justify-center rounded-full p-0.5 text-muted-foreground hover:text-foreground hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1'
+          aria-label={`What is ${metricInfo.label}?`}
+        >
+          <Info className='h-3.5 w-3.5 mb-0.5 shrink-0' aria-hidden />
+        </button>
+      </PopoverTrigger>
+      <PopoverContent
+        side='top'
+        align='start'
+        className='max-w-xs space-y-2 text-sm'
+      >
+        <p className='font-medium leading-snug'>{metricInfo.label}</p>
+        <p className='text-muted-foreground leading-relaxed'>
+          {metricInfo.description}
+        </p>
+        <p className='text-muted-foreground leading-relaxed'>
+          {metricInfo.context}
+        </p>
+      </PopoverContent>
+    </Popover>
+  );
+}
+
+function insightEmphasisClass(emphasis: InsightEmphasis = "metric"): string {
+  switch (emphasis) {
+    case "simple":
+      return cn("font-semibold", COMPARE_THEME.simple.strongClass);
+    case "criteria":
+      return cn("font-semibold", COMPARE_THEME.criteria.strongClass);
+    default:
+      return "font-semibold text-foreground";
+  }
+}
 
 function InsightBody({ insight }: { insight: InsightCard }) {
   if (insight.content) {
@@ -118,13 +168,16 @@ function InsightBody({ insight }: { insight: InsightCard }) {
       <p className='text-sm leading-relaxed'>
         {insight.content.map((part, index) =>
           typeof part === "string" ? (
-            part
+            <span key={index}>{part}</span>
           ) : (
-            <span key={index} className={insightEmphasisClass}>
+            <span key={index} className={insightEmphasisClass(part.emphasis)}>
               {part.text}
             </span>
           ),
         )}
+        {insight.metricInfo ? (
+          <MetricInfoPopover metricInfo={insight.metricInfo} />
+        ) : null}
       </p>
     );
   }

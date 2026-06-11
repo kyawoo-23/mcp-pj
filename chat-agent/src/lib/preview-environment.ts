@@ -1,4 +1,20 @@
-/** True on Vercel preview deployments. Server-only (`VERCEL_ENV` is not exposed to the client). */
+/** True on Vercel preview deployments (`VERCEL_ENV`) or preview.* hostnames in the browser. */
 export function isPreviewEnvironment(): boolean {
-  return process.env.VERCEL_ENV === "preview";
+  if (process.env.VERCEL_ENV === "preview") {
+    return true;
+  }
+
+  if (typeof window !== "undefined") {
+    return window.location.hostname.startsWith("preview.");
+  }
+
+  return false;
+}
+
+export function toPreviewOrigin(productionOrigin: string): string {
+  const url = new URL(productionOrigin);
+  if (!url.hostname.startsWith("preview.")) {
+    url.hostname = `preview.${url.hostname}`;
+  }
+  return url.origin;
 }
