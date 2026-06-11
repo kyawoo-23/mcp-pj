@@ -4,10 +4,14 @@ This file is the entry point for LLM coding agents working in this repository.
 Read it first. It complements (does not replace) `README.md` and
 `mcp-architecture.md`, which are the human-facing references.
 
+**Domain glossary** → [`CONTEXT.md`](CONTEXT.md). **Per-project rules** →
+`*/AGENTS.md` (listed below).
+
 For per-project agent rules, see also:
 
 - `chat-agent/AGENTS.md` — chat agent specifics + MCP canonical-docs policy
 - `uni-booking/AGENTS.md`, `uni-registration/AGENTS.md` — traditional UI app rules
+- `home/AGENTS.md` — research hub (survey, analysis, My study results)
 
 ---
 
@@ -153,11 +157,17 @@ Required:
   - Optional OpenUI rendering: `NEXT_PUBLIC_OPENUI_RENDERING=true`
     (default off; when on, assistant replies may include fenced OpenUI Lang
     blocks rendered as structured UI)
+  - Study protocol: `NEXT_PUBLIC_CURRENT_STUDY_PROTOCOL_VERSION` (default
+    `v2_criteria`; see §14)
 - `uni-booking/`, `uni-registration/`, `home/` `.env.local`:
   - `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+  - Study protocol: `NEXT_PUBLIC_CURRENT_STUDY_PROTOCOL_VERSION` (default
+    `v2_criteria`; see §14)
 - `mcp-server/.env`:
   - `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`
   - Optional: `PORT=4004`, `MCP_AUTH_TOKEN`
+  - Study protocol: `CURRENT_STUDY_PROTOCOL_VERSION` (default `v2_criteria`;
+    see §14)
 
 Rules:
 
@@ -284,41 +294,10 @@ Rules for agents:
 ## 9b. The `home/` app (research hub — easy to overlook)
 
 `home/` is **not just a landing page**. It is the research-facing
-front-end and the place where the experiment lifecycle actually lives
-for participants and researchers:
-
-- `src/app/page.tsx` — landing / entry into the study.
-- `src/app/research/` — research description, protocol, consent
-  material. Backed by `src/data/research.json`.
-- `src/app/survey/` — participant survey flow (SUS, NASA Raw-TLX,
-  SDT-based items, preference questions). Writes to the survey tables
-  seeded by `supabase/seeds/tasks_surveys.sql`.
-- `src/app/analysis/` — researcher-side analysis dashboards backed by
-  the `analysis` Supabase edge function (`supabase/functions/analysis`)
-  and the `z_mock_analysis_data.sql` seed.
-- `src/app/statistics/` — aggregate stats views (uses `recharts` and
-  `simple-statistics` for client-side computation).
-- `src/app/auth/`, `src/app/settings/`, `src/app/api/` — shared auth /
-  account / API surface.
-
-Quirks specific to `home/`:
-
-- **Different UI substrate from the other apps.** `home/` uses
-  `@base-ui/react` + a much wider Radix footprint (accordion, carousel,
-  resizable panels, day-picker, toast, etc.), `recharts`, and
-  `react-json-view-lite`. Don't assume a component exists in `home/`
-  just because it exists in `chat-agent/` — and vice versa.
-- **Has its own `pnpm-workspace.yaml`** while the other Next.js apps
-  do not. Treat `home/` as a self-contained pnpm root.
-- **Older versions of some libs** (Sonner v1, Zod v3, `@hookform/resolvers`
-  v3, older Radix majors). Don't blindly upgrade to match `chat-agent/`
-  — survey/analysis pages have been validated against these versions.
-- **Talks to the `analysis` edge function**, so changes there must be
-  paired with `supabase/functions/analysis` updates and re-served via
-  `make edge-functions`.
-- **Owns the "research truth"**: any change that affects what
-  participants see, the survey instrument, or how results are
-  aggregated has experimental implications — see §13.
+front-end where the experiment lifecycle lives for participants and
+researchers (survey instrument, analysis dashboards, **My study results**
+at `/survey/history`). See **`home/AGENTS.md`** for routes, study-protocol
+switchers, compare-view components, and home-specific UI quirks.
 
 When in doubt: research / survey / stats / analytics work belongs in
 `home/`. Task execution (registration, booking, chat) belongs in the
@@ -384,6 +363,14 @@ other four apps.
   off; the OpenUI bundle is lazy-loaded only when the flag is on. Changing
   `chatOpenUILibrary` requires `pnpm generate:openui-prompt` (also runs in
   `prebuild`).
+- **Preview deployments** — all four Next.js apps detect preview via
+  `VERCEL_ENV=preview` or `preview.*` hostnames, show a fixed banner, and
+  rewrite cross-app URLs (e.g. survey links) to the preview origin. See
+  `*/src/lib/preview-environment.ts`.
+- **Dual study protocol versions** — `task_progress`, `task_survey_responses`,
+  and `task_interview_responses` carry a `protocol_version` column; v1 and
+  v2 rows coexist per participant. Active writes use
+  `CURRENT_STUDY_PROTOCOL_VERSION` from env (§14).
 
 ---
 
@@ -398,10 +385,49 @@ This is a research artifact. Some changes have experimental implications:
   messages) without flagging it.
 - Analytics tables (`task_mode_*`, analysis edge function) record
   experiment data; treat them as append-only from app code.
+- **`research.json` is the frozen v1 paper snapshot** — do not rewrite it
+  to reflect v2_criteria behavior. Analysis and research pages use
+  protocol switchers (`v1` / `v2` route slugs) to filter cohorts.
+- **My study results compare view** — metrics shown side-by-side for
+  `v1_simple` and `v2_criteria` must stay consistent across modalities;
+  see `CONTEXT.md` for canonical terms.
 
 ---
 
-## 14. Quick contact
+## 14. Study protocol and task mode
+
+Domain terms (`v1_simple`, `v2_criteria`, task assignment set, My study
+results) are defined in [`CONTEXT.md`](CONTEXT.md). This section covers
+operational facts for agents.
+
+- **Active protocol** — each app exports `CURRENT_STUDY_PROTOCOL_VERSION`
+  from its `study-protocol.ts` (or `home/src/utils/study-protocol.ts`),
+  parsed from `NEXT_PUBLIC_CURRENT_STUDY_PROTOCOL_VERSION` (Next.js) or
+  `CURRENT_STUDY_PROTOCOL_VERSION` (`mcp-server`). Default: `v2_criteria`.
+- **Coexisting rows** — `protocol_version` on `task_progress`,
+  `task_survey_responses`, and `task_interview_responses` lets v1 and v2
+  participation records live side by side for the same user. **v1_simple
+  rows are frozen** — do not mutate or reset them when changing v2 behavior.
+- **Task assignment** — under `v2_criteria`, each user gets one row in
+  `task_user_assignments` pointing at a seeded `task_assignment_sets` row
+  (assigned at survey start in `home/src/app/actions/survey.ts`). Both
+  modalities share the same assignment for that user.
+- **Criteria verification** — on task completion, MCP tool handlers
+  (`mcp-server/src/tools/courses.ts`, `facilities.ts`) and traditional
+  server actions (`uni-*/src/app/actions/`) verify the action matches the
+  user's assignment criteria. Shared helpers: `task-criteria.ts` in each
+  app; `mcp-server/src/lib/task-criteria.ts`.
+- **Task mode scaffolding** — session/progress tracking via
+  `task-mode-client.ts` and `task-mode-server.ts` in each task app;
+  `mcp-server/src/lib/task-mode.ts` on the server. All filter by
+  `CURRENT_STUDY_PROTOCOL_VERSION`.
+- **Modality parity** — criteria logic and task-mode behavior must stay
+  aligned across `chat-agent`, `uni-booking`, `uni-registration`, and
+  `mcp-server` for the active protocol version.
+
+---
+
+## 15. Quick contact
 
 **Author**: Kyaw Kyaw Oo — Department of Mathematics and Computer Science,
 Chulalongkorn University. Email: `kyawkyawjek@gmail.com`.
