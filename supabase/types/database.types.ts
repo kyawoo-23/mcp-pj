@@ -807,6 +807,7 @@ export type Database = {
         Returns: string
       }
       get_never_logged_in_count: { Args: never; Returns: number }
+      get_protocol_completed_counts: { Args: never; Returns: Json }
       get_total_auth_users_count: { Args: never; Returns: number }
       is_admin: { Args: { user_id: string }; Returns: boolean }
       show_limit: { Args: never; Returns: number }

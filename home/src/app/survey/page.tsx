@@ -101,13 +101,24 @@ export default async function SurveyPage() {
     .eq("user_id", user.id)
     .eq("protocol_version", CURRENT_STUDY_PROTOCOL_VERSION);
 
-  const priorProtocolProgressCountPromise = sessionIds.length
+  const participationProgressCountPromise = sessionIds.length
     ? supabase
         .from("task_progress")
         .select("id", { count: "exact", head: true })
         .in("session_id", sessionIds)
-        .neq("protocol_version", CURRENT_STUDY_PROTOCOL_VERSION)
     : Promise.resolve({ count: 0 });
+
+  const participationSurveyCountPromise = sessionIds.length
+    ? supabase
+        .from("task_survey_responses")
+        .select("id", { count: "exact", head: true })
+        .in("session_id", sessionIds)
+    : Promise.resolve({ count: 0 });
+
+  const participationInterviewCountPromise = supabase
+    .from("task_interview_responses")
+    .select("id", { count: "exact", head: true })
+    .eq("user_id", user.id);
 
   const assignmentPromise = supabase
     .from("task_user_assignments")
@@ -128,22 +139,27 @@ export default async function SurveyPage() {
     { data: surveyResponses },
     { data: interviewResponses },
     { data: assignment },
-    { count: priorProtocolProgressCount },
+    { count: participationProgressCount },
+    { count: participationSurveyCount },
+    { count: participationInterviewCount },
   ] = await Promise.all([
     taskProgressPromise,
     surveyQuestionsPromise,
     surveyResponsesPromise,
     interviewResponsesPromise,
     assignmentPromise,
-    priorProtocolProgressCountPromise,
+    participationProgressCountPromise,
+    participationSurveyCountPromise,
+    participationInterviewCountPromise,
   ]);
 
   const showMigrationNotice =
     !!profile?.migrated_from_simple_tasks_at &&
     !profile?.criteria_migration_notice_dismissed_at;
   const hasStudyHistory =
-    (priorProtocolProgressCount ?? 0) > 0 ||
-    !!profile?.migrated_from_simple_tasks_at;
+    (participationProgressCount ?? 0) > 0 ||
+    (participationSurveyCount ?? 0) > 0 ||
+    (participationInterviewCount ?? 0) > 0;
 
   return (
     <SurveyPageClient

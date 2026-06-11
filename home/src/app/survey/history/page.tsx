@@ -6,8 +6,6 @@ import type {
   StudyHistorySurveyResponse,
   StudyHistoryTask,
 } from "@/lib/study-history";
-import { CURRENT_STUDY_PROTOCOL_VERSION } from "@/utils/study-protocol";
-
 export default async function StudyHistoryPage() {
   const supabase = await createClient();
   const {
@@ -25,42 +23,35 @@ export default async function StudyHistoryPage() {
 
   const sessionIds = (sessions || []).map((s) => s.id);
 
-  if (!sessionIds.length) {
-    return (
-      <StudyHistoryClient
-        tasks={[]}
-        surveyResponses={[]}
-        interviewResponses={[]}
-        archivedLabel='Simple tasks (pre-criteria protocol)'
-      />
-    );
-  }
-
-  const [progressResult, surveyResult, interviewResult] = await Promise.all([
-    supabase
-      .from("task_progress")
-      .select(
-        `
+  const progressPromise = sessionIds.length
+    ? supabase
+        .from("task_progress")
+        .select(
+          `
         id,
         status,
         started_at,
         completed_at,
         success_payload,
+        protocol_version,
         task_definitions ( task_code, title, description, system_type ),
         task_sessions ( system_type )
       `,
-      )
-      .in("session_id", sessionIds)
-      .neq("protocol_version", CURRENT_STUDY_PROTOCOL_VERSION),
-    supabase
-      .from("task_survey_responses")
-      .select(
-        `
+        )
+        .in("session_id", sessionIds)
+    : Promise.resolve({ data: [] });
+
+  const surveyPromise = sessionIds.length
+    ? supabase
+        .from("task_survey_responses")
+        .select(
+          `
         id,
         question_id,
         response_value,
         response_text,
         session_id,
+        protocol_version,
         task_survey_questions (
           question_text,
           order_index,
@@ -70,9 +61,13 @@ export default async function StudyHistoryPage() {
         ),
         task_sessions ( system_type )
       `,
-      )
-      .in("session_id", sessionIds)
-      .neq("protocol_version", CURRENT_STUDY_PROTOCOL_VERSION),
+        )
+        .in("session_id", sessionIds)
+    : Promise.resolve({ data: [] });
+
+  const [progressResult, surveyResult, interviewResult] = await Promise.all([
+    progressPromise,
+    surveyPromise,
     supabase
       .from("task_interview_responses")
       .select(
@@ -81,11 +76,11 @@ export default async function StudyHistoryPage() {
         question_id,
         response_text,
         created_at,
+        protocol_version,
         task_interview_questions ( question_text, order_index )
       `,
       )
-      .eq("user_id", user.id)
-      .neq("protocol_version", CURRENT_STUDY_PROTOCOL_VERSION),
+      .eq("user_id", user.id),
   ]);
 
   const tasks = (progressResult.data || []) as StudyHistoryTask[];
@@ -99,7 +94,6 @@ export default async function StudyHistoryPage() {
       tasks={tasks}
       surveyResponses={surveyResponses}
       interviewResponses={interviewResponses}
-      archivedLabel='Simple tasks (pre-criteria protocol)'
     />
   );
 }

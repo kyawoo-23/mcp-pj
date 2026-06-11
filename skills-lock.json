@@ -6,11 +6,23 @@
       "sourceType": "github",
       "computedHash": "6412eb4eb3b91595ebab937f0c69501240e7ba761b3d82510b5cf506ec5c7adc"
     },
+    "grill-with-docs": {
+      "source": "mattpocock/skills",
+      "sourceType": "github",
+      "skillPath": "skills/engineering/grill-with-docs/SKILL.md",
+      "computedHash": "eb0e91e84277283dc2b23ed544399e53afd6b5287e5b6929f25fe8aa608e164b"
+    },
     "openui": {
       "source": "thesysdev/openui",
       "sourceType": "github",
       "skillPath": "skills/openui/SKILL.md",
       "computedHash": "094ca9fb2701f1b4e879e59c74033aaefcc295ecb1ae1c7fd9717b8c23a1b78a"
+    },
+    "ui-ux-pro-max": {
+      "source": "nextlevelbuilder/ui-ux-pro-max-skill",
+      "sourceType": "github",
+      "skillPath": ".claude/skills/ui-ux-pro-max/SKILL.md",
+      "computedHash": "0a413bf988d06481f69bb81df2070741c3ba12dd9f1be2706d57f259c905992d"
     }
   }
 }

@@ -1,0 +1,17 @@
+[
+  {
+    "json_build_object": {
+      "profiles": [],
+      "task_sessions": [],
+      "task_progress": [],
+      "task_definitions": [],
+      "task_surveys": [],
+      "task_survey_questions": [],
+      "task_survey_responses": [],
+      "task_interview_questions": [],
+      "task_interview_responses": [],
+      "never_logged_in_count": 0,
+      "total_auth_users_count": 0
+    }
+  }
+]

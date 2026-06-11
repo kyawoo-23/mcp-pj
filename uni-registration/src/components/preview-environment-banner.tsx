@@ -21,7 +21,7 @@ export function PreviewEnvironmentBanner({
         <FlaskConical className='size-3 shrink-0' aria-hidden />
         <span>Preview environment</span>
       </div>
-      <div aria-hidden className='h-8 shrink-0' />
+      <div aria-hidden className='h-7 shrink-0' />
     </>
   );
 }

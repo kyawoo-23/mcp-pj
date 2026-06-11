@@ -18,7 +18,6 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-
 type ResearchClientProps = {
   data: AnalysisPayload;
   metrics: {

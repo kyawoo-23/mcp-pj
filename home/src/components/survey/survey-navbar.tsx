@@ -179,7 +179,7 @@ export function SurveyNavbar({
                     <Link href='/survey/history'>
                       <DropdownMenuItem>
                         <ClipboardClock className='mr-2 h-4 w-4' />
-                        <span>Previous study record</span>
+                        <span>My study results</span>
                       </DropdownMenuItem>
                     </Link>
                   ) : null}
