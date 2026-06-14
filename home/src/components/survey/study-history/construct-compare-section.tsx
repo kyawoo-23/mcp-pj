@@ -29,6 +29,8 @@ interface ConstructCompareSectionProps {
   questions: UnifiedCompareQuestion[];
   modality: HistoryModalityFilter;
   defaultOpen?: boolean;
+  showSimple?: boolean;
+  showCriteria?: boolean;
 }
 
 export function ConstructCompareSection({
@@ -38,6 +40,8 @@ export function ConstructCompareSection({
   questions,
   modality,
   defaultOpen = false,
+  showSimple = true,
+  showCriteria = true,
 }: ConstructCompareSectionProps) {
   const [open, setOpen] = useState(defaultOpen);
   const metricRows = getConstructCompareRows(
@@ -87,6 +91,8 @@ export function ConstructCompareSection({
                 modality={modality}
                 simpleHasData={simpleMetrics.hasData}
                 criteriaHasData={criteriaMetrics.hasData}
+                showSimple={showSimple}
+                showCriteria={showCriteria}
               />
             ) : null}
             {hasQuestions ? (
@@ -95,6 +101,8 @@ export function ConstructCompareSection({
                   <QuestionCompareRow
                     key={`${q.survey_name}:${q.order_index}`}
                     question={q}
+                    showSimple={showSimple}
+                    showCriteria={showCriteria}
                   />
                 ))}
               </div>

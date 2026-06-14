@@ -18,6 +18,8 @@ interface ComparisonMatrixProps {
   simpleHasData: boolean;
   criteriaHasData: boolean;
   title?: string;
+  showSimple?: boolean;
+  showCriteria?: boolean;
 }
 
 function modalitySubtitle(modality: HistoryModalityFilter): string {
@@ -30,7 +32,11 @@ export function ComparisonMatrix({
   simpleHasData,
   criteriaHasData,
   title = "Performance comparison by metric",
+  showSimple = true,
+  showCriteria = true,
 }: ComparisonMatrixProps) {
+  const showDelta = showSimple && showCriteria;
+
   return (
     <div className='space-y-3'>
       <div className='flex flex-wrap items-end justify-between gap-2'>
@@ -44,8 +50,8 @@ export function ComparisonMatrix({
       <div className='rounded-xl border border-border/80 bg-card shadow-xs'>
         <div className='overflow-x-auto'>
           <table className='w-full min-w-[640px] table-fixed border-collapse text-sm'>
-            <CompareTableColGroup />
-            <CompareTableHeader />
+            <CompareTableColGroup showSimple={showSimple} showCriteria={showCriteria} />
+            <CompareTableHeader showSimple={showSimple} showCriteria={showCriteria} />
             <tbody>
               {rows.map((row) => (
                 <tr
@@ -61,37 +67,43 @@ export function ComparisonMatrix({
                       {row.description}
                     </p>
                   </th>
-                  <td className='text-right px-4 py-3 tabular-nums font-semibold align-top'>
-                    {simpleHasData ? (
-                      row.simpleDisplay
-                    ) : (
-                      <span className='text-muted-foreground/60 text-xs font-normal italic'>
-                        No data
-                      </span>
-                    )}
-                    <MetricBar
-                      percent={row.simpleBarPercent}
-                      variant='simple'
-                      className='mt-1.5'
-                    />
-                  </td>
-                  <td className='text-right px-4 py-3 tabular-nums font-semibold align-top'>
-                    {criteriaHasData ? (
-                      row.criteriaDisplay
-                    ) : (
-                      <span className='text-muted-foreground/60 text-xs font-normal italic'>
-                        No data
-                      </span>
-                    )}
-                    <MetricBar
-                      percent={row.criteriaBarPercent}
-                      variant='criteria'
-                      className='mt-1.5'
-                    />
-                  </td>
-                  <td className='text-right px-4 py-3 align-top'>
-                    <DeltaBadge delta={row.delta} />
-                  </td>
+                  {showSimple ? (
+                    <td className='text-right px-4 py-3 tabular-nums font-semibold align-top'>
+                      {simpleHasData ? (
+                        row.simpleDisplay
+                      ) : (
+                        <span className='text-muted-foreground/60 text-xs font-normal italic'>
+                          No data
+                        </span>
+                      )}
+                      <MetricBar
+                        percent={row.simpleBarPercent}
+                        variant='simple'
+                        className='mt-1.5'
+                      />
+                    </td>
+                  ) : null}
+                  {showCriteria ? (
+                    <td className='text-right px-4 py-3 tabular-nums font-semibold align-top'>
+                      {criteriaHasData ? (
+                        row.criteriaDisplay
+                      ) : (
+                        <span className='text-muted-foreground/60 text-xs font-normal italic'>
+                          No data
+                        </span>
+                      )}
+                      <MetricBar
+                        percent={row.criteriaBarPercent}
+                        variant='criteria'
+                        className='mt-1.5'
+                      />
+                    </td>
+                  ) : null}
+                  {showDelta ? (
+                    <td className='text-right px-4 py-3 align-top'>
+                      <DeltaBadge delta={row.delta} />
+                    </td>
+                  ) : null}
                 </tr>
               ))}
             </tbody>

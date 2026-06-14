@@ -262,6 +262,12 @@ export function protocolsWithParticipationData(
   });
 }
 
+export function getAvailableProtocols(
+  grouped: Map<StudyProtocolVersion, ProtocolParticipationData>,
+): StudyProtocolVersion[] {
+  return protocolsWithParticipationData(grouped);
+}
+
 // ============================================================================
 // Compare view: modality filter, metrics, deltas, construct groups
 // ============================================================================

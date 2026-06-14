@@ -114,6 +114,8 @@ interface TaskCompareSectionProps {
   criteriaCompleted: number;
   criteriaTotal: number;
   modality?: HistoryModalityFilter;
+  showSimple?: boolean;
+  showCriteria?: boolean;
 }
 
 export function TaskCompareSection({
@@ -123,8 +125,12 @@ export function TaskCompareSection({
   criteriaCompleted,
   criteriaTotal,
   modality = "all",
+  showSimple = true,
+  showCriteria = true,
 }: TaskCompareSectionProps) {
   if (rows.length === 0) return null;
+
+  const minTableWidth = showSimple && showCriteria ? "min-w-[560px]" : "min-w-[320px]";
 
   return (
     <Card className='shadow-xs border-border/80 overflow-hidden gap-0 py-0'>
@@ -136,54 +142,64 @@ export function TaskCompareSection({
               Task completion
             </h2>
             <p className='text-xs text-muted-foreground'>
-              Status per protocol across interaction modalities
+              {showSimple && showCriteria
+                ? "Status per protocol across interaction modalities"
+                : "Status across interaction modalities"}
             </p>
           </div>
         </div>
         <div className='flex flex-wrap gap-4 text-xs'>
-          <span>
-            <span className={cn("font-bold", COMPARE_THEME.simple.accentClass)}>
-              Simple Task:
-            </span>{" "}
-            <span className='tabular-nums font-semibold'>
-              {simpleCompleted}/{simpleTotal}
+          {showSimple ? (
+            <span>
+              <span className={cn("font-bold", COMPARE_THEME.simple.accentClass)}>
+                Simple Task:
+              </span>{" "}
+              <span className='tabular-nums font-semibold'>
+                {simpleCompleted}/{simpleTotal}
+              </span>
             </span>
-          </span>
-          <span>
-            <span className={cn("font-bold", COMPARE_THEME.criteria.accentClass)}>
-              Criteria Task:
-            </span>{" "}
-            <span className='tabular-nums font-semibold'>
-              {criteriaCompleted}/{criteriaTotal}
+          ) : null}
+          {showCriteria ? (
+            <span>
+              <span className={cn("font-bold", COMPARE_THEME.criteria.accentClass)}>
+                Criteria Task:
+              </span>{" "}
+              <span className='tabular-nums font-semibold'>
+                {criteriaCompleted}/{criteriaTotal}
+              </span>
             </span>
-          </span>
+          ) : null}
         </div>
       </div>
       <CardContent className='p-0 overflow-x-auto'>
-        <table className='w-full min-w-[560px] border-collapse text-sm'>
+        <table className={cn("w-full border-collapse text-sm", minTableWidth)}>
           <thead>
             <tr className='border-b border-border/60 bg-muted/20'>
               <th scope='col' className='text-left px-4 py-2.5 font-medium'>
                 Task
               </th>
-              <th
-                scope='col'
-                className={cn(
-                  "text-left px-3 py-2.5 font-medium text-xs",
-                  COMPARE_THEME.simple.accentClass,
-                )}
-              >
-                Simple Task
-              </th>
-              <th
-                scope='col'
-                className={cn(
-                  "text-left px-3 py-2.5 font-medium text-xs",
-                  COMPARE_THEME.criteria.accentClass,
-                )}
-              >
-                Criteria Task
-              </th>
+              {showSimple ? (
+                <th
+                  scope='col'
+                  className={cn(
+                    "text-left px-3 py-2.5 font-medium text-xs",
+                    COMPARE_THEME.simple.accentClass,
+                  )}
+                >
+                  Simple Task
+                </th>
+              ) : null}
+              {showCriteria ? (
+                <th
+                  scope='col'
+                  className={cn(
+                    "text-left px-3 py-2.5 font-medium text-xs",
+                    COMPARE_THEME.criteria.accentClass,
+                  )}
+                >
+                  Criteria Task
+                </th>
+              ) : null}
             </tr>
           </thead>
           <tbody>
@@ -207,20 +223,24 @@ export function TaskCompareSection({
                     </div>
                   </div>
                 </th>
-                <td className='px-3 py-3 align-top'>
-                  <ModalityStatusList
-                    traditional={row.simpleTraditional}
-                    chat={row.simpleChat}
-                    modality={modality}
-                  />
-                </td>
-                <td className='px-3 py-3 align-top'>
-                  <ModalityStatusList
-                    traditional={row.criteriaTraditional}
-                    chat={row.criteriaChat}
-                    modality={modality}
-                  />
-                </td>
+                {showSimple ? (
+                  <td className='px-3 py-3 align-top'>
+                    <ModalityStatusList
+                      traditional={row.simpleTraditional}
+                      chat={row.simpleChat}
+                      modality={modality}
+                    />
+                  </td>
+                ) : null}
+                {showCriteria ? (
+                  <td className='px-3 py-3 align-top'>
+                    <ModalityStatusList
+                      traditional={row.criteriaTraditional}
+                      chat={row.criteriaChat}
+                      modality={modality}
+                    />
+                  </td>
+                ) : null}
               </tr>
             ))}
           </tbody>

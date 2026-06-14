@@ -103,31 +103,53 @@ function ProtocolResponsePanel({
 
 export function QuestionCompareDetail({
   question,
+  showSimple = true,
+  showCriteria = true,
 }: {
   question: UnifiedCompareQuestion;
+  showSimple?: boolean;
+  showCriteria?: boolean;
 }) {
+  const columnCount = [showSimple, showCriteria].filter(Boolean).length;
+
   return (
-    <div className='grid grid-cols-1 md:grid-cols-2 gap-4 px-4 py-4 bg-muted/10 border-t border-border/50'>
-      <ProtocolResponsePanel
-        responses={question.simpleResponses}
-        protocolLabel='Simple Task'
-        accentClass={COMPARE_THEME.simple.accentClass}
-      />
-      <ProtocolResponsePanel
-        responses={question.criteriaResponses}
-        protocolLabel='Criteria Task'
-        accentClass={COMPARE_THEME.criteria.accentClass}
-      />
+    <div
+      className={cn(
+        "grid grid-cols-1 gap-4 px-4 py-4 bg-muted/10 border-t border-border/50",
+        columnCount > 1 && "md:grid-cols-2",
+      )}
+    >
+      {showSimple ? (
+        <ProtocolResponsePanel
+          responses={question.simpleResponses}
+          protocolLabel='Simple Task'
+          accentClass={COMPARE_THEME.simple.accentClass}
+        />
+      ) : null}
+      {showCriteria ? (
+        <ProtocolResponsePanel
+          responses={question.criteriaResponses}
+          protocolLabel='Criteria Task'
+          accentClass={COMPARE_THEME.criteria.accentClass}
+        />
+      ) : null}
     </div>
   );
 }
 
 interface QuestionCompareRowProps {
   question: UnifiedCompareQuestion;
+  showSimple?: boolean;
+  showCriteria?: boolean;
 }
 
-export function QuestionCompareRow({ question }: QuestionCompareRowProps) {
+export function QuestionCompareRow({
+  question,
+  showSimple = true,
+  showCriteria = true,
+}: QuestionCompareRowProps) {
   const [open, setOpen] = useState(false);
+  const showDelta = showSimple && showCriteria;
 
   const simpleScore = scoreForSide(question.simpleResponses);
   const criteriaScore = scoreForSide(question.criteriaResponses);
@@ -139,7 +161,11 @@ export function QuestionCompareRow({ question }: QuestionCompareRowProps) {
         })
       : formatDelta(null, null, { higherIsBetter: true });
 
-  const chipAria = `Simple Tasks: ${simpleScore.chip}, Criteria Tasks: ${criteriaScore.chip}`;
+  const chipAria = showSimple && showCriteria
+    ? `Simple Tasks: ${simpleScore.chip}, Criteria Tasks: ${criteriaScore.chip}`
+    : showSimple
+      ? `Simple Task: ${simpleScore.chip}`
+      : `Criteria Task: ${criteriaScore.chip}`;
 
   return (
     <Collapsible open={open} onOpenChange={setOpen}>
@@ -162,13 +188,21 @@ export function QuestionCompareRow({ question }: QuestionCompareRowProps) {
               className='tabular-nums text-[11px] font-semibold'
               aria-label={chipAria}
             >
-              <span className={COMPARE_THEME.simple.accentClass}>{simpleScore.chip}</span>
-              <span className='mx-1 text-muted-foreground'>·</span>
-              <span className={COMPARE_THEME.criteria.accentClass}>
-                {criteriaScore.chip}
-              </span>
+              {showSimple ? (
+                <span className={COMPARE_THEME.simple.accentClass}>
+                  {simpleScore.chip}
+                </span>
+              ) : null}
+              {showSimple && showCriteria ? (
+                <span className='mx-1 text-muted-foreground'>·</span>
+              ) : null}
+              {showCriteria ? (
+                <span className={COMPARE_THEME.criteria.accentClass}>
+                  {criteriaScore.chip}
+                </span>
+              ) : null}
             </Badge>
-            <DeltaBadge delta={delta} />
+            {showDelta ? <DeltaBadge delta={delta} /> : null}
             <ChevronDown
               className={cn(
                 "h-4 w-4 text-muted-foreground motion-safe:transition-transform motion-safe:duration-200",
@@ -180,7 +214,11 @@ export function QuestionCompareRow({ question }: QuestionCompareRowProps) {
         </button>
       </CollapsibleTrigger>
       <CollapsibleContent className='data-[state=closed]:animate-collapsible-up data-[state=open]:animate-collapsible-down overflow-hidden'>
-        <QuestionCompareDetail question={question} />
+        <QuestionCompareDetail
+          question={question}
+          showSimple={showSimple}
+          showCriteria={showCriteria}
+        />
       </CollapsibleContent>
     </Collapsible>
   );

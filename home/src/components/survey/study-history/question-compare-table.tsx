@@ -15,8 +15,15 @@ import { DeltaBadge } from "./delta-badge";
 import { MetricBar } from "./metric-bar";
 import { QuestionCompareDetail } from "./question-compare-row";
 
-const ROW_GRID =
+const ROW_GRID_BOTH =
   "grid grid-cols-1 md:grid-cols-[minmax(0,1fr)_minmax(88px,120px)_minmax(88px,120px)_minmax(72px,96px)_40px] gap-x-4 gap-y-3 md:gap-y-0 md:items-start";
+
+const ROW_GRID_SINGLE =
+  "grid grid-cols-1 md:grid-cols-[minmax(0,1fr)_minmax(88px,120px)_40px] gap-x-4 gap-y-3 md:gap-y-0 md:items-start";
+
+function questionRowGridClass(showSimple: boolean, showCriteria: boolean): string {
+  return showSimple && showCriteria ? ROW_GRID_BOTH : ROW_GRID_SINGLE;
+}
 
 function barPercentForQuestion(
   numeric: number | null,
@@ -64,12 +71,18 @@ function QuestionBlock({
   question,
   isOpen,
   onToggle,
+  showSimple = true,
+  showCriteria = true,
 }: {
   question: UnifiedCompareQuestion;
   isOpen: boolean;
   onToggle: () => void;
+  showSimple?: boolean;
+  showCriteria?: boolean;
 }) {
   const key = `${question.survey_name}:${question.order_index}`;
+  const showDelta = showSimple && showCriteria;
+  const rowGridClass = questionRowGridClass(showSimple, showCriteria);
   const simpleScore = scoreForSide(
     question.simpleResponses,
     question.scale_type,
@@ -91,7 +104,7 @@ function QuestionBlock({
     <div className='border-b border-border/50 last:border-0'>
       <div
         className={cn(
-          ROW_GRID,
+          rowGridClass,
           "px-4 py-3 hover:bg-muted/15 transition-colors",
         )}
       >
@@ -102,33 +115,39 @@ function QuestionBlock({
           {question.question_text}
         </p>
 
-        <div className='md:text-right tabular-nums pl-6 md:pl-0'>
-          <p className='font-semibold'>{simpleScore.chip}</p>
-          <MetricBar
-            percent={barPercentForQuestion(
-              simpleScore.numeric,
-              question.scale_type,
-            )}
-            variant='simple'
-            className='mt-1'
-          />
-        </div>
+        {showSimple ? (
+          <div className='md:text-right tabular-nums pl-6 md:pl-0'>
+            <p className='font-semibold'>{simpleScore.chip}</p>
+            <MetricBar
+              percent={barPercentForQuestion(
+                simpleScore.numeric,
+                question.scale_type,
+              )}
+              variant='simple'
+              className='mt-1'
+            />
+          </div>
+        ) : null}
 
-        <div className='md:text-right tabular-nums pl-6 md:pl-0'>
-          <p className='font-semibold'>{criteriaScore.chip}</p>
-          <MetricBar
-            percent={barPercentForQuestion(
-              criteriaScore.numeric,
-              question.scale_type,
-            )}
-            variant='criteria'
-            className='mt-1'
-          />
-        </div>
+        {showCriteria ? (
+          <div className='md:text-right tabular-nums pl-6 md:pl-0'>
+            <p className='font-semibold'>{criteriaScore.chip}</p>
+            <MetricBar
+              percent={barPercentForQuestion(
+                criteriaScore.numeric,
+                question.scale_type,
+              )}
+              variant='criteria'
+              className='mt-1'
+            />
+          </div>
+        ) : null}
 
-        <div className='flex items-center md:justify-end pl-6 md:pl-0'>
-          <DeltaBadge delta={delta} />
-        </div>
+        {showDelta ? (
+          <div className='flex items-center md:justify-end pl-6 md:pl-0'>
+            <DeltaBadge delta={delta} />
+          </div>
+        ) : null}
 
         <div className='flex items-center justify-end'>
           <button
@@ -157,7 +176,11 @@ function QuestionBlock({
 
       {isOpen ? (
         <div id={`question-panel-${key}`}>
-          <QuestionCompareDetail question={question} />
+          <QuestionCompareDetail
+            question={question}
+            showSimple={showSimple}
+            showCriteria={showCriteria}
+          />
         </div>
       ) : null}
     </div>
@@ -166,9 +189,15 @@ function QuestionBlock({
 
 interface QuestionCompareTableProps {
   questions: UnifiedCompareQuestion[];
+  showSimple?: boolean;
+  showCriteria?: boolean;
 }
 
-export function QuestionCompareTable({ questions }: QuestionCompareTableProps) {
+export function QuestionCompareTable({
+  questions,
+  showSimple = true,
+  showCriteria = true,
+}: QuestionCompareTableProps) {
   const [expandAll, setExpandAll] = useState(false);
   const [openKeys, setOpenKeys] = useState<Set<string>>(new Set());
 
@@ -216,6 +245,9 @@ export function QuestionCompareTable({ questions }: QuestionCompareTableProps) {
     setOpenKeys(next);
   };
 
+  const rowGridClass = questionRowGridClass(showSimple, showCriteria);
+  const showDelta = showSimple && showCriteria;
+
   return (
     <div className='space-y-4'>
       <div className='flex items-center justify-between gap-3'>
@@ -251,20 +283,24 @@ export function QuestionCompareTable({ questions }: QuestionCompareTableProps) {
           <div className='rounded-xl border border-border/80 bg-card shadow-xs overflow-hidden'>
             <div
               className={cn(
-                ROW_GRID,
+                rowGridClass,
                 "px-4 py-2.5 border-b border-border/80 bg-muted/40 text-xs font-semibold uppercase tracking-wide text-muted-foreground",
                 "hidden md:grid",
               )}
               aria-hidden
             >
               <span>Question</span>
-              <span className={cn("text-right", COMPARE_THEME.simple.accentClass)}>
-                Simple Task
-              </span>
-              <span className={cn("text-right", COMPARE_THEME.criteria.accentClass)}>
-                Criteria Task
-              </span>
-              <span className='text-right'>Difference</span>
+              {showSimple ? (
+                <span className={cn("text-right", COMPARE_THEME.simple.accentClass)}>
+                  Simple Task
+                </span>
+              ) : null}
+              {showCriteria ? (
+                <span className={cn("text-right", COMPARE_THEME.criteria.accentClass)}>
+                  Criteria Task
+                </span>
+              ) : null}
+              {showDelta ? <span className='text-right'>Difference</span> : null}
               <span className='sr-only'>Expand</span>
             </div>
 
@@ -276,6 +312,8 @@ export function QuestionCompareTable({ questions }: QuestionCompareTableProps) {
                   question={question}
                   isOpen={isRowOpen(key)}
                   onToggle={() => toggleRow(key)}
+                  showSimple={showSimple}
+                  showCriteria={showCriteria}
                 />
               );
             })}
