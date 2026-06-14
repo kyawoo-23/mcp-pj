@@ -11,6 +11,7 @@ import type {
   StudyHistoryTask,
 } from "@/lib/study-history";
 import {
+  getAvailableProtocols,
   groupHistoryByProtocol,
   protocolSectionHasData,
 } from "@/lib/study-history";
@@ -47,6 +48,21 @@ function hasAnyParticipationData(
   return false;
 }
 
+function getStudyHistorySubtitle(
+  availableProtocols: ReturnType<typeof getAvailableProtocols>,
+): string {
+  const hasV1 = availableProtocols.includes("v1_simple");
+  const hasV2 = availableProtocols.includes("v2_criteria");
+
+  if (hasV1 && hasV2) {
+    return "Compare Simple Task and Criteria Task performance side-by-side across tasks, surveys, and interview responses.";
+  }
+  if (hasV1) {
+    return "Review your Simple Task results across tasks, surveys, and interview responses.";
+  }
+  return "Review your Criteria Task results across tasks, surveys, and interview responses.";
+}
+
 export function StudyHistoryClient({
   tasks,
   surveyResponses,
@@ -57,6 +73,13 @@ export function StudyHistoryClient({
     surveyResponses,
     interviewResponses,
   );
+  const grouped = groupHistoryByProtocol(
+    tasks,
+    surveyResponses,
+    interviewResponses,
+  );
+  const availableProtocols = getAvailableProtocols(grouped);
+  const subtitle = getStudyHistorySubtitle(availableProtocols);
 
   return (
     <div className='min-h-screen bg-muted/20'>
@@ -74,10 +97,7 @@ export function StudyHistoryClient({
               My study results
             </h1>
           </div>
-          <p className='text-sm text-muted-foreground max-w-2xl'>
-            Compare Simple Task and Criteria Task performance side-by-side across
-            tasks, surveys, and interview responses.
-          </p>
+          <p className='text-sm text-muted-foreground max-w-2xl'>{subtitle}</p>
         </header>
 
         <Alert>
@@ -132,6 +152,7 @@ export function StudyHistoryClient({
               tasks={tasks}
               surveyResponses={surveyResponses}
               interviewResponses={interviewResponses}
+              availableProtocols={availableProtocols}
             />
 
             <div className='pt-4 flex justify-center'>
