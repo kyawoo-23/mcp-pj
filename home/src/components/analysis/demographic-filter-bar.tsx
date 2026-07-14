@@ -37,6 +37,7 @@ import type { DemographicDimension } from "@/lib/analysis-calculations";
 import {
   AGE_OPTIONS,
   GENDER_OPTIONS,
+  TECHNICAL_PROFICIENCY_OPTIONS,
   PROGRAMMING_EXPERIENCE_OPTIONS,
   AI_TOOL_FREQUENCY_OPTIONS,
 } from "@/utils/constants";
@@ -119,6 +120,10 @@ const VALUE_OPTIONS_MAP: Record<
     label: o.label,
   })),
   gender: GENDER_OPTIONS.map((o) => ({
+    value: String(o.value),
+    label: o.label,
+  })),
+  technical_proficiency: TECHNICAL_PROFICIENCY_OPTIONS.map((o) => ({
     value: String(o.value),
     label: o.label,
   })),

@@ -46,7 +46,10 @@ export default async function ResearchPage({ searchParams }: ResearchPageProps) 
 
         {/* Hero Section */}
         <header
-          className={cn("mb-12 pb-8 border-b border-l-4 pl-4", meta.bannerClass)}
+          className={cn(
+            "mb-12 rounded-lg border-b border-l-4 px-5 py-6 sm:px-6 sm:py-8",
+            meta.bannerClass,
+          )}
         >
           <div className='flex flex-wrap items-center gap-2 mb-3'>
             <Badge variant='secondary' className='text-xs'>
@@ -178,7 +181,11 @@ export default async function ResearchPage({ searchParams }: ResearchPageProps) 
               </ul>
             </nav>
 
-            <ResearchClient data={payload} metrics={metrics!} />
+            <ResearchClient
+              protocolVersion={version}
+              data={payload}
+              metrics={metrics!}
+            />
           </>
         )}
       </div>
