@@ -33,6 +33,7 @@ import { ResearchDataDialog } from "@/components/research/research-data-dialog";
 import { Sparkles } from "lucide-react";
 import { SystemTypes } from "@/lib/constants";
 import type { AnalysisPayload } from "@/lib/types";
+import type { StudyProtocolVersion } from "@/lib/analysis-calculations";
 import {
   computeEmpiricalData,
   type EmpiricalData,
@@ -113,12 +114,12 @@ function SUSBarChart({ data }: { data: EmpiricalData }) {
         chat: Number(chatRow?.allMean ?? 0).toFixed(1),
       },
       {
-        population: "3+ Yrs Programming",
+        population: data.advancedSubgroupCopy.chartShortLabel,
         traditional: Number(tradRow?.advancedMean ?? 0).toFixed(1),
         chat: Number(chatRow?.advancedMean ?? 0).toFixed(1),
       },
     ];
-  }, [data.sus]);
+  }, [data.sus, data.advancedSubgroupCopy.chartShortLabel]);
 
   return (
     <Card className='overflow-hidden shadow-sm border bg-white'>
@@ -210,7 +211,7 @@ function SUSSection({ data }: { data: EmpiricalData }) {
                         </span>
                       </th>
                       <th className='text-right py-3 px-4 font-medium text-muted-foreground'>
-                        3+ Yrs Programming
+                        {data.advancedSubgroupCopy.chartShortLabel}
                         <span className='block text-[10px] font-normal'>
                           N = {data.advancedCount}
                         </span>
@@ -261,11 +262,11 @@ function SUSSection({ data }: { data: EmpiricalData }) {
       </div>
 
       <FindingCallout>
-        While the Traditional UI received higher overall usability ratings,
-        participants with 3+ years of programming experience preferred the
-        Chat-Agent, which reached acceptable usability thresholds for this
-        group. Experienced programmers appear better equipped to leverage
-        intent-driven conversational workflows.
+        While the Traditional UI received higher overall usability ratings,{" "}
+        {data.advancedSubgroupCopy.susFindingLead} preferred the Chat-Agent,
+        which reached acceptable usability thresholds for this group.{" "}
+        {data.advancedSubgroupCopy.susFindingTail} appear better equipped to
+        leverage intent-driven conversational workflows.
       </FindingCallout>
     </SectionBlock>
   );
@@ -364,7 +365,7 @@ function TLXSection({ data }: { data: EmpiricalData }) {
         />
         <TLXRadar
           data={data.tlx.advanced}
-          title={`3+ Yrs Programming (N = ${data.advancedCount})`}
+          title={`${data.advancedSubgroupCopy.chartShortLabel} (N = ${data.advancedCount})`}
         />
       </div>
 
@@ -474,7 +475,7 @@ function SDTSection({ data }: { data: EmpiricalData }) {
         />
         <SDTRadar
           data={data.sdt.advanced}
-          title={`3+ Yrs Programming (N = ${data.advancedCount})`}
+          title={`${data.advancedSubgroupCopy.chartShortLabel} (N = ${data.advancedCount})`}
         />
       </div>
 
@@ -705,10 +706,17 @@ function TaskPreferenceSection({ data }: { data: EmpiricalData }) {
 
 interface EmpiricalComparisonProps {
   payload: AnalysisPayload;
+  protocolVersion: StudyProtocolVersion;
 }
 
-export function EmpiricalComparison({ payload }: EmpiricalComparisonProps) {
-  const data = useMemo(() => computeEmpiricalData(payload), [payload]);
+export function EmpiricalComparison({
+  payload,
+  protocolVersion,
+}: EmpiricalComparisonProps) {
+  const data = useMemo(
+    () => computeEmpiricalData(payload, protocolVersion),
+    [payload, protocolVersion],
+  );
 
   return (
     <div id='empirical-comparison' className='scroll-mt-20'>
@@ -742,7 +750,7 @@ export function EmpiricalComparison({ payload }: EmpiricalComparisonProps) {
           </span>{" "}
           and a specialized subgroup with{" "}
           <span className='text-foreground font-semibold'>
-            3+ years of programming experience (N={data.advancedCount})
+            {data.advancedSubgroupCopy.introLongLabel} (N={data.advancedCount})
           </span>
           .
         </p>

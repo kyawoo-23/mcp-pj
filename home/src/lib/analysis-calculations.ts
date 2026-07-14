@@ -447,7 +447,15 @@ export function calculateDemographics(payload: AnalysisPayload) {
     genderCounts[gender] = (genderCounts[gender] || 0) + 1;
   }
 
-  // Programming experience distribution
+  // Technical proficiency distribution (v1_simple cohorts)
+  const techProficiencyCounts: Record<string, number> = {};
+  for (const profile of profiles) {
+    const proficiency = profile.technical_proficiency || "unknown";
+    techProficiencyCounts[proficiency] =
+      (techProficiencyCounts[proficiency] || 0) + 1;
+  }
+
+  // Programming experience distribution (v2_criteria cohorts)
   const programmingExpCounts: Record<string, number> = {};
   for (const profile of profiles) {
     const experience = profile.programming_experience || "unknown";
@@ -475,6 +483,13 @@ export function calculateDemographics(payload: AnalysisPayload) {
       count,
       percentage: total > 0 ? (count / total) * 100 : 0,
     })),
+    technicalProficiency: Object.entries(techProficiencyCounts).map(
+      ([key, count]) => ({
+        label: key,
+        count,
+        percentage: total > 0 ? (count / total) * 100 : 0,
+      }),
+    ),
     programmingExperience: Object.entries(programmingExpCounts).map(
       ([key, count]) => ({
         label: key,
@@ -1073,6 +1088,7 @@ export function filterPayloadToCompletedUsers(
 export type DemographicDimension =
   | "age_range"
   | "gender"
+  | "technical_proficiency"
   | "programming_experience"
   | "ai_tool_frequency";
 
