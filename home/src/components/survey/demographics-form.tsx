@@ -27,20 +27,21 @@ import {
 import {
   AGE_OPTIONS,
   GENDER_OPTIONS,
-  PROGRAMMING_EXPERIENCE_OPTIONS,
+  TECHNICAL_EXPERIENCE_HELP,
+  TECHNICAL_EXPERIENCE_OPTIONS,
   AI_TOOL_FREQUENCY_OPTIONS,
 } from "../../utils/constants";
 
 interface DemographicsFormProps {
   initialAgeRange: ProfileRow["age_range"] | null;
   initialGender: ProfileRow["gender"] | null;
-  initialProgrammingExperience: ProfileRow["programming_experience"] | null;
+  initialTechnicalExperience: ProfileRow["technical_experience"] | null;
   initialAiToolFrequency: ProfileRow["ai_tool_frequency"] | null;
   saving: boolean;
   onSave: (
     ageRange: ProfileRow["age_range"],
     gender: ProfileRow["gender"],
-    programmingExperience: ProfileRow["programming_experience"],
+    technicalExperience: ProfileRow["technical_experience"],
     aiToolFrequency: ProfileRow["ai_tool_frequency"],
   ) => Promise<void>;
 }
@@ -48,7 +49,7 @@ interface DemographicsFormProps {
 export function DemographicsForm({
   initialAgeRange,
   initialGender,
-  initialProgrammingExperience,
+  initialTechnicalExperience,
   initialAiToolFrequency,
   saving,
   onSave,
@@ -59,21 +60,29 @@ export function DemographicsForm({
   const [gender, setGender] = useState<ProfileRow["gender"] | null>(
     initialGender,
   );
-  const [programmingExperience, setProgrammingExperience] = useState<
-    ProfileRow["programming_experience"] | null
-  >(initialProgrammingExperience);
+  const [technicalExperience, setTechnicalExperience] = useState<
+    ProfileRow["technical_experience"] | null
+  >(initialTechnicalExperience);
   const [aiToolFrequency, setAiToolFrequency] = useState<
     ProfileRow["ai_tool_frequency"] | null
   >(initialAiToolFrequency);
 
   const handleSubmit = () => {
-    if (ageRange && gender && programmingExperience && aiToolFrequency) {
-      onSave(ageRange, gender, programmingExperience, aiToolFrequency);
+    if (
+      ageRange != null &&
+      gender != null &&
+      technicalExperience != null &&
+      aiToolFrequency != null
+    ) {
+      onSave(ageRange, gender, technicalExperience, aiToolFrequency);
     }
   };
 
   const isFormComplete =
-    ageRange && gender && programmingExperience && aiToolFrequency;
+    ageRange != null &&
+    gender != null &&
+    technicalExperience != null &&
+    aiToolFrequency != null;
 
   return (
     <div className='flex min-h-screen items-center justify-center bg-background p-6 pb-32'>
@@ -127,7 +136,7 @@ export function DemographicsForm({
           </div>
           <div className='space-y-2'>
             <div className='flex items-center gap-2'>
-              <Label>Programming experience</Label>
+              <Label>Technical proficiency</Label>
               <Popover>
                 <PopoverTrigger asChild>
                   <button
@@ -135,28 +144,27 @@ export function DemographicsForm({
                     className='text-muted-foreground hover:text-foreground'
                   >
                     <HelpCircle className='h-4 w-4' />
-                    <span className='sr-only'>Programming experience info</span>
+                    <span className='sr-only'>Technical proficiency info</span>
                   </button>
                 </PopoverTrigger>
                 <PopoverContent className='w-80 text-sm'>
-                  Include university courses, personal projects, internships,
-                  and self-study.
+                  {TECHNICAL_EXPERIENCE_HELP}
                 </PopoverContent>
               </Popover>
             </div>
             <Select
-              value={programmingExperience ?? undefined}
+              value={technicalExperience ?? undefined}
               onValueChange={(value) =>
-                setProgrammingExperience(
-                  value as ProfileRow["programming_experience"],
+                setTechnicalExperience(
+                  value as ProfileRow["technical_experience"],
                 )
               }
             >
               <SelectTrigger>
-                <SelectValue placeholder='Select your programming experience' />
+                <SelectValue placeholder='Select your technical proficiency' />
               </SelectTrigger>
               <SelectContent>
-                {PROGRAMMING_EXPERIENCE_OPTIONS.map((option) => (
+                {TECHNICAL_EXPERIENCE_OPTIONS.map((option) => (
                   <SelectItem key={option.value} value={option.value || ""}>
                     {option.label}
                   </SelectItem>

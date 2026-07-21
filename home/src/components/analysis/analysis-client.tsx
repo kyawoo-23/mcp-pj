@@ -25,7 +25,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { OverviewCards } from "@/components/analysis/overview-cards";
-import { DemographicsCharts } from "@/components/analysis/demographics-charts";
+import { DemographicsCharts, type SkillChartMode } from "@/components/analysis/demographics-charts";
 import { SurveyScoresCharts } from "@/components/analysis/survey-scores-charts";
 import { PreferenceCharts } from "@/components/analysis/preference-charts";
 import {
@@ -52,7 +52,13 @@ type AnalysisClientProps = {
 };
 
 // Dashboard content component that accepts a payload and renders all sections
-function DashboardContent({ payload }: { payload: AnalysisPayload }) {
+function DashboardContent({
+  payload,
+  skillChartMode,
+}: {
+  payload: AnalysisPayload;
+  skillChartMode: SkillChartMode;
+}) {
   // Memoize heavy calculations so they only run when payload changes
   const taskDurations = useMemo(
     () => calculateTaskDurations(payload),
@@ -73,7 +79,10 @@ function DashboardContent({ payload }: { payload: AnalysisPayload }) {
       {/* Demographics */}
       <section className='mb-12'>
         <h2 className='text-2xl font-semibold mb-4'>User Demographics</h2>
-        <DemographicsCharts demographics={demographics} />
+        <DemographicsCharts
+          demographics={demographics}
+          skillChartMode={skillChartMode}
+        />
       </section>
 
       {/* Survey Results */}
@@ -190,6 +199,9 @@ export function AnalysisClient({
     return base;
   }, [activeTab, protocolData, filteredData, demographicFilters]);
 
+  const skillChartMode: SkillChartMode =
+    protocolVersion === "v1_simple" ? "technical" : "years";
+
   if (error) {
     return (
       <Card>
@@ -282,10 +294,16 @@ export function AnalysisClient({
           </TabsTrigger>
         </TabsList>
         <TabsContent value='completed' className='mt-8'>
-          <DashboardContent payload={effectivePayload} />
+          <DashboardContent
+            payload={effectivePayload}
+            skillChartMode={skillChartMode}
+          />
         </TabsContent>
         <TabsContent value='all' className='mt-8'>
-          <DashboardContent payload={effectivePayload} />
+          <DashboardContent
+            payload={effectivePayload}
+            skillChartMode={skillChartMode}
+          />
         </TabsContent>
       </Tabs>
     </>

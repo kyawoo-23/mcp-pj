@@ -28,3 +28,13 @@ The side-by-side layout on My study results that aligns Simple Tasks and Criteri
 ## Participation record
 
 One participant's stored task progress, survey responses, and interview answers for a given study protocol version.
+
+## Subjective technical proficiency
+
+A v1_simple self-rating of technical skill: none, limited, moderate, or advanced.
+_Avoid_: Technical proficiency (alone, when contrasting protocols), programming experience
+
+## Years-based technical proficiency
+
+A v2_criteria time-anchored measure of computer and technical experience: none, under 1 year, 1–3 years, or more than 3 years. “More than 3 years” means strictly more than three years; exactly three years belongs in 1–3 years.
+_Avoid_: Programming experience, technical proficiency (alone, when contrasting protocols), advanced (as a years bucket)

@@ -24,26 +24,29 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { PROGRAMMING_EXPERIENCE_OPTIONS } from "../../utils/constants";
+import {
+  TECHNICAL_EXPERIENCE_HELP,
+  TECHNICAL_EXPERIENCE_OPTIONS,
+} from "../../utils/constants";
 
-interface ProgrammingExperiencePromptProps {
+interface TechnicalExperiencePromptProps {
   saving: boolean;
   onSave: (
-    programmingExperience: ProfileRow["programming_experience"],
+    technicalExperience: ProfileRow["technical_experience"],
   ) => Promise<void>;
 }
 
-export function ProgrammingExperiencePrompt({
+export function TechnicalExperiencePrompt({
   saving,
   onSave,
-}: ProgrammingExperiencePromptProps) {
-  const [programmingExperience, setProgrammingExperience] = useState<
-    ProfileRow["programming_experience"] | null
+}: TechnicalExperiencePromptProps) {
+  const [technicalExperience, setTechnicalExperience] = useState<
+    ProfileRow["technical_experience"] | null
   >(null);
 
   const handleSubmit = () => {
-    if (programmingExperience) {
-      onSave(programmingExperience);
+    if (technicalExperience != null) {
+      onSave(technicalExperience);
     }
   };
 
@@ -53,14 +56,14 @@ export function ProgrammingExperiencePrompt({
         <CardHeader>
           <CardTitle>One quick update</CardTitle>
           <CardDescription>
-            We added a programming experience question to the survey. Please
+            We added a technical proficiency question to the survey. Please
             answer it to continue.
           </CardDescription>
         </CardHeader>
         <CardContent className='space-y-4'>
           <div className='space-y-2'>
             <div className='flex items-center gap-2'>
-              <Label>Programming experience</Label>
+              <Label>Technical proficiency</Label>
               <Popover>
                 <PopoverTrigger asChild>
                   <button
@@ -68,28 +71,27 @@ export function ProgrammingExperiencePrompt({
                     className='text-muted-foreground hover:text-foreground'
                   >
                     <HelpCircle className='h-4 w-4' />
-                    <span className='sr-only'>Programming experience info</span>
+                    <span className='sr-only'>Technical proficiency info</span>
                   </button>
                 </PopoverTrigger>
                 <PopoverContent className='w-80 text-sm'>
-                  Include university courses, personal projects, internships,
-                  and self-study.
+                  {TECHNICAL_EXPERIENCE_HELP}
                 </PopoverContent>
               </Popover>
             </div>
             <Select
-              value={programmingExperience ?? undefined}
+              value={technicalExperience ?? undefined}
               onValueChange={(value) =>
-                setProgrammingExperience(
-                  value as ProfileRow["programming_experience"],
+                setTechnicalExperience(
+                  value as ProfileRow["technical_experience"],
                 )
               }
             >
               <SelectTrigger>
-                <SelectValue placeholder='Select your programming experience' />
+                <SelectValue placeholder='Select your technical proficiency' />
               </SelectTrigger>
               <SelectContent>
-                {PROGRAMMING_EXPERIENCE_OPTIONS.map((option) => (
+                {TECHNICAL_EXPERIENCE_OPTIONS.map((option) => (
                   <SelectItem key={option.value} value={option.value || ""}>
                     {option.label}
                   </SelectItem>
@@ -99,7 +101,7 @@ export function ProgrammingExperiencePrompt({
           </div>
           <Button
             className='w-full'
-            disabled={!programmingExperience || saving}
+            disabled={technicalExperience == null || saving}
             onClick={handleSubmit}
           >
             {saving ? "Saving..." : "Continue"}

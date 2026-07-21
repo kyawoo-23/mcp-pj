@@ -24,7 +24,7 @@ import {
 } from "@/app/actions/survey";
 
 interface UseSurveyDataProps {
-  profile: Pick<ProfileRow, "id" | "age_range" | "gender" | "programming_experience" | "ai_tool_frequency"> | null;
+  profile: Pick<ProfileRow, "id" | "age_range" | "gender" | "technical_experience" | "ai_tool_frequency"> | null;
   sessions: TaskSessionRow[];
   taskDefinitions: TaskDefinitionRow[];
   taskProgress: TaskProgressRow[];
@@ -128,10 +128,10 @@ export function useSurveyData({
     profileState?.gender &&
     profileState?.ai_tool_frequency
   );
-  const requiresProgrammingExperience =
-    hasBaseProfile && !profileState?.programming_experience;
+  const requiresTechnicalExperience =
+    hasBaseProfile && !profileState?.technical_experience;
   const requiresDemographics =
-    !hasBaseProfile || requiresProgrammingExperience;
+    !hasBaseProfile || requiresTechnicalExperience;
 
   // Refresh data
   const refreshTaskData = useCallback(async () => {
@@ -238,17 +238,30 @@ export function useSurveyData({
   const saveDemographics = async (
     ageRange: ProfileRow["age_range"],
     gender: ProfileRow["gender"],
-    programmingExperience: ProfileRow["programming_experience"],
+    technicalExperience: ProfileRow["technical_experience"],
     aiToolFrequency: ProfileRow["ai_tool_frequency"]
   ) => {
-    if (!profileState || !ageRange || !gender || !programmingExperience || !aiToolFrequency) return;
+    if (!profileState) {
+      toast.error("Failed to save demographics", {
+        description: "Your profile could not be loaded. Refresh the page and try again.",
+      });
+      return;
+    }
+    if (
+      ageRange == null ||
+      gender == null ||
+      technicalExperience == null ||
+      aiToolFrequency == null
+    ) {
+      return;
+    }
     setSavingDemographics(true);
     try {
       const result = await saveDemographicsAction(
         profileState.id,
         ageRange,
         gender,
-        programmingExperience,
+        technicalExperience,
         aiToolFrequency,
       );
 
@@ -263,7 +276,7 @@ export function useSurveyData({
         ...profileState,
         age_range: ageRange,
         gender,
-        programming_experience: programmingExperience,
+        technical_experience: technicalExperience,
         ai_tool_frequency: aiToolFrequency,
       });
       setSessionsState((prev) => {
@@ -280,8 +293,8 @@ export function useSurveyData({
     }
   };
 
-  const saveProgrammingExperience = async (
-    programmingExperience: ProfileRow["programming_experience"],
+  const saveTechnicalExperience = async (
+    technicalExperience: ProfileRow["technical_experience"],
   ) => {
     if (
       !profileState?.age_range ||
@@ -293,7 +306,7 @@ export function useSurveyData({
     await saveDemographics(
       profileState.age_range,
       profileState.gender,
-      programmingExperience,
+      technicalExperience,
       profileState.ai_tool_frequency,
     );
   };
@@ -384,8 +397,8 @@ export function useSurveyData({
     savingDemographics,
     startingSurvey,
     requiresDemographics,
-    requiresProgrammingExperience,
-    saveProgrammingExperience,
+    requiresTechnicalExperience,
+    saveTechnicalExperience,
 
     // Derived data
     tasksBySystem,

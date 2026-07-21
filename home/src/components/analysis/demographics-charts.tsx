@@ -19,7 +19,7 @@ import {
   getAgeRangeLabel,
   getGenderLabel,
   getTechnicalProficiencyLabel,
-  getProgrammingExperienceLabel,
+  getTechnicalExperienceLabel,
   getAiToolFrequencyLabel,
 } from "@/utils/constants";
 
@@ -40,7 +40,7 @@ interface DemographicsData {
     count: number;
     percentage: number;
   }>;
-  programmingExperience: Array<{
+  technicalExperience: Array<{
     label: string;
     count: number;
     percentage: number;
@@ -48,7 +48,7 @@ interface DemographicsData {
   aiFrequency: Array<{ label: string; count: number; percentage: number }>;
 }
 
-export type SkillChartMode = "technical" | "programming";
+export type SkillChartMode = "technical" | "years";
 
 interface DemographicsChartsProps {
   demographics: DemographicsData;
@@ -62,7 +62,7 @@ function excludeUnknown<T extends { label: string }>(items: T[]): T[] {
 
 export function DemographicsCharts({
   demographics,
-  skillChartMode = "programming",
+  skillChartMode = "years",
 }: DemographicsChartsProps) {
   // Prepare chart data (excluding Unknown so only filled-in demographics are shown)
   const ageData = excludeUnknown(demographics.ageRange).map((item) => ({
@@ -80,12 +80,12 @@ export function DemographicsCharts({
   const skillSource =
     skillChartMode === "technical"
       ? demographics.technicalProficiency
-      : demographics.programmingExperience;
+      : demographics.technicalExperience;
   const techData = excludeUnknown(skillSource).map((item) => ({
     label:
       skillChartMode === "technical"
         ? getTechnicalProficiencyLabel(item.label)
-        : getProgrammingExperienceLabel(item.label),
+        : getTechnicalExperienceLabel(item.label),
     count: item.count,
     percentage: item.percentage,
   }));
@@ -187,18 +187,18 @@ export function DemographicsCharts({
         </CardContent>
       </Card>
 
-      {/* Technical Proficiency / Programming Experience */}
+      {/* Subjective / years-based technical proficiency */}
       <Card>
         <CardHeader>
           <CardTitle>
             {skillChartMode === "technical"
-              ? "Technical Proficiency"
-              : "Programming Experience"}
+              ? "Subjective Technical Proficiency"
+              : "Years-based Technical Proficiency"}
           </CardTitle>
           <CardDescription>
             {skillChartMode === "technical"
-              ? "Distribution of users by technical skill level"
-              : "Distribution of users by years of programming experience"}
+              ? "Distribution of users by subjective technical skill level"
+              : "Distribution of users by years of computer/technical experience"}
           </CardDescription>
         </CardHeader>
         <CardContent>
