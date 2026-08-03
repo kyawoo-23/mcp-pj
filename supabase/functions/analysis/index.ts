@@ -12,6 +12,112 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, accept",
 }
 
+type StudyProtocolVersion = "v1_simple" | "v2_criteria"
+
+const PROTOCOL_VERSIONS = new Set<StudyProtocolVersion>([
+  "v1_simple",
+  "v2_criteria",
+])
+
+type AnalysisRequestBody = {
+  protocol_version?: string
+}
+
+type ProfileRow = {
+  id: string
+  age_range: string | null
+  gender: string | null
+  technical_proficiency: string | null
+  programming_experience: string | null
+  ai_tool_frequency: string | null
+  created_at: string
+}
+
+type TaskSessionRow = {
+  id: string
+  user_id: string
+  system_type: string
+  status: string
+  started_at: string | null
+  completed_at: string | null
+  created_at: string
+}
+
+type TaskProgressRow = {
+  id: string
+  session_id: string
+  task_definition_id: string
+  status: string
+  started_at: string | null
+  completed_at: string | null
+  protocol_version: string
+}
+
+type TaskSurveyResponseRow = {
+  id: string
+  session_id: string
+  question_id: string
+  response_value: number | null
+  response_text: string | null
+  protocol_version: string
+}
+
+type TaskInterviewResponseRow = {
+  id: string
+  user_id: string
+  question_id: string
+  response_text: string | null
+  protocol_version: string
+}
+
+// Keep in sync with home/src/lib/analysis-calculations.ts filterPayloadByProtocolVersion
+function narrowPayloadByProtocol<
+  TProfile extends ProfileRow,
+  TSession extends TaskSessionRow,
+  TProgress extends TaskProgressRow,
+  TSurvey extends TaskSurveyResponseRow,
+  TInterview extends TaskInterviewResponseRow,
+>(
+  profiles: TProfile[],
+  taskSessions: TSession[],
+  taskProgress: TProgress[],
+  taskSurveyResponses: TSurvey[],
+  taskInterviewResponses: TInterview[],
+): { profiles: TProfile[]; taskSessions: TSession[] } {
+  const activeSessionIds = new Set<string>()
+  for (const row of taskProgress) {
+    activeSessionIds.add(row.session_id)
+  }
+  for (const row of taskSurveyResponses) {
+    activeSessionIds.add(row.session_id)
+  }
+
+  const filteredTaskSessions = taskSessions.filter((s) =>
+    activeSessionIds.has(s.id)
+  )
+
+  const activeUserIds = new Set(filteredTaskSessions.map((s) => s.user_id))
+  for (const row of taskInterviewResponses) {
+    activeUserIds.add(row.user_id)
+  }
+
+  const filteredProfiles = profiles.filter((p) => activeUserIds.has(p.id))
+
+  return {
+    profiles: filteredProfiles,
+    taskSessions: filteredTaskSessions,
+  }
+}
+
+function parseProtocolVersion(
+  raw: string | undefined,
+): StudyProtocolVersion | null {
+  if (raw && PROTOCOL_VERSIONS.has(raw as StudyProtocolVersion)) {
+    return raw as StudyProtocolVersion
+  }
+  return null
+}
+
 Deno.serve(async (req) => {
   // Handle CORS preflight requests
   if (req.method === "OPTIONS") {
@@ -37,14 +143,14 @@ Deno.serve(async (req) => {
     const supabase = createClient(supabaseUrl, supabaseServiceKey)
 
     // Get the authorization header from the request (for client-side calls)
-    const authHeader = req.headers.get('Authorization')
-    
-    let user;
-    let userError;
-    
+    const authHeader = req.headers.get("Authorization")
+
+    let user
+    let userError
+
     if (authHeader) {
       // Client-side call: extract token from Authorization header
-      const token = authHeader.replace('Bearer ', '')
+      const token = authHeader.replace("Bearer ", "")
       const result = await supabase.auth.getUser(token)
       user = result.data.user
       userError = result.error
@@ -65,6 +171,79 @@ Deno.serve(async (req) => {
       )
     }
 
+    let body: AnalysisRequestBody = {}
+    if (req.method === "POST") {
+      try {
+        const text = await req.text()
+        if (text) {
+          body = JSON.parse(text) as AnalysisRequestBody
+        }
+      } catch {
+        return new Response(
+          JSON.stringify({ error: "Invalid JSON body" }),
+          {
+            status: 400,
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          },
+        )
+      }
+    }
+
+    const protocolVersion = body.protocol_version !== undefined
+      ? parseProtocolVersion(body.protocol_version)
+      : null
+
+    if (
+      body.protocol_version !== undefined &&
+      body.protocol_version !== null &&
+      protocolVersion === null
+    ) {
+      return new Response(
+        JSON.stringify({
+          error: "Invalid protocol_version",
+          details: "Must be v1_simple or v2_criteria",
+        }),
+        {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        },
+      )
+    }
+
+    let taskProgressQuery = supabase
+      .from("task_progress")
+      .select(
+        "id, session_id, task_definition_id, status, started_at, completed_at, protocol_version",
+      )
+      .limit(100000)
+
+    let taskSurveyResponsesQuery = supabase
+      .from("task_survey_responses")
+      .select(
+        "id, session_id, question_id, response_value, response_text, protocol_version",
+      )
+      .limit(100000)
+
+    let taskInterviewResponsesQuery = supabase
+      .from("task_interview_responses")
+      .select("id, user_id, question_id, response_text, protocol_version")
+      .limit(100000)
+
+    if (protocolVersion) {
+      taskProgressQuery = taskProgressQuery.eq(
+        "protocol_version",
+        protocolVersion,
+      )
+      taskSurveyResponsesQuery = taskSurveyResponsesQuery.eq(
+        "protocol_version",
+        protocolVersion,
+      )
+      taskInterviewResponsesQuery = taskInterviewResponsesQuery.eq(
+        "protocol_version",
+        protocolVersion,
+      )
+    }
+
     // Fetch all required tables in parallel
     const [
       { data: profiles, error: profilesError },
@@ -79,16 +258,17 @@ Deno.serve(async (req) => {
     ] = await Promise.all([
       supabase
         .from("profiles")
-        .select("id, age_range, gender, technical_proficiency, ai_tool_frequency, created_at")
+        .select(
+          "id, age_range, gender, technical_proficiency, programming_experience, ai_tool_frequency, created_at",
+        )
         .limit(100000),
       supabase
         .from("task_sessions")
-        .select("id, user_id, system_type, status, started_at, completed_at, created_at")
+        .select(
+          "id, user_id, system_type, status, started_at, completed_at, created_at",
+        )
         .limit(100000),
-      supabase
-        .from("task_progress")
-        .select("id, session_id, task_definition_id, status, started_at, completed_at")
-        .limit(100000),
+      taskProgressQuery,
       supabase
         .from("task_definitions")
         .select("id, task_code, title, system_type")
@@ -99,39 +279,32 @@ Deno.serve(async (req) => {
         .limit(100000),
       supabase
         .from("task_survey_questions")
-        .select("id, survey_id, question_text, scale_type, min_value, max_value, order_index, construct")
+        .select(
+          "id, survey_id, question_text, scale_type, min_value, max_value, order_index, construct",
+        )
         .order("order_index", { ascending: true })
         .limit(100000),
-      supabase
-        .from("task_survey_responses")
-        .select("id, session_id, question_id, response_value, response_text")
-        .limit(100000),
+      taskSurveyResponsesQuery,
       supabase
         .from("task_interview_questions")
         .select("id, question_text, order_index, options")
         .order("order_index", { ascending: true })
         .limit(100000),
-      supabase
-        .from("task_interview_responses")
-        .select("id, user_id, question_id, response_text")
-        .limit(100000),
+      taskInterviewResponsesQuery,
     ])
 
     // Get never logged in count using database function (has access to auth.users)
-    // Counts users who either:
-    // 1. Never confirmed email (email_confirmed_at IS NULL)
-    // 2. Confirmed email but never logged in (email_confirmed_at IS NOT NULL AND last_sign_in_at IS NULL)
-    const { data: neverLoggedInCount, error: neverLoggedInError } = await supabase
-      .rpc("get_never_logged_in_count")
-    
+    const { data: neverLoggedInCount, error: neverLoggedInError } =
+      await supabase.rpc("get_never_logged_in_count")
+
     if (neverLoggedInError) {
       console.error("Error fetching never logged in count:", neverLoggedInError)
     }
 
     // Get total auth users count using database function (has access to auth.users)
-    const { data: totalAuthUsersCount, error: totalAuthUsersError } = await supabase
-      .rpc("get_total_auth_users_count")
-    
+    const { data: totalAuthUsersCount, error: totalAuthUsersError } =
+      await supabase.rpc("get_total_auth_users_count")
+
     if (totalAuthUsersError) {
       console.error("Error fetching total auth users count:", totalAuthUsersError)
     }
@@ -163,18 +336,36 @@ Deno.serve(async (req) => {
       )
     }
 
+    const progressRows = taskProgress ?? []
+    const surveyResponseRows = taskSurveyResponses ?? []
+    const interviewResponseRows = taskInterviewResponses ?? []
+    let profileRows = profiles ?? []
+    let sessionRows = taskSessions ?? []
+
+    if (protocolVersion) {
+      const narrowed = narrowPayloadByProtocol(
+        profileRows,
+        sessionRows,
+        progressRows,
+        surveyResponseRows,
+        interviewResponseRows,
+      )
+      profileRows = narrowed.profiles
+      sessionRows = narrowed.taskSessions
+    }
+
     // Return all data as a single JSON object
     return new Response(
       JSON.stringify({
-        profiles: profiles ?? [],
-        task_sessions: taskSessions ?? [],
-        task_progress: taskProgress ?? [],
+        profiles: profileRows,
+        task_sessions: sessionRows,
+        task_progress: progressRows,
         task_definitions: taskDefinitions ?? [],
         task_surveys: taskSurveys ?? [],
         task_survey_questions: taskSurveyQuestions ?? [],
-        task_survey_responses: taskSurveyResponses ?? [],
+        task_survey_responses: surveyResponseRows,
         task_interview_questions: taskInterviewQuestions ?? [],
-        task_interview_responses: taskInterviewResponses ?? [],
+        task_interview_responses: interviewResponseRows,
         never_logged_in_count: neverLoggedInCount ?? 0,
         total_auth_users_count: totalAuthUsersCount ?? 0,
       }),
@@ -204,6 +395,7 @@ Deno.serve(async (req) => {
 
   curl -i --location --request POST 'http://127.0.0.1:23456/functions/v1/analysis' \
     --header 'Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6ImFub24iLCJleHAiOjE5ODM4MTI5OTZ9.CRXP1A7WOeoJeXxjNni43kdQwgnWNReilDMblYTn_I0' \
-    --header 'Content-Type: application/json'
+    --header 'Content-Type: application/json' \
+    --data '{"protocol_version":"v2_criteria"}'
 
 */

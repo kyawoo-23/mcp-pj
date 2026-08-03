@@ -10,6 +10,18 @@ import {
 import { AVAILABLE_TOOLS } from "@/lib/tool-definitions";
 import { cn } from "@/lib/utils";
 
+const PLACEHOLDER_TIPS = [
+  "Which course would you like to join?",
+  "Tell me which class you want to drop",
+  "Need a room or facility? Say when and where",
+  "Want to cancel a booking? Just name it",
+  "Ask what's on your schedule this week",
+  "Type in any language you're comfortable with",
+] as const;
+
+const TIP_CYCLE_MS = 4000;
+const TIP_FADE_MS = 300;
+
 interface ChatInputProps {
   onSend: (message: string) => void;
   isLoading?: boolean;
@@ -25,13 +37,40 @@ export interface ChatInputHandle {
 export const ChatInput = React.forwardRef<ChatInputHandle, ChatInputProps>(
   ({ onSend, isLoading = false, disabled = false, conversationId }, ref) => {
     const [input, setInput] = React.useState("");
+    const [tipIndex, setTipIndex] = React.useState(0);
+    const [tipVisible, setTipVisible] = React.useState(true);
     const textareaRef = React.useRef<HTMLTextAreaElement>(null);
+
+    const showPlaceholderTip = !input.trim() && !disabled;
+
+    React.useEffect(() => {
+      if (!showPlaceholderTip) return;
+
+      let fadeTimeout: ReturnType<typeof setTimeout>;
+
+      const cycle = setInterval(() => {
+        setTipVisible(false);
+        fadeTimeout = setTimeout(() => {
+          setTipIndex((i) => (i + 1) % PLACEHOLDER_TIPS.length);
+          setTipVisible(true);
+        }, TIP_FADE_MS);
+      }, TIP_CYCLE_MS);
+
+      return () => {
+        clearInterval(cycle);
+        clearTimeout(fadeTimeout);
+      };
+    }, [showPlaceholderTip]);
+
+    React.useEffect(() => {
+      if (showPlaceholderTip) {
+        setTipVisible(true);
+      }
+    }, [showPlaceholderTip]);
 
     React.useImperativeHandle(ref, () => ({
       setInput: (value: string) => {
         setInput(value);
-        // Helper to trigger auto-grow if needed, though handleInput handles it on change
-        // We'll manually adjust height after setting value
         setTimeout(() => {
           if (textareaRef.current) {
             textareaRef.current.style.height = "auto";
@@ -65,7 +104,6 @@ export const ChatInput = React.forwardRef<ChatInputHandle, ChatInputProps>(
       onSend(input);
       setInput("");
 
-      // Reset height
       if (textareaRef.current) {
         textareaRef.current.style.height = "auto";
       }
@@ -73,7 +111,6 @@ export const ChatInput = React.forwardRef<ChatInputHandle, ChatInputProps>(
 
     const handleInput = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
       setInput(e.target.value);
-      // Auto-grow
       e.target.style.height = "auto";
       e.target.style.height = `${Math.min(e.target.scrollHeight, 200)}px`;
     };
@@ -81,36 +118,47 @@ export const ChatInput = React.forwardRef<ChatInputHandle, ChatInputProps>(
     return (
       <div className='relative flex w-full flex-col items-center bg-background p-4'>
         <div className='relative flex w-full max-w-4xl flex-col overflow-hidden rounded-2xl border border-input bg-background shadow-sm focus-within:border-ring focus-within:ring-1 focus-within:ring-ring'>
-          <Textarea
-            ref={textareaRef}
-            value={input}
-            onChange={handleInput}
-            onKeyDown={handleKeyDown}
-            placeholder='Send a message...'
-            className='min-h-[60px] w-full resize-none border-0 bg-transparent px-4 py-4 pr-14 text-base focus-visible:ring-0 focus-visible:ring-offset-0'
-            disabled={disabled}
-          />
+          <div className='relative'>
+            <Textarea
+              ref={textareaRef}
+              value={input}
+              onChange={handleInput}
+              onKeyDown={handleKeyDown}
+              placeholder=' '
+              aria-label={PLACEHOLDER_TIPS[tipIndex]}
+              className='min-h-[60px] w-full resize-none border-0 bg-transparent px-4 py-4 pr-14 text-base focus-visible:ring-0 focus-visible:ring-offset-0'
+              disabled={disabled}
+            />
+            {showPlaceholderTip ? (
+              <span
+                aria-hidden
+                className={cn(
+                  "pointer-events-none absolute top-4 left-4 pr-14 text-base text-muted-foreground transition-opacity duration-300 md:text-sm",
+                  tipVisible ? "opacity-100" : "opacity-0"
+                )}
+              >
+                {PLACEHOLDER_TIPS[tipIndex]}
+              </span>
+            ) : null}
+          </div>
 
           <div className='flex items-center justify-between px-3 py-2'>
-            {/* Left side actions */}
             <div className='flex items-center gap-1'>
               <Popover>
                 <PopoverTrigger asChild>
                   <Button
                     variant='ghost'
                     size='icon'
-                    className='h-8 w-8 rounded-full group'
+                    className='group h-8 w-8 rounded-full'
                   >
-                    <Wrench className='h-4 w-4 opacity-50 group-hover:opacity-100 transition-all' />
+                    <Wrench className='h-4 w-4 opacity-50 transition-all group-hover:opacity-100' />
                     <span className='sr-only'>Available tools</span>
                   </Button>
                 </PopoverTrigger>
                 <PopoverContent className='w-80 p-0' align='start'>
-                  <div className='p-4 border-b'>
-                    <h4 className='font-medium leading-none'>
-                      Available Tools
-                    </h4>
-                    <p className='text-sm text-muted-foreground mt-1'>
+                  <div className='border-b p-4'>
+                    <h4 className='font-medium leading-none'>Available Tools</h4>
+                    <p className='mt-1 text-sm text-muted-foreground'>
                       The agent can use these tools to help you.
                     </p>
                   </div>
@@ -129,10 +177,10 @@ export const ChatInput = React.forwardRef<ChatInputHandle, ChatInputProps>(
                             )}
                           </div>
                           <div className='grid gap-0.5'>
-                            <div className='font-medium text-foreground leading-none'>
+                            <div className='font-medium leading-none text-foreground'>
                               {tool.name.replace(/_/g, " ")}
                             </div>
-                            <div className='text-xs text-muted-foreground leading-snug'>
+                            <div className='text-xs leading-snug text-muted-foreground'>
                               {tool.description}
                             </div>
                           </div>
@@ -144,7 +192,6 @@ export const ChatInput = React.forwardRef<ChatInputHandle, ChatInputProps>(
               </Popover>
             </div>
 
-            {/* Right side actions */}
             <Button
               onClick={handleSend}
               disabled={!input.trim() || isLoading || disabled}

@@ -1,13 +1,38 @@
+import * as React from "react";
+import dynamic from "next/dynamic";
 import { cn } from "@/lib/utils";
 import { UserAvatar, AssistantAvatar, SystemIcon } from "./icons/message-icons";
-import ReactMarkdown from "react-markdown";
-import { Search, CheckCircle, AlertCircle, Loader2 } from "lucide-react";
-import { TOOL_DEFINITIONS } from "@/lib/tool-definitions";
+import { Loader2 } from "lucide-react";
+import {
+  THINKING_LABEL,
+  WRITING_LABEL,
+  allToolPartsFinished,
+} from "@/lib/chat-activity";
 import type {
   TextPart,
   ToolInvocationPart,
   ChatMessageData,
 } from "@/lib/types";
+import { stripAssistantIntent, stripHiddenRef } from "@/lib/assistant-intent";
+import { OPENUI_RENDERING_ENABLED } from "@/lib/openui/openui-config";
+import { MarkdownContent } from "./markdown-content";
+
+/** Lazy-load OpenUI (~heavy); only registered when the feature flag is on. */
+const OpenUIAwareContent = OPENUI_RENDERING_ENABLED
+  ? dynamic(
+      () =>
+        import("./openui-aware-content").then((m) => m.OpenUIAwareContent),
+      {
+        ssr: false,
+        loading: () => (
+          <div
+            className="h-8 animate-pulse rounded-lg bg-muted/40"
+            aria-hidden
+          />
+        ),
+      },
+    )
+  : null;
 
 interface ChatMessageProps {
   message: ChatMessageData;
@@ -15,199 +40,54 @@ interface ChatMessageProps {
   isStreaming?: boolean;
 }
 
-function ToolInvocation({ part }: { part: ToolInvocationPart }) {
-  const toolDef = TOOL_DEFINITIONS[part.toolName];
-  const IconComponent = toolDef?.icon || Search;
-  const icon = <IconComponent className='h-4 w-4' />;
-  const displayName = toolDef?.displayName || part.toolName;
-  const isLoading =
-    part.state === "input-streaming" || part.state === "input-available";
-  const hasResult = part.state === "output-available";
-  const hasError = part.state === "output-error";
-  const result = part.output as Record<string, unknown> | undefined;
-  const resultHasError = result && "error" in result;
-
+/** Compact status row while the assistant turn is streaming but has no reply text yet */
+function AssistantStreamingStatus({ label }: { label: string }) {
   return (
-    <div className='my-2 rounded-lg border border-border/60 bg-muted/30 overflow-hidden'>
-      {/* Tool Header */}
-      <div className='flex items-center gap-2 px-3 py-2 bg-muted/50 border-b border-border/40'>
-        <span className='text-muted-foreground'>{icon}</span>
-        <span className='text-sm font-medium'>{displayName}</span>
-        {isLoading && (
-          <Loader2 className='h-3 w-3 animate-spin text-muted-foreground ml-auto' />
-        )}
-        {hasResult && !resultHasError && (
-          <CheckCircle className='h-3 w-3 text-emerald-500 ml-auto' />
-        )}
-        {(hasError || resultHasError) && (
-          <AlertCircle className='h-3 w-3 text-red-500 ml-auto' />
-        )}
-      </div>
-
-      {/* Tool Result */}
-      {hasError && part.errorText && (
-        <div className='px-3 py-2 text-xs text-red-500'>{part.errorText}</div>
-      )}
-      {hasResult && result && (
-        <div className='px-3 py-2 text-xs'>
-          {resultHasError ? (
-            <div className='text-red-500'>{String(result.error)}</div>
-          ) : (
-            <ToolResultDisplay result={result} toolName={part.toolName} />
-          )}
-        </div>
-      )}
+    <div
+      className="flex min-w-0 items-center gap-2 rounded-xl border border-border/50 bg-muted/30 px-3 py-2 text-sm text-muted-foreground"
+      role="status"
+      aria-live="polite"
+      aria-busy="true"
+    >
+      <Loader2
+        className="h-4 w-4 shrink-0 animate-spin text-muted-foreground"
+        aria-hidden
+      />
+      <span>{label}</span>
     </div>
   );
 }
 
-// Component to display tool results in a human-readable format
-function ToolResultDisplay({
-  result,
-  toolName,
-}: {
-  result: Record<string, unknown>;
-  toolName: string;
-}) {
-  // Course search results
-  if (toolName === "search_courses" && Array.isArray(result.courses)) {
-    const courses = result.courses as Array<{
-      code: string;
-      title: string;
-      credits: number;
-    }>;
-    if (courses.length === 0) {
-      return <span className='text-muted-foreground'>No courses found</span>;
+/** Collapse near-duplicate paragraphs (model often repeats the same confirmation). */
+function dedupeAssistantParagraphs(text: string): string {
+  const paragraphs = text
+    .split(/\n{2,}/)
+    .map((p) => p.trim())
+    .filter(Boolean);
+  if (paragraphs.length < 2) return text;
+
+  const normalize = (p: string) =>
+    p
+      .replace(/[*_`]/g, "")
+      .replace(/\s+/g, " ")
+      .toLowerCase();
+
+  const kept: string[] = [];
+  for (const p of paragraphs) {
+    const key = normalize(p);
+    if (kept.some((existing) => normalize(existing) === key)) continue;
+    if (
+      kept.some(
+        (existing) =>
+          key.length > 40 &&
+          (key.includes(normalize(existing)) || normalize(existing).includes(key)),
+      )
+    ) {
+      continue;
     }
-    return (
-      <div className='space-y-1'>
-        <span className='text-muted-foreground'>
-          Found {courses.length} course(s):
-        </span>
-        <ul className='list-disc list-inside space-y-0.5'>
-          {courses.slice(0, 5).map((course, i) => (
-            <li key={i}>
-              <strong>{course.code}</strong> - {course.title} ({course.credits}{" "}
-              credits)
-            </li>
-          ))}
-          {courses.length > 5 && (
-            <li className='text-muted-foreground'>
-              ...and {courses.length - 5} more
-            </li>
-          )}
-        </ul>
-      </div>
-    );
+    kept.push(p);
   }
-
-  // Facility search results
-  if (toolName === "search_facilities" && Array.isArray(result.facilities)) {
-    const facilities = result.facilities as Array<{
-      name: string;
-      building: string;
-      room_number: string;
-    }>;
-    if (facilities.length === 0) {
-      return <span className='text-muted-foreground'>No facilities found</span>;
-    }
-    return (
-      <div className='space-y-1'>
-        <span className='text-muted-foreground'>
-          Found {facilities.length} facility(ies):
-        </span>
-        <ul className='list-disc list-inside space-y-0.5'>
-          {facilities.slice(0, 5).map((facility, i) => (
-            <li key={i}>
-              <strong>{facility.name}</strong> - {facility.building}, Room{" "}
-              {facility.room_number}
-            </li>
-          ))}
-          {facilities.length > 5 && (
-            <li className='text-muted-foreground'>
-              ...and {facilities.length - 5} more
-            </li>
-          )}
-        </ul>
-      </div>
-    );
-  }
-
-  // Booking/registration success
-  if (result.message) {
-    return (
-      <span className='text-emerald-600 dark:text-emerald-400'>
-        ✓ {String(result.message)}
-      </span>
-    );
-  }
-
-  // Registrations list
-  if (
-    toolName === "get_student_registrations" &&
-    Array.isArray(result.registrations)
-  ) {
-    const regs = result.registrations as Array<{
-      course_sections?: { courses?: { code: string; title: string } };
-    }>;
-    if (regs.length === 0) {
-      return (
-        <span className='text-muted-foreground'>No active registrations</span>
-      );
-    }
-    return (
-      <div className='space-y-1'>
-        <span className='text-muted-foreground'>
-          {regs.length} active registration(s)
-        </span>
-        <ul className='list-disc list-inside space-y-0.5'>
-          {regs.map((reg, i) => (
-            <li key={i}>
-              {reg.course_sections?.courses?.code} -{" "}
-              {reg.course_sections?.courses?.title}
-            </li>
-          ))}
-        </ul>
-      </div>
-    );
-  }
-
-  // Bookings list
-  if (toolName === "get_student_bookings" && Array.isArray(result.bookings)) {
-    const bookings = result.bookings as Array<{
-      booking_date: string;
-      start_time: string;
-      end_time: string;
-      status: string;
-      facilities?: { name: string };
-    }>;
-    if (bookings.length === 0) {
-      return <span className='text-muted-foreground'>No bookings found</span>;
-    }
-    return (
-      <div className='space-y-1'>
-        <span className='text-muted-foreground'>
-          {bookings.length} booking(s)
-        </span>
-        <ul className='list-disc list-inside space-y-0.5'>
-          {bookings.slice(0, 5).map((booking, i) => (
-            <li key={i}>
-              {booking.facilities?.name} - {booking.booking_date}{" "}
-              {booking.start_time.slice(0, 5)}-{booking.end_time.slice(0, 5)} (
-              {booking.status})
-            </li>
-          ))}
-        </ul>
-      </div>
-    );
-  }
-
-  // Default: show simplified JSON
-  return (
-    <pre className='text-xs text-muted-foreground overflow-x-auto max-h-32'>
-      {JSON.stringify(result, null, 2)}
-    </pre>
-  );
+  return kept.join("\n\n");
 }
 
 export function ChatMessage({
@@ -225,8 +105,8 @@ export function ChatMessage({
       .join("");
 
     return (
-      <div className='flex w-full justify-center py-4'>
-        <div className='flex items-center gap-2 rounded-lg bg-muted/50 px-4 py-2 text-sm text-muted-foreground'>
+      <div className="flex w-full justify-center py-4">
+        <div className="flex items-center gap-2 rounded-lg bg-muted/50 px-4 py-2 text-sm text-muted-foreground">
           <SystemIcon />
           <span>{textContent}</span>
         </div>
@@ -234,7 +114,6 @@ export function ChatMessage({
     );
   }
 
-  // Separate text parts and tool parts
   const textParts = message.parts.filter(
     (p): p is TextPart => p.type === "text",
   );
@@ -242,6 +121,19 @@ export function ChatMessage({
     (p): p is ToolInvocationPart => p.type === "tool-invocation",
   );
   const textContent = textParts.map((p) => p.text).join("");
+  const displayText = isUser
+    ? stripHiddenRef(textContent)
+    : dedupeAssistantParagraphs(stripAssistantIntent(textContent));
+
+  const showThinkingStrip =
+    !isUser && isStreaming && !textContent && toolParts.length === 0;
+
+  const showWritingStrip =
+    !isUser &&
+    isStreaming &&
+    !textContent &&
+    toolParts.length > 0 &&
+    allToolPartsFinished(message.parts);
 
   return (
     <div
@@ -250,28 +142,24 @@ export function ChatMessage({
         isUser ? "flex-row-reverse" : "flex-row",
       )}
     >
-      {/* Avatar */}
-      <div className='shrink-0 pt-1'>
+      <div className="shrink-0 pt-1">
         {isUser ? <UserAvatar /> : <AssistantAvatar />}
       </div>
 
-      {/* Content */}
       <div
         className={cn(
-          "flex max-w-[80%] flex-col gap-1",
-          isUser ? "items-end" : "items-start",
+          "flex flex-col gap-2",
+          isUser ? "max-w-[80%] items-end" : "w-full max-w-[80%] items-start",
         )}
       >
-        {/* Tool Invocations (for assistant messages) */}
-        {!isUser && toolParts.length > 0 && (
-          <div className='w-full space-y-2'>
-            {toolParts.map((part) => (
-              <ToolInvocation key={part.toolCallId} part={part} />
-            ))}
-          </div>
+        {!isUser && showThinkingStrip && (
+          <AssistantStreamingStatus label={THINKING_LABEL} />
         )}
 
-        {/* Text Content Bubble */}
+        {!isUser && showWritingStrip && (
+          <AssistantStreamingStatus label={WRITING_LABEL} />
+        )}
+
         {textContent && (
           <div
             className={cn(
@@ -281,27 +169,22 @@ export function ChatMessage({
                 : "bg-muted/60 text-foreground border border-border/50 rounded-tl-sm",
             )}
           >
-            <div className='prose prose-sm dark:prose-invert max-w-none whitespace-pre-wrap leading-relaxed'>
-              <ReactMarkdown>{textContent}</ReactMarkdown>
-            </div>
+            {!isUser && OpenUIAwareContent ? (
+              <OpenUIAwareContent
+                text={displayText}
+                isStreaming={isStreaming}
+              />
+            ) : (
+              <MarkdownContent text={displayText} />
+            )}
             {isStreaming && (
-              <span className='animate-pulse inline-block h-4 w-1.5 align-middle bg-foreground/50 ml-1' />
+              <span className="animate-pulse inline-block h-4 w-1.5 align-middle bg-foreground/50 ml-1" />
             )}
           </div>
         )}
-        {/* Streaming Cursor for empty message */}
-        {isStreaming && !textContent && (
-          <div
-            className={cn(
-              "rounded-2xl px-4 py-3 text-sm shadow-sm bg-muted/60 text-foreground border border-border/50 rounded-tl-sm",
-            )}
-          >
-            <span className='animate-pulse inline-block h-4 w-1.5 align-middle bg-foreground/50' />
-          </div>
-        )}
-        {/* Optional Timestamp */}
+
         {showTimestamp && message.timestamp && (
-          <span className='px-1 text-xs text-muted-foreground'>
+          <span className="px-1 text-xs text-muted-foreground">
             {message.timestamp.toLocaleTimeString([], {
               hour: "2-digit",
               minute: "2-digit",

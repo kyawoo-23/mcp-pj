@@ -38,6 +38,7 @@ import {
   AGE_OPTIONS,
   GENDER_OPTIONS,
   TECHNICAL_PROFICIENCY_OPTIONS,
+  PROGRAMMING_EXPERIENCE_OPTIONS,
   AI_TOOL_FREQUENCY_OPTIONS,
 } from "@/utils/constants";
 
@@ -47,7 +48,7 @@ const DIMENSION_OPTIONS: Array<{
 }> = [
   { value: "age_range", label: "Age range" },
   { value: "gender", label: "Gender" },
-  { value: "technical_proficiency", label: "Technical proficiency" },
+  { value: "programming_experience", label: "Programming experience" },
   { value: "ai_tool_frequency", label: "AI usage frequency" },
 ];
 
@@ -123,6 +124,10 @@ const VALUE_OPTIONS_MAP: Record<
     label: o.label,
   })),
   technical_proficiency: TECHNICAL_PROFICIENCY_OPTIONS.map((o) => ({
+    value: String(o.value),
+    label: o.label,
+  })),
+  programming_experience: PROGRAMMING_EXPERIENCE_OPTIONS.map((o) => ({
     value: String(o.value),
     label: o.label,
   })),

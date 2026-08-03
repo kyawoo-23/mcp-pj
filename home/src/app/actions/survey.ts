@@ -2,6 +2,7 @@
 
 import { createClient } from "@/lib/supabase/server";
 import type { ProfileRow, TaskSessionRow } from "@/lib/types";
+import { CURRENT_STUDY_PROTOCOL_VERSION } from "@/utils/study-protocol";
 import { revalidatePath } from "next/cache";
 
 type SuccessResult<T> = { ok: true; data: T };
@@ -12,7 +13,7 @@ export async function saveDemographicsAction(
   userId: string,
   ageRange: ProfileRow["age_range"],
   gender: ProfileRow["gender"],
-  technicalProficiency: ProfileRow["technical_proficiency"],
+  programmingExperience: ProfileRow["programming_experience"],
   aiToolFrequency: ProfileRow["ai_tool_frequency"]
 ): Promise<ActionResult<TaskSessionRow>> {
   const supabase = await createClient();
@@ -24,7 +25,7 @@ export async function saveDemographicsAction(
     .update({
       age_range: ageRange,
       gender,
-      technical_proficiency: technicalProficiency,
+      programming_experience: programmingExperience,
       ai_tool_frequency: aiToolFrequency,
       updated_at: now,
     })
@@ -38,33 +39,55 @@ export async function saveDemographicsAction(
     };
   }
 
-  // 2. Upsert task session (init traditional session)
-  const { data: upserted, error: sessionError } = await supabase
+  // 2. Ensure traditional session exists (do not reset status on profile updates)
+  const { data: existingSession, error: fetchSessionError } = await supabase
     .from("task_sessions")
-    .upsert(
-      [
-        {
-          user_id: userId,
-          system_type: "traditional",
-          status: "not_started",
-          updated_at: now,
-        },
-      ],
-      { onConflict: "user_id,system_type" }
+    .select(
+      "id, status, system_type, started_at, completed_at, user_id, created_at, updated_at",
     )
-    .select()
-    .single();
+    .eq("user_id", userId)
+    .eq("system_type", "traditional")
+    .maybeSingle();
 
-  if (sessionError || !upserted) {
-    console.error("Failed to create session:", sessionError);
+  if (fetchSessionError) {
+    console.error("Failed to load session:", fetchSessionError);
     return {
       ok: false,
-      error: "Failed to create your session. Please try again.",
+      error: "Failed to load your session. Please try again.",
     };
   }
 
+  let session: TaskSessionRow;
+
+  if (existingSession) {
+    session = existingSession;
+  } else {
+    const { data: inserted, error: insertError } = await supabase
+      .from("task_sessions")
+      .insert({
+        user_id: userId,
+        system_type: "traditional",
+        status: "not_started",
+        updated_at: now,
+      })
+      .select(
+        "id, status, system_type, started_at, completed_at, user_id, created_at, updated_at",
+      )
+      .single();
+
+    if (insertError || !inserted) {
+      console.error("Failed to create session:", insertError);
+      return {
+        ok: false,
+        error: "Failed to create your session. Please try again.",
+      };
+    }
+
+    session = inserted;
+  }
+
   revalidatePath("/survey");
-  return { ok: true, data: upserted };
+  return { ok: true, data: session };
 }
 
 export async function startSurveyAction(userId: string): Promise<ActionResult<void>> {
@@ -97,6 +120,44 @@ export async function startSurveyAction(userId: string): Promise<ActionResult<vo
     };
   }
 
+  // Assign task set if not assigned
+  const { data: existingAssignment } = await supabase
+    .from("task_user_assignments")
+    .select("id")
+    .eq("user_id", userId)
+    .maybeSingle();
+
+  if (!existingAssignment) {
+    const { data: sets } = await supabase.from("task_assignment_sets").select("id");
+    if (sets && sets.length > 0) {
+      // Get assignment counts for balancing
+      const { data: counts } = await supabase
+        .from("task_user_assignments")
+        .select("assignment_set_id");
+        
+      // Count frequency of each set
+      const freq = new Map<string, number>();
+      sets.forEach(s => freq.set(s.id, 0));
+      (counts || []).forEach(c => {
+        if (freq.has(c.assignment_set_id)) {
+          freq.set(c.assignment_set_id, freq.get(c.assignment_set_id)! + 1);
+        }
+      });
+      
+      // Find the sets with minimum count
+      const minCount = Math.min(...Array.from(freq.values()));
+      const candidates = sets.filter(s => freq.get(s.id) === minCount);
+      
+      // Pick a random set among those with min count
+      const pickedSet = candidates[Math.floor(Math.random() * candidates.length)];
+      
+      await supabase.from("task_user_assignments").insert({
+        user_id: userId,
+        assignment_set_id: pickedSet.id,
+      });
+    }
+  }
+
   revalidatePath("/survey");
   return { ok: true, data: undefined };
 }
@@ -115,7 +176,8 @@ export async function openTaskAction(
     .select("status")
     .eq("session_id", sessionId)
     .eq("task_definition_id", taskDefinitionId)
-    .single();
+    .eq("protocol_version", CURRENT_STUDY_PROTOCOL_VERSION)
+    .maybeSingle();
 
   if (existingProgress?.status === "in_progress") {
     // Task is already open and in progress; no need to update status again.
@@ -138,6 +200,7 @@ export async function openTaskAction(
       .from("task_progress")
       .update({ status: "not_started", updated_at: now })
       .in("session_id", allSessionIds)
+      .eq("protocol_version", CURRENT_STUDY_PROTOCOL_VERSION)
       .eq("status", "in_progress");
 
     if (resetError) {
@@ -151,7 +214,8 @@ export async function openTaskAction(
     .from("task_progress")
     .update({ status: "in_progress", started_at: now, updated_at: now })
     .eq("session_id", sessionId)
-    .eq("task_definition_id", taskDefinitionId);
+    .eq("task_definition_id", taskDefinitionId)
+    .eq("protocol_version", CURRENT_STUDY_PROTOCOL_VERSION);
 
   if (updateError) {
     console.error("Failed to open task:", updateError);
@@ -180,7 +244,8 @@ export async function resetTaskAction(
     .select("status")
     .eq("session_id", sessionId)
     .eq("task_definition_id", taskDefinitionId)
-    .single();
+    .eq("protocol_version", CURRENT_STUDY_PROTOCOL_VERSION)
+    .maybeSingle();
 
   if (fetchError) {
     console.error("Failed to fetch task progress:", fetchError);
@@ -198,7 +263,8 @@ export async function resetTaskAction(
     .from("task_progress")
     .delete()
     .eq("session_id", sessionId)
-    .eq("task_definition_id", taskDefinitionId);
+    .eq("task_definition_id", taskDefinitionId)
+    .eq("protocol_version", CURRENT_STUDY_PROTOCOL_VERSION);
 
   if (progressError) {
     console.error("Failed to delete progress:", progressError);
@@ -227,7 +293,8 @@ export async function resetTaskAction(
   const { error: surveyError } = await supabase
     .from("task_survey_responses")
     .delete()
-    .eq("session_id", sessionId);
+    .eq("session_id", sessionId)
+    .eq("protocol_version", CURRENT_STUDY_PROTOCOL_VERSION);
 
   if (surveyError) {
     console.error("Failed to delete survey responses:", surveyError);
@@ -255,13 +322,40 @@ export async function resetTaskAction(
   const { error: interviewError } = await supabase
     .from("task_interview_responses")
     .delete()
-    .eq("user_id", userId);
+    .eq("user_id", userId)
+    .eq("protocol_version", CURRENT_STUDY_PROTOCOL_VERSION);
 
   if (interviewError) {
     console.error("Failed to delete interview responses:", interviewError);
     return {
       ok: false,
       error: "Failed to clear interview responses. Please try again.",
+    };
+  }
+
+  revalidatePath("/survey");
+  return { ok: true, data: undefined };
+}
+
+export async function dismissCriteriaMigrationNoticeAction(
+  userId: string
+): Promise<ActionResult<void>> {
+  const supabase = await createClient();
+  const now = new Date().toISOString();
+
+  const { error } = await supabase
+    .from("profiles")
+    .update({
+      criteria_migration_notice_dismissed_at: now,
+      updated_at: now,
+    })
+    .eq("id", userId);
+
+  if (error) {
+    console.error("Failed to dismiss migration notice:", error);
+    return {
+      ok: false,
+      error: "Failed to save your preference. Please try again.",
     };
   }
 
@@ -281,10 +375,14 @@ export async function ensureProgressAction(
   }
 
   const supabase = await createClient();
+  const rows = items.map((item) => ({
+    ...item,
+    protocol_version: CURRENT_STUDY_PROTOCOL_VERSION,
+  }));
   const { error } = await supabase
     .from("task_progress")
-    .upsert(items, {
-      onConflict: "session_id,task_definition_id",
+    .upsert(rows, {
+      onConflict: "session_id,task_definition_id,protocol_version",
       ignoreDuplicates: true,
     });
 

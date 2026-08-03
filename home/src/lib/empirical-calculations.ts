@@ -7,6 +7,7 @@ import {
   filterPayloadToCompletedUsers,
   filterPayloadByDemographics,
   buildPairedSurveyData,
+  type StudyProtocolVersion,
 } from "./analysis-calculations";
 
 // ============================================================================
@@ -18,11 +19,48 @@ export function getCompletedPayload(payload: AnalysisPayload): AnalysisPayload {
   return filterPayloadToCompletedUsers(payload);
 }
 
-/** Filter payload to advanced technical_proficiency users only */
-export function getAdvancedPayload(payload: AnalysisPayload): AnalysisPayload {
-  return filterPayloadByDemographics(payload, [
-    { dimension: "technical_proficiency", values: ["advanced"] },
-  ]);
+/** Filter payload to the advanced skill subgroup for the given protocol. */
+export function getAdvancedPayload(
+  payload: AnalysisPayload,
+  protocolVersion: StudyProtocolVersion = "v2_criteria",
+): AnalysisPayload {
+  const criteria =
+    protocolVersion === "v1_simple"
+      ? { dimension: "technical_proficiency" as const, values: ["advanced"] }
+      : {
+          dimension: "programming_experience" as const,
+          values: ["three_plus_years"],
+        };
+  return filterPayloadByDemographics(payload, [criteria]);
+}
+
+export type AdvancedSubgroupCopy = {
+  tabLabel: string;
+  chartShortLabel: string;
+  introLongLabel: string;
+  susFindingLead: string;
+  susFindingTail: string;
+};
+
+export function getAdvancedSubgroupCopy(
+  protocolVersion: StudyProtocolVersion,
+): AdvancedSubgroupCopy {
+  if (protocolVersion === "v1_simple") {
+    return {
+      tabLabel: "Advanced Tech Skills",
+      chartShortLabel: "Advanced Technical",
+      introLongLabel: "advanced technical proficiency",
+      susFindingLead: "technically advanced users",
+      susFindingTail: "Experienced users",
+    };
+  }
+  return {
+    tabLabel: "3+ Years Programming",
+    chartShortLabel: "3+ Yrs Programming",
+    introLongLabel: "3+ years of programming experience",
+    susFindingLead: "participants with 3+ years of programming experience",
+    susFindingTail: "Experienced programmers",
+  };
 }
 
 // ============================================================================
@@ -346,13 +384,18 @@ export function calculateTaskPreference(
 // Master function: compute all empirical comparison data
 // ============================================================================
 
-export function computeEmpiricalData(payload: AnalysisPayload) {
+export function computeEmpiricalData(
+  payload: AnalysisPayload,
+  protocolVersion: StudyProtocolVersion = "v2_criteria",
+) {
   const completed = filterPayloadToCompletedUsers(payload);
-  const advanced = getAdvancedPayload(completed);
+  const advanced = getAdvancedPayload(completed, protocolVersion);
+  const advancedSubgroupCopy = getAdvancedSubgroupCopy(protocolVersion);
 
   return {
     allCount: completed.profiles.length,
     advancedCount: advanced.profiles.length,
+    advancedSubgroupCopy,
     sus: calculateSUSComparison(completed, advanced),
     tlx: calculateTLXComparison(completed, advanced),
     sdt: calculateSDTComparison(completed, advanced),

@@ -2,8 +2,11 @@ import { withSentryConfig } from "@sentry/nextjs";
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  /* config options here */
   reactCompiler: true,
+  experimental: {
+    // Direct-import transform for heavy packages (Vercel bundle-size rule 2.1).
+    optimizePackageImports: ["@openuidev/react-lang", "lucide-react"],
+  },
 };
 
 export default withSentryConfig(nextConfig, {

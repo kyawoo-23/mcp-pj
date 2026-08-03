@@ -7,10 +7,13 @@ import {
   calculateTaskDurations,
   filterPayloadToCompletedUsers,
   filterPayloadByDemographics,
+  type StudyProtocolVersion,
 } from "@/lib/analysis-calculations";
+import type { SkillChartMode } from "@/components/analysis/demographics-charts";
 import { TaskDurationCharts } from "@/components/analysis/task-duration-charts";
 import { EmpiricalComparison } from "@/components/research/empirical-comparison";
 import { DemographicsCharts } from "@/components/analysis/demographics-charts";
+import { getAdvancedSubgroupCopy } from "@/lib/empirical-calculations";
 import { Info } from "lucide-react";
 import {
   Popover,
@@ -20,6 +23,7 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 type ResearchClientProps = {
+  protocolVersion: StudyProtocolVersion;
   data: AnalysisPayload;
   metrics: {
     totalUsers: number;
@@ -29,18 +33,35 @@ type ResearchClientProps = {
   };
 };
 
-export function ResearchClient({ data }: ResearchClientProps) {
+export function ResearchClient({
+  protocolVersion,
+  data,
+}: ResearchClientProps) {
+  const skillChartMode: SkillChartMode =
+    protocolVersion === "v1_simple" ? "technical" : "programming";
+  const advancedSubgroupCopy = getAdvancedSubgroupCopy(protocolVersion);
+
+  const advancedCriteria = useMemo(
+    () =>
+      protocolVersion === "v1_simple"
+        ? [{ dimension: "technical_proficiency" as const, values: ["advanced"] }]
+        : [
+            {
+              dimension: "programming_experience" as const,
+              values: ["three_plus_years"],
+            },
+          ],
+    [protocolVersion],
+  );
+
   const completedPayload = useMemo(
     () => filterPayloadToCompletedUsers(data),
     [data],
   );
 
   const advancedPayload = useMemo(
-    () =>
-      filterPayloadByDemographics(completedPayload, [
-        { dimension: "technical_proficiency", values: ["advanced"] },
-      ]),
-    [completedPayload],
+    () => filterPayloadByDemographics(completedPayload, advancedCriteria),
+    [completedPayload, advancedCriteria],
   );
 
   const taskDurations = useMemo(
@@ -60,7 +81,7 @@ export function ResearchClient({ data }: ResearchClientProps) {
     <>
       {/* Empirical Comparison */}
       <section className='mb-16'>
-        <EmpiricalComparison payload={data} />
+        <EmpiricalComparison payload={data} protocolVersion={protocolVersion} />
       </section>
 
       {/* Demographics */}
@@ -72,14 +93,20 @@ export function ResearchClient({ data }: ResearchClientProps) {
               All Participants (N={completedPayload.profiles.length})
             </TabsTrigger>
             <TabsTrigger value="advanced">
-              Advanced Tech Skills (N={advancedPayload.profiles.length})
+              {advancedSubgroupCopy.tabLabel} (N={advancedPayload.profiles.length})
             </TabsTrigger>
           </TabsList>
           <TabsContent value="all" className="mt-0">
-            <DemographicsCharts demographics={demographicsAll} />
+            <DemographicsCharts
+              demographics={demographicsAll}
+              skillChartMode={skillChartMode}
+            />
           </TabsContent>
           <TabsContent value="advanced" className="mt-0">
-            <DemographicsCharts demographics={demographicsAdvanced} />
+            <DemographicsCharts
+              demographics={demographicsAdvanced}
+              skillChartMode={skillChartMode}
+            />
           </TabsContent>
         </Tabs>
       </section>

@@ -10,6 +10,7 @@ import type {
   TaskDefinitionRow,
   TaskProgressRow,
   TaskSessionRow,
+  UserAssignmentWithSet,
   UserInterviewResponseRow,
 } from "@/lib/types";
 import { Button } from "@/components/ui/button";
@@ -19,8 +20,10 @@ import { TraditionalSurvey } from "@/components/survey/traditional-survey";
 import { InterviewForm } from "@/components/survey/interview-form";
 import { SurveySection } from "@/components/survey/survey-section";
 import { DemographicsForm } from "@/components/survey/demographics-form";
+import { ProgrammingExperiencePrompt } from "@/components/survey/programming-experience-prompt";
 import { useSurveyData } from "@/hooks/use-survey-data";
 import { SurveyNavbar } from "@/components/survey/survey-navbar";
+import { CriteriaMigrationNotice } from "@/components/survey/criteria-migration-notice";
 import { toast } from "sonner";
 import {
   AlertDialog,
@@ -39,7 +42,7 @@ interface SurveyPageClientProps {
     | "id"
     | "age_range"
     | "gender"
-    | "technical_proficiency"
+    | "programming_experience"
     | "ai_tool_frequency"
   > | null;
   sessions: TaskSessionRow[];
@@ -50,6 +53,10 @@ interface SurveyPageClientProps {
   surveyResponses: SurveyResponseRow[];
   interviewQuestions: InterviewQuestionRow[];
   interviewResponses: UserInterviewResponseRow[];
+  assignment?: UserAssignmentWithSet | null;
+  showMigrationNotice?: boolean;
+  hasStudyHistory?: boolean;
+  userId?: string;
 }
 
 type SectionKey =
@@ -70,6 +77,10 @@ export function SurveyPageClient({
   surveyResponses,
   interviewQuestions,
   interviewResponses,
+  assignment,
+  showMigrationNotice = false,
+  hasStudyHistory = false,
+  userId,
 }: SurveyPageClientProps) {
   const [activeSection, setActiveSection] = useState<SectionKey | null>(
     "intro",
@@ -80,9 +91,12 @@ export function SurveyPageClient({
     profileState,
     surveyResponsesState,
     interviewResponsesState,
+    assignmentState,
     savingDemographics,
     startingSurvey,
     requiresDemographics,
+    requiresProgrammingExperience,
+    saveProgrammingExperience,
 
     // Derived data
     tasksBySystem,
@@ -125,6 +139,7 @@ export function SurveyPageClient({
     surveyResponses,
     interviewQuestions,
     interviewResponses,
+    assignment,
   });
 
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -230,20 +245,34 @@ export function SurveyPageClient({
 
   if (requiresDemographics) {
     return (
-      <div className='min-h-screen bg-background'>
-        <SurveyNavbar onRefresh={handleRefresh} isRefreshing={isRefreshing} />
+      <div className='min-h-screen'>
+        <SurveyNavbar
+          onRefresh={handleRefresh}
+          isRefreshing={isRefreshing}
+          hasStudyHistory={hasStudyHistory}
+        />
+        {showMigrationNotice && userId ? (
+          <CriteriaMigrationNotice open userId={userId} />
+        ) : null}
         <div className='p-6'>
           <div className='mx-auto w-full max-w-5xl'>
-            <DemographicsForm
-              initialAgeRange={profileState?.age_range ?? null}
-              initialGender={profileState?.gender ?? null}
-              initialTechnicalProficiency={
-                profileState?.technical_proficiency ?? null
-              }
-              initialAiToolFrequency={profileState?.ai_tool_frequency ?? null}
-              saving={savingDemographics}
-              onSave={saveDemographics}
-            />
+            {requiresProgrammingExperience ? (
+              <ProgrammingExperiencePrompt
+                saving={savingDemographics}
+                onSave={saveProgrammingExperience}
+              />
+            ) : (
+              <DemographicsForm
+                initialAgeRange={profileState?.age_range ?? null}
+                initialGender={profileState?.gender ?? null}
+                initialProgrammingExperience={
+                  profileState?.programming_experience ?? null
+                }
+                initialAiToolFrequency={profileState?.ai_tool_frequency ?? null}
+                saving={savingDemographics}
+                onSave={saveDemographics}
+              />
+            )}
           </div>
         </div>
       </div>
@@ -251,8 +280,15 @@ export function SurveyPageClient({
   }
 
   return (
-    <div className='min-h-screen bg-background'>
-      <SurveyNavbar onRefresh={handleRefresh} isRefreshing={isRefreshing} />
+    <div className='min-h-screen'>
+      <SurveyNavbar
+        onRefresh={handleRefresh}
+        isRefreshing={isRefreshing}
+        hasStudyHistory={hasStudyHistory}
+      />
+      {showMigrationNotice && userId ? (
+        <CriteriaMigrationNotice open userId={userId} />
+      ) : null}
       <div className='p-6'>
         <div className='mx-auto flex w-full max-w-5xl flex-col gap-6'>
           {/* Intro Section */}
@@ -318,6 +354,7 @@ export function SurveyPageClient({
               activeTaskId={activeTask?.task_definition_id}
               onOpenTask={openTask}
               onResetTask={handleResetTask}
+              assignment={assignmentState}
             />
           </SurveySection>
 
@@ -360,6 +397,7 @@ export function SurveyPageClient({
               activeTaskId={activeTask?.task_definition_id}
               onOpenTask={openTask}
               onResetTask={handleResetTask}
+              assignment={assignmentState}
             />
           </SurveySection>
 

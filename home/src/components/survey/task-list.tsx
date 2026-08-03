@@ -16,6 +16,7 @@ import type {
   TaskDefinitionRow,
   TaskProgressRow,
   TaskSessionRow,
+  UserAssignmentWithSet,
 } from "@/lib/types";
 
 interface TaskListProps {
@@ -32,6 +33,7 @@ interface TaskListProps {
     task: TaskDefinitionRow,
     session: TaskSessionRow,
   ) => void | Promise<void>;
+  assignment?: UserAssignmentWithSet | null;
 }
 
 const statusVariantMap: Record<
@@ -50,6 +52,7 @@ export function TaskList({
   activeTaskId,
   onOpenTask,
   onResetTask,
+  assignment,
 }: TaskListProps) {
   const [openingTaskId, setOpeningTaskId] = useState<string | null>(null);
   const [isResetting, setIsResetting] = useState(false);
@@ -65,6 +68,13 @@ export function TaskList({
         const status = progress?.status ?? "not_started";
         const isActive = activeTaskId === task.id;
         const canOpen = !!session && session.status !== "not_started";
+        
+        // Extract specific target info if available
+        const targets = (assignment?.task_assignment_sets?.targets ?? {}) as Record<string, { title?: string; description?: string }>;
+        const specificTarget = targets[task.task_code];
+        const displayTitle = specificTarget?.title || task.title;
+        const displayDesc = specificTarget?.description || task.description;
+
         return (
           <div
             key={task.id}
@@ -72,15 +82,15 @@ export function TaskList({
           >
             <div className='space-y-1'>
               <div className='flex items-center gap-2'>
-                <span className='text-sm font-semibold'>{task.title}</span>
+                <span className='text-sm font-semibold'>{displayTitle}</span>
                 <Badge variant={statusVariantMap[status]}>
                   {status.replace("_", " ")}
                 </Badge>
                 {isActive && <Badge variant='info'>Active</Badge>}
               </div>
-              {task.description && (
+              {displayDesc && (
                 <p className='text-sm text-muted-foreground'>
-                  {task.description}
+                  {displayDesc}
                 </p>
               )}
             </div>

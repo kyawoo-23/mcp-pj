@@ -1,3 +1,8 @@
+import {
+  isPreviewEnvironment,
+  toPreviewOrigin,
+} from "@/lib/preview-environment";
+
 export const BASE_URL =
   typeof window !== "undefined"
     ? window.location.origin
@@ -16,15 +21,42 @@ export const APIRoutes = {
   passwordRecovery: "/api/reset-password",
 };
 
-export function getSurveyUrl(): string {
-  const isDevMode = process.env.NEXT_PUBLIC_DEV_MODE === "true";
-  const isVercel = typeof window !== "undefined" && window.location.hostname.includes("vercel");
+function isDevMode(): boolean {
+  return process.env.NEXT_PUBLIC_DEV_MODE === "true";
+}
 
-  if (isDevMode) {
-    return "http://localhost:4003/survey";
+function isLegacyVercelDeployment(): boolean {
+  return (
+    typeof window !== "undefined" &&
+    window.location.hostname.includes("vercel")
+  );
+}
+
+function resolveAppOrigin(
+  localOrigin: string,
+  productionOrigin: string,
+  legacyVercelOrigin: string,
+): string {
+  if (isDevMode()) {
+    return localOrigin;
   }
 
-  return isVercel
-    ? "https://mcp-pj.vercel.app/survey"
-    : "https://mcp-project.app/survey";
+  if (isPreviewEnvironment()) {
+    return toPreviewOrigin(productionOrigin);
+  }
+
+  if (isLegacyVercelDeployment()) {
+    return legacyVercelOrigin;
+  }
+
+  return productionOrigin;
+}
+
+export function getSurveyUrl(): string {
+  const base = resolveAppOrigin(
+    "http://localhost:4003",
+    "https://mcp-project.app",
+    "https://mcp-pj.vercel.app",
+  );
+  return `${base}/survey`;
 }

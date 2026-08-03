@@ -287,12 +287,18 @@ export type Database = {
             | Database["public"]["Enums"]["ai_tool_frequency"]
             | null
           created_at: string
+          criteria_migration_notice_dismissed_at: string | null
           email: string | null
           full_name: string | null
           gender: Database["public"]["Enums"]["gender_identity"] | null
           id: string
+          migrated_from_simple_tasks_at: string | null
+          programming_experience:
+            | Database["public"]["Enums"]["programming_experience"]
+            | null
           role: Database["public"]["Enums"]["user_role"]
           student_id: string | null
+          study_protocol_version: Database["public"]["Enums"]["study_protocol_version"]
           technical_proficiency:
             | Database["public"]["Enums"]["technical_proficiency"]
             | null
@@ -304,12 +310,18 @@ export type Database = {
             | Database["public"]["Enums"]["ai_tool_frequency"]
             | null
           created_at?: string
+          criteria_migration_notice_dismissed_at?: string | null
           email?: string | null
           full_name?: string | null
           gender?: Database["public"]["Enums"]["gender_identity"] | null
           id: string
+          migrated_from_simple_tasks_at?: string | null
+          programming_experience?:
+            | Database["public"]["Enums"]["programming_experience"]
+            | null
           role?: Database["public"]["Enums"]["user_role"]
           student_id?: string | null
+          study_protocol_version?: Database["public"]["Enums"]["study_protocol_version"]
           technical_proficiency?:
             | Database["public"]["Enums"]["technical_proficiency"]
             | null
@@ -321,12 +333,18 @@ export type Database = {
             | Database["public"]["Enums"]["ai_tool_frequency"]
             | null
           created_at?: string
+          criteria_migration_notice_dismissed_at?: string | null
           email?: string | null
           full_name?: string | null
           gender?: Database["public"]["Enums"]["gender_identity"] | null
           id?: string
+          migrated_from_simple_tasks_at?: string | null
+          programming_experience?:
+            | Database["public"]["Enums"]["programming_experience"]
+            | null
           role?: Database["public"]["Enums"]["user_role"]
           student_id?: string | null
+          study_protocol_version?: Database["public"]["Enums"]["study_protocol_version"]
           technical_proficiency?:
             | Database["public"]["Enums"]["technical_proficiency"]
             | null
@@ -381,6 +399,27 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      task_assignment_sets: {
+        Row: {
+          created_at: string
+          id: string
+          set_label: string
+          targets: Json
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          set_label: string
+          targets?: Json
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          set_label?: string
+          targets?: Json
+        }
+        Relationships: []
       }
       task_definitions: {
         Row: {
@@ -475,6 +514,7 @@ export type Database = {
         Row: {
           created_at: string
           id: string
+          protocol_version: Database["public"]["Enums"]["study_protocol_version"]
           question_id: string
           response_text: string
           user_id: string
@@ -482,6 +522,7 @@ export type Database = {
         Insert: {
           created_at?: string
           id?: string
+          protocol_version?: Database["public"]["Enums"]["study_protocol_version"]
           question_id: string
           response_text: string
           user_id: string
@@ -489,6 +530,7 @@ export type Database = {
         Update: {
           created_at?: string
           id?: string
+          protocol_version?: Database["public"]["Enums"]["study_protocol_version"]
           question_id?: string
           response_text?: string
           user_id?: string
@@ -515,6 +557,7 @@ export type Database = {
           completed_at: string | null
           created_at: string
           id: string
+          protocol_version: Database["public"]["Enums"]["study_protocol_version"]
           session_id: string
           started_at: string | null
           status: Database["public"]["Enums"]["task_progress_status"]
@@ -526,6 +569,7 @@ export type Database = {
           completed_at?: string | null
           created_at?: string
           id?: string
+          protocol_version?: Database["public"]["Enums"]["study_protocol_version"]
           session_id: string
           started_at?: string | null
           status?: Database["public"]["Enums"]["task_progress_status"]
@@ -537,6 +581,7 @@ export type Database = {
           completed_at?: string | null
           created_at?: string
           id?: string
+          protocol_version?: Database["public"]["Enums"]["study_protocol_version"]
           session_id?: string
           started_at?: string | null
           status?: Database["public"]["Enums"]["task_progress_status"]
@@ -650,6 +695,7 @@ export type Database = {
         Row: {
           created_at: string
           id: string
+          protocol_version: Database["public"]["Enums"]["study_protocol_version"]
           question_id: string
           response_text: string | null
           response_value: number | null
@@ -658,6 +704,7 @@ export type Database = {
         Insert: {
           created_at?: string
           id?: string
+          protocol_version?: Database["public"]["Enums"]["study_protocol_version"]
           question_id: string
           response_text?: string | null
           response_value?: number | null
@@ -666,6 +713,7 @@ export type Database = {
         Update: {
           created_at?: string
           id?: string
+          protocol_version?: Database["public"]["Enums"]["study_protocol_version"]
           question_id?: string
           response_text?: string | null
           response_value?: number | null
@@ -709,6 +757,42 @@ export type Database = {
         }
         Relationships: []
       }
+      task_user_assignments: {
+        Row: {
+          assignment_set_id: string
+          created_at: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          assignment_set_id: string
+          created_at?: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          assignment_set_id?: string
+          created_at?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "task_user_assignments_assignment_set_id_fkey"
+            columns: ["assignment_set_id"]
+            isOneToOne: false
+            referencedRelation: "task_assignment_sets"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "task_user_assignments_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
@@ -723,6 +807,8 @@ export type Database = {
         Returns: string
       }
       get_never_logged_in_count: { Args: never; Returns: number }
+      get_protocol_completed_counts: { Args: never; Returns: Json }
+      get_total_auth_users_count: { Args: never; Returns: number }
       is_admin: { Args: { user_id: string }; Returns: boolean }
       show_limit: { Args: never; Returns: number }
       show_trgm: { Args: { "": string }; Returns: string[] }
@@ -748,7 +834,13 @@ export type Database = {
         | "other"
       gender_identity: "female" | "male" | "prefer_not_say"
       message_role: "user" | "assistant" | "system"
+      programming_experience:
+        | "none"
+        | "under_1_year"
+        | "one_to_two_years"
+        | "three_plus_years"
       registration_status: "active" | "dropped" | "completed" | "waitlisted"
+      study_protocol_version: "v1_simple" | "v2_criteria"
       survey_construct:
         | "Usability"
         | "Workload"
@@ -915,7 +1007,14 @@ export const Constants = {
       ],
       gender_identity: ["female", "male", "prefer_not_say"],
       message_role: ["user", "assistant", "system"],
+      programming_experience: [
+        "none",
+        "under_1_year",
+        "one_to_two_years",
+        "three_plus_years",
+      ],
       registration_status: ["active", "dropped", "completed", "waitlisted"],
+      study_protocol_version: ["v1_simple", "v2_criteria"],
       survey_construct: [
         "Usability",
         "Workload",

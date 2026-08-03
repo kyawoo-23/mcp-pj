@@ -9,10 +9,12 @@ import type {
   TaskDefinitionRow,
   TaskProgressRow,
   TaskSessionRow,
+  UserAssignmentWithSet,
   UserInterviewResponseRow,
 } from "@/lib/types";
 import { toast } from "sonner";
 import { TASK_ORDER, getTaskUrl } from "../utils/constants";
+import { CURRENT_STUDY_PROTOCOL_VERSION } from "@/utils/study-protocol";
 import {
   ensureProgressAction,
   openTaskAction,
@@ -22,13 +24,14 @@ import {
 } from "@/app/actions/survey";
 
 interface UseSurveyDataProps {
-  profile: Pick<ProfileRow, "id" | "age_range" | "gender" | "technical_proficiency" | "ai_tool_frequency"> | null;
+  profile: Pick<ProfileRow, "id" | "age_range" | "gender" | "programming_experience" | "ai_tool_frequency"> | null;
   sessions: TaskSessionRow[];
   taskDefinitions: TaskDefinitionRow[];
   taskProgress: TaskProgressRow[];
   surveyResponses: SurveyResponseRow[];
   interviewQuestions: InterviewQuestionRow[];
   interviewResponses: UserInterviewResponseRow[];
+  assignment?: UserAssignmentWithSet | null;
 }
 
 export function useSurveyData({
@@ -39,6 +42,7 @@ export function useSurveyData({
   surveyResponses,
   interviewQuestions,
   interviewResponses,
+  assignment,
 }: UseSurveyDataProps) {
   const supabase = useMemo(() => createClient(), []);
 
@@ -48,6 +52,7 @@ export function useSurveyData({
   const [taskProgressState, setTaskProgressState] = useState(taskProgress);
   const [surveyResponsesState, setSurveyResponsesState] = useState(surveyResponses);
   const [interviewResponsesState, setInterviewResponsesState] = useState(interviewResponses);
+  const [assignmentState, setAssignmentState] = useState(assignment);
   const [savingDemographics, setSavingDemographics] = useState(false);
   const [startingSurvey, setStartingSurvey] = useState(false);
 
@@ -118,7 +123,15 @@ export function useSurveyData({
   const isChatSurveyLocked = !chatSurveyAvailable;
   const isInterviewLocked = !interviewAvailable;
 
-  const requiresDemographics = !profileState?.age_range || !profileState?.gender || !profileState?.technical_proficiency || !profileState?.ai_tool_frequency;
+  const hasBaseProfile = !!(
+    profileState?.age_range &&
+    profileState?.gender &&
+    profileState?.ai_tool_frequency
+  );
+  const requiresProgrammingExperience =
+    hasBaseProfile && !profileState?.programming_experience;
+  const requiresDemographics =
+    !hasBaseProfile || requiresProgrammingExperience;
 
   // Refresh data
   const refreshTaskData = useCallback(async () => {
@@ -136,24 +149,42 @@ export function useSurveyData({
 
     const latestSessionIds = latestSessions.map((session) => session.id);
     if (latestSessionIds.length) {
-      const [progressResult, surveyResponseResult, interviewResponseResult] = await Promise.all([
+      const [progressResult, surveyResponseResult, interviewResponseResult, assignmentResult] = await Promise.all([
         supabase
           .from("task_progress")
-          .select("id, task_definition_id, status, started_at, completed_at, created_at, session_id, success_payload, updated_at")
-          .in("session_id", latestSessionIds),
+          .select("id, task_definition_id, status, started_at, completed_at, created_at, session_id, success_payload, updated_at, protocol_version")
+          .in("session_id", latestSessionIds)
+          .eq("protocol_version", CURRENT_STUDY_PROTOCOL_VERSION),
         supabase
           .from("task_survey_responses")
-          .select("id, question_id, response_value, response_text, session_id, created_at")
-          .in("session_id", latestSessionIds),
+          .select("id, question_id, response_value, response_text, session_id, created_at, protocol_version")
+          .in("session_id", latestSessionIds)
+          .eq("protocol_version", CURRENT_STUDY_PROTOCOL_VERSION),
         supabase
           .from("task_interview_responses")
-          .select("id, question_id, response_text, user_id, created_at")
-          .eq("user_id", user.id),
+          .select("id, question_id, response_text, user_id, created_at, protocol_version")
+          .eq("user_id", user.id)
+          .eq("protocol_version", CURRENT_STUDY_PROTOCOL_VERSION),
+        supabase
+          .from("task_user_assignments")
+          .select(`
+            id,
+            task_assignment_sets (
+              id,
+              set_label,
+              targets
+            )
+          `)
+          .eq("user_id", user.id)
+          .maybeSingle(),
       ]);
 
       setTaskProgressState(progressResult.data || []);
       setSurveyResponsesState(surveyResponseResult.data || []);
       setInterviewResponsesState(interviewResponseResult.data || []);
+      if (assignmentResult.data) {
+        setAssignmentState(assignmentResult.data);
+      }
     }
   }, [supabase]);
 
@@ -207,17 +238,17 @@ export function useSurveyData({
   const saveDemographics = async (
     ageRange: ProfileRow["age_range"],
     gender: ProfileRow["gender"],
-    technicalProficiency: ProfileRow["technical_proficiency"],
+    programmingExperience: ProfileRow["programming_experience"],
     aiToolFrequency: ProfileRow["ai_tool_frequency"]
   ) => {
-    if (!profileState || !ageRange || !gender || !technicalProficiency || !aiToolFrequency) return;
+    if (!profileState || !ageRange || !gender || !programmingExperience || !aiToolFrequency) return;
     setSavingDemographics(true);
     try {
       const result = await saveDemographicsAction(
         profileState.id,
         ageRange,
         gender,
-        technicalProficiency,
+        programmingExperience,
         aiToolFrequency,
       );
 
@@ -232,10 +263,13 @@ export function useSurveyData({
         ...profileState,
         age_range: ageRange,
         gender,
-        technical_proficiency: technicalProficiency,
+        programming_experience: programmingExperience,
         ai_tool_frequency: aiToolFrequency,
       });
-      setSessionsState([upserted]); // Since we return single upserted
+      setSessionsState((prev) => {
+        const rest = prev.filter((s) => s.system_type !== "traditional");
+        return [...rest, upserted];
+      });
       toast.success("Demographics saved");
       await refreshTaskData();
     } catch (error) {
@@ -244,6 +278,24 @@ export function useSurveyData({
     } finally {
       setSavingDemographics(false);
     }
+  };
+
+  const saveProgrammingExperience = async (
+    programmingExperience: ProfileRow["programming_experience"],
+  ) => {
+    if (
+      !profileState?.age_range ||
+      !profileState?.gender ||
+      !profileState?.ai_tool_frequency
+    ) {
+      return;
+    }
+    await saveDemographics(
+      profileState.age_range,
+      profileState.gender,
+      programmingExperience,
+      profileState.ai_tool_frequency,
+    );
   };
 
   const startSurvey = async () => {
@@ -328,9 +380,12 @@ export function useSurveyData({
     profileState,
     surveyResponsesState,
     interviewResponsesState,
+    assignmentState,
     savingDemographics,
     startingSurvey,
     requiresDemographics,
+    requiresProgrammingExperience,
+    saveProgrammingExperience,
 
     // Derived data
     tasksBySystem,

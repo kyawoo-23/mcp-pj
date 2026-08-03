@@ -2,7 +2,13 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { LogOut, Settings, RefreshCw, Info } from "lucide-react";
+import {
+  LogOut,
+  Settings,
+  RefreshCw,
+  Info,
+  ClipboardClock,
+} from "lucide-react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -29,9 +35,14 @@ import Image from "next/image";
 export interface SurveyNavbarProps {
   onRefresh?: () => void;
   isRefreshing?: boolean;
+  hasStudyHistory?: boolean;
 }
 
-export function SurveyNavbar({ onRefresh, isRefreshing }: SurveyNavbarProps) {
+export function SurveyNavbar({
+  onRefresh,
+  isRefreshing,
+  hasStudyHistory,
+}: SurveyNavbarProps) {
   const router = useRouter();
   const supabase = createClient();
   const [user, setUser] = useState<User | null>(null);
@@ -164,6 +175,14 @@ export function SurveyNavbar({ onRefresh, isRefreshing }: SurveyNavbarProps) {
                     )}
                   </div>
                   <DropdownMenuSeparator />
+                  {hasStudyHistory ? (
+                    <Link href='/survey/history'>
+                      <DropdownMenuItem>
+                        <ClipboardClock className='mr-2 h-4 w-4' />
+                        <span>My study results</span>
+                      </DropdownMenuItem>
+                    </Link>
+                  ) : null}
                   <Link href='/settings'>
                     <DropdownMenuItem>
                       <Settings className='mr-2 h-4 w-4' />

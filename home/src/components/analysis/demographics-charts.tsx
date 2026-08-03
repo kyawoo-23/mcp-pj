@@ -19,6 +19,7 @@ import {
   getAgeRangeLabel,
   getGenderLabel,
   getTechnicalProficiencyLabel,
+  getProgrammingExperienceLabel,
   getAiToolFrequencyLabel,
 } from "@/utils/constants";
 
@@ -39,11 +40,19 @@ interface DemographicsData {
     count: number;
     percentage: number;
   }>;
+  programmingExperience: Array<{
+    label: string;
+    count: number;
+    percentage: number;
+  }>;
   aiFrequency: Array<{ label: string; count: number; percentage: number }>;
 }
 
+export type SkillChartMode = "technical" | "programming";
+
 interface DemographicsChartsProps {
   demographics: DemographicsData;
+  skillChartMode?: SkillChartMode;
 }
 
 // Exclude Unknown / empty demographics from chart data
@@ -51,7 +60,10 @@ function excludeUnknown<T extends { label: string }>(items: T[]): T[] {
   return items.filter((item) => item.label.toLowerCase() !== "unknown");
 }
 
-export function DemographicsCharts({ demographics }: DemographicsChartsProps) {
+export function DemographicsCharts({
+  demographics,
+  skillChartMode = "programming",
+}: DemographicsChartsProps) {
   // Prepare chart data (excluding Unknown so only filled-in demographics are shown)
   const ageData = excludeUnknown(demographics.ageRange).map((item) => ({
     label: getAgeRangeLabel(item.label),
@@ -65,13 +77,18 @@ export function DemographicsCharts({ demographics }: DemographicsChartsProps) {
     percentage: item.percentage,
   }));
 
-  const techData = excludeUnknown(demographics.technicalProficiency).map(
-    (item) => ({
-      label: getTechnicalProficiencyLabel(item.label),
-      count: item.count,
-      percentage: item.percentage,
-    }),
-  );
+  const skillSource =
+    skillChartMode === "technical"
+      ? demographics.technicalProficiency
+      : demographics.programmingExperience;
+  const techData = excludeUnknown(skillSource).map((item) => ({
+    label:
+      skillChartMode === "technical"
+        ? getTechnicalProficiencyLabel(item.label)
+        : getProgrammingExperienceLabel(item.label),
+    count: item.count,
+    percentage: item.percentage,
+  }));
 
   const aiData = excludeUnknown(demographics.aiFrequency).map((item) => ({
     label: getAiToolFrequencyLabel(item.label),
@@ -170,12 +187,18 @@ export function DemographicsCharts({ demographics }: DemographicsChartsProps) {
         </CardContent>
       </Card>
 
-      {/* Technical Proficiency */}
+      {/* Technical Proficiency / Programming Experience */}
       <Card>
         <CardHeader>
-          <CardTitle>Technical Proficiency</CardTitle>
+          <CardTitle>
+            {skillChartMode === "technical"
+              ? "Technical Proficiency"
+              : "Programming Experience"}
+          </CardTitle>
           <CardDescription>
-            Distribution of users by technical skill level
+            {skillChartMode === "technical"
+              ? "Distribution of users by technical skill level"
+              : "Distribution of users by years of programming experience"}
           </CardDescription>
         </CardHeader>
         <CardContent>

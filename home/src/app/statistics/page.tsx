@@ -6,9 +6,8 @@ import { RefreshButton } from "@/components/analysis/refresh-button";
 import { Button } from "@/components/ui/button";
 import { StatisticsClient } from "@/components/statistics/statistics-client";
 import { AnalysisSkeleton } from "@/components/analysis/analysis-skeleton";
-
 async function StatisticsContent() {
-  const result = await fetchAnalysis();
+  const result = await fetchAnalysis({ protocolVersion: "v2_criteria" });
   return (
     <StatisticsClient initialData={result.data} initialError={result.error} />
   );

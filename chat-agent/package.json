@@ -5,9 +5,12 @@
   "private": true,
   "scripts": {
     "dev": "next dev --port 4000 --inspect",
+    "prebuild": "bun scripts/generate-openui-prompt.mts",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "test": "jest",
+    "generate:openui-prompt": "bun scripts/generate-openui-prompt.mts"
   },
   "dependencies": {
     "@ai-sdk/google": "^3.0.1",
@@ -15,7 +18,9 @@
     "@ai-sdk/react": "^3.0.3",
     "@bprogress/next": "^3.2.12",
     "@hookform/resolvers": "^5.2.2",
+    "@openuidev/react-lang": "^0.2.6",
     "@radix-ui/react-avatar": "^1.1.11",
+    "@radix-ui/react-collapsible": "^1.1.12",
     "@radix-ui/react-dialog": "^1.1.15",
     "@radix-ui/react-dropdown-menu": "^2.1.16",
     "@radix-ui/react-label": "^2.1.8",

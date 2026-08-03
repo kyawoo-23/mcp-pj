@@ -34,6 +34,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { useWarnIfUnsavedChanges } from "@/hooks/use-warn-if-unsaved-changes";
+import { CURRENT_STUDY_PROTOCOL_VERSION } from "@/utils/study-protocol";
 
 const SURVEY_CONFIG: Record<string, { title: string; description: string }> = {
   SUS: {
@@ -171,6 +172,7 @@ export function ChatAgentSurvey({
       const entries = Object.entries(responses).map(([questionId, value]) => ({
         session_id: session.id,
         question_id: questionId,
+        protocol_version: CURRENT_STUDY_PROTOCOL_VERSION,
         response_value: Number.isNaN(Number(value)) ? null : Number(value),
         response_text: Number.isNaN(Number(value)) ? value : null,
       }));
@@ -178,7 +180,9 @@ export function ChatAgentSurvey({
       if (entries.length) {
         const { error } = await supabase
           .from("task_survey_responses")
-          .upsert(entries, { onConflict: "session_id,question_id" });
+          .upsert(entries, {
+            onConflict: "session_id,question_id,protocol_version",
+          });
         if (error) {
           toast.error("Failed to save survey responses", {
             description: error.message,

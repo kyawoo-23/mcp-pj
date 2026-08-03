@@ -12,6 +12,12 @@ import { revalidatePath } from "next/cache";
 import { AVAILABLE_TOOLS } from "@/lib/tool-definitions";
 import { getTaskSessionByUser, recordTaskEvent } from "@/lib/task-mode-server";
 import { createMCPClient, type MCPClient } from "@ai-sdk/mcp";
+import {
+  messagePartFromUIPart,
+  stripDisplayOnlyPartsForModel,
+} from "@/lib/chat-message-parts";
+import { OPENUI_RENDERING_ENABLED } from "@/lib/openui/openui-config";
+import { getOpenUISystemPrompt } from "@/lib/openui/openui-system-prompt";
 
 // Allow streaming responses up to 30 seconds
 export const maxDuration = 30;
@@ -54,7 +60,10 @@ export async function POST(req: Request) {
       allTools = await mcpClient.tools();
       console.log("✅ Using MCP tools from:", process.env.MCP_SERVER_URL);
     } catch (error) {
-      console.error("❌ MCP connection failed, falling back to direct tools:", error);
+      console.error(
+        "❌ MCP connection failed, falling back to direct tools:",
+        error,
+      );
       allTools = createTools(supabase);
     }
   } else {
@@ -103,7 +112,7 @@ export async function POST(req: Request) {
         JSON.stringify({
           error: "Failed to create user profile. Please complete your profile.",
         }),
-        { status: 500, headers: { "Content-Type": "application/json" } }
+        { status: 500, headers: { "Content-Type": "application/json" } },
       );
     }
     profile = newProfile;
@@ -123,7 +132,7 @@ export async function POST(req: Request) {
   const taskSession = await getTaskSessionByUser(
     supabase,
     user.id,
-    "chat_agent"
+    "chat_agent",
   );
   const lastMessage = messages[messages.length - 1];
   if (
@@ -132,7 +141,7 @@ export async function POST(req: Request) {
     lastMessage?.role === "user"
   ) {
     const textParts = (lastMessage.parts || []).filter(
-      (p): p is { type: "text"; text: string } => p.type === "text"
+      (p): p is { type: "text"; text: string } => p.type === "text",
     );
     const content = textParts.map((p) => p.text).join("\n");
     await recordTaskEvent(supabase, taskSession.id, "turn", "user_message", {
@@ -144,16 +153,12 @@ export async function POST(req: Request) {
   // Save the last user message to database
   if (lastMessage && lastMessage.role === "user") {
     const textParts = (lastMessage.parts || []).filter(
-      (p): p is { type: "text"; text: string } => p.type === "text"
+      (p): p is { type: "text"; text: string } => p.type === "text",
     );
     const content = textParts.map((p) => p.text).join("\n");
-    const parts: MessagePart[] = (lastMessage.parts || []).map((p) => {
-      if (p.type === "text") {
-        return { type: "text", text: p.text };
-      }
-      // Preserve other part types as-is
-      return p as MessagePart;
-    });
+    const parts: MessagePart[] = (lastMessage.parts || [])
+      .map(messagePartFromUIPart)
+      .filter((part): part is MessagePart => part !== null);
 
     try {
       await createMessage({
@@ -168,13 +173,15 @@ export async function POST(req: Request) {
   }
 
   // Convert UIMessage format (with parts) to CoreMessage format (with content)
-  const coreMessages = await convertToModelMessages(messages);
+  const coreMessages = await convertToModelMessages(
+    stripDisplayOnlyPartsForModel(messages),
+  );
   const systemPrompt = `
-    Current Date and Time: ${new Date().toLocaleString('en-US', { timeZone: 'Asia/Bangkok', weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' })}.
-    
+    Current Date and Time: ${new Date().toLocaleString("en-US", { timeZone: "Asia/Bangkok", weekday: "long", year: "numeric", month: "long", day: "numeric", hour: "2-digit", minute: "2-digit" })}.
+
     You are the Uni-Chat Agent, a friendly and helpful virtual assistant for university students.
     Your tone should be warm, conversational, and encouraging as if you are a supportive senior student or a helpful friend.
-    
+
     ${
       profile
         ? `You are talking to ${profile.full_name}. Their Student ID is ${
@@ -187,12 +194,37 @@ export async function POST(req: Request) {
     The student's internal UUID is "${profile?.id || "unknown"}".
     - You MUST use this UUID for all tool calls (bookings, registrations, fetching data).
     - You MUST NOT mention this UUID to the user. Only refer to them by their name or Student ID.
-    
+
+    HIDDEN METADATA CONVENTION:
+    User messages may end with a "(ref: {...})" block containing JSON with database IDs.
+    - Example: "I choose Study Room 201.\n\n(ref: {\"facilityId\":\"abc-123\"})"
+    - The (ref: ...) block contains the canonical IDs you must use for tool calls.
+    - Always use the IDs from (ref: ...) when present. Never guess or extract IDs from the human-readable part.
+    - Do NOT mention the (ref: ...) block or raw UUIDs in your replies to the user.
+
+    ASSISTANT INTENT BLOCK (REQUIRED for confirmations / choices):
+    Whenever you ask the user to confirm a mutation, OR ask them to pick between options,
+    append a single hidden JSON block at the very end of your reply (after all visible text):
+
+    (intent: {"action":"book_facility","slots":{"facilityId":"<uuid>","bookingDate":"YYYY-MM-DD","startTime":"HH:MM","endTime":"HH:MM"},"ui":"confirm","label":"Study Room 201 on 2026-05-29, 10:00-12:00"})
+
+    Rules for the intent block:
+    - action: one of book_facility | cancel_booking | register_course | drop_course | ask_choice | info
+    - slots: canonical IDs and normalized values from tool results only (never invent UUIDs)
+      - book_facility: facilityId, bookingDate (YYYY-MM-DD), startTime (HH:MM 24h), endTime (HH:MM 24h)
+      - cancel_booking: bookingId
+      - register_course | drop_course: sectionId
+    - ui: confirm | choose | none (metadata only — not shown in the UI; the user replies in plain text)
+    - label: optional short human-readable summary in the user's language (no UUIDs)
+    - Emit the block regardless of reply language. Do not mention or describe this block to the user.
+    - After a successful mutation tool call, use ui:"none" with the same action and slots.
+    - If a required slot is unknown, omit it rather than guessing.
+
     You have access to tools that can help students:
     ${AVAILABLE_TOOLS.map((tool) => `    - ${tool.name}: ${tool.description}`).join("\n")}
-    
+
     When a student asks about courses, facilities, or wants to make a booking/registration, USE THE TOOLS to help them.
-    
+
     RESPONSE STYLE GUIDELINES:
     - Be conversational! Avoid sounding like a form or robot.
     - Ask for missing information naturally (e.g., "What time works best for you?" instead of "Provide: Time").
@@ -207,23 +239,43 @@ export async function POST(req: Request) {
     - Reply in the user's language whenever possible, and keep terminology familiar to them. If the language is unclear, politely ask or default to the language they're already using.
 
     CRITICAL WORKFLOW RULES:
-    1. **Confirmation**: Before modifying data (booking/registering), YOU MUST explicitly ask for confirmation.
+    1. **Confirmation**: Before modifying data (booking, registering, dropping, or canceling), YOU MUST explicitly ask for confirmation.
        - Clear: "Shall I go ahead and book the Tennis Court for 5 PM?"
-       - Wait for a "Yes" or equivalent before calling the booking tool.
+       - Wait for a "Yes" or equivalent before calling any mutation tool.
 
     2. **Course Registration**:
-       - User gives Code/Name -> Call \`search_courses\` to get the course list.
+       - User gives Code/Name -> Call \`search_courses\` with a **narrow** query (prefer the course code, e.g. \`CS201\`). Do not list all courses when the user named a specific code.
        - From \`search_courses\`, take the selected course's \`id\` (UUID) and pass it as \`courseId\` into \`get_course_sections\`.
        - From \`get_course_sections\`, take the chosen section's \`id\` (UUID) and pass it as \`sectionId\` into \`register_course\` (and \`drop_course\`).
        - Never use course code/title or section number as IDs in tool calls.
-       - If multiple sections -> List them and ASK which one to pick.
-       - **NEVER** assume a section or auto-register without user selection.
+       - If the user already named **both** a course code and a section (e.g. "CS201 Section A"):
+         - Still call \`search_courses\` and \`get_course_sections\` to resolve UUIDs.
+         - In your reply, **do not** repeat full course catalogs or every section—summarize only the matching section and ask for confirmation.
+         - Treat their stated section as their selection; do not ask them to pick again from a list.
+       - If multiple sections and the user did **not** name one -> List them and ASK which to pick.
+       - **NEVER** auto-register without explicit confirmation ("Yes" or equivalent).
+
+    2b. **Course Drop**:
+       - User wants to drop -> Call \`get_student_registrations\` to find their enrollment (use \`sectionId\` for \`drop_course\`).
+       - Do **not** use \`get_course_sections\` for drops unless registrations lookup fails.
+       - If the user named **course code + section**, match that enrollment, summarize once, and ask for confirmation—do not repeat the same details twice.
 
     3. **Facility Booking**:
-       - User gives Name -> Call \`search_facilities\` to get the facility list.
+       - Facilities are stored with **English** names (e.g. \`Study Room 202\`, room \`202\`). When the user names a facility in any language, **you** map it to that canonical English name or room number before calling \`search_facilities\`—never pass their verbatim non-English label as the query.
+       - User gives Name -> Call \`search_facilities\` with a **narrow** canonical query (English name or room number). Do not list all facilities when the user named a specific facility.
+       - If search returns no rows, retry with room number only, or \`type\` (e.g. \`study_room\`) plus room number, before saying the facility does not exist.
        - Use the exact \`id\` (UUID) from the search result when calling \`book_facility\`—never use facility name as facilityId.
        - Then ask for Date/Time if missing.
-       - confirm details -> call \`book_facility\`.
+       - If the user already named **facility + date + start/end time**:
+         - Still call \`search_facilities\` to resolve the UUID.
+         - In your reply, summarize only that booking request and ask for confirmation.
+         - Do not show or describe every facility; do not ask them to choose the same facility again.
+       - Confirm details -> call \`book_facility\`.
+
+    4. **Booking Cancellation**:
+       - User wants to cancel -> Call \`get_student_bookings\` to find their booking (use \`bookingId\` for \`cancel_booking\`).
+       - If the user named **facility + date + start/end time**, match that booking, summarize once, and ask for confirmation.
+       - Do not list all bookings or repeat the same booking details twice when there is one clear match.
 
     OPTIMIZATION INSTRUCTION:
     - BE CONCISE AND DIRECT.
@@ -231,8 +283,16 @@ export async function POST(req: Request) {
     - Think efficiently.
   `;
 
+  // Render-only OpenUI: append the OpenUI Lang instructions only when the
+  // feature flag is on. Tool execution stays on the normal chat + MCP path.
+  const finalSystemPrompt = OPENUI_RENDERING_ENABLED
+    ? `${systemPrompt}\n\n${getOpenUISystemPrompt()}`
+    : systemPrompt;
+
   const result = streamText({
-    model: google(`models/${process.env.NEXT_PUBLIC_GOOGLE_GENERATIVE_MODEL_ID || "gemini-2.5-flash"}`),
+    model: google(
+      `models/${process.env.NEXT_PUBLIC_GOOGLE_GENERATIVE_MODEL_ID || "gemini-2.5-flash"}`,
+    ),
     providerOptions: {
       google: {
         thinkingConfig: {
@@ -241,62 +301,33 @@ export async function POST(req: Request) {
         },
       } satisfies GoogleGenerativeAIProviderOptions,
     },
-    system: systemPrompt,
+    system: finalSystemPrompt,
     messages: coreMessages,
     tools: allTools,
     stopWhen: stepCountIs(5), // Allow up to 5 tool call steps
-    onFinish: async ({ text, toolCalls, toolResults }) => {
-      // Save assistant response to database
+  });
+
+  // Return response with conversationId in headers
+  const response = result.toUIMessageStreamResponse({
+    originalMessages: stripDisplayOnlyPartsForModel(messages),
+    onFinish: async ({ responseMessage }) => {
       try {
-        const parts: MessagePart[] = [{ type: "text", text }];
-
-        // Add tool invocations if any
-        if (toolCalls && toolCalls.length > 0) {
-          for (let i = 0; i < toolCalls.length; i++) {
-            const toolCall = toolCalls[i];
-            const toolResult = toolResults?.[i];
-
-            // Extract input from toolCall - it may be in different formats
-            const input =
-              "args" in toolCall
-                ? (toolCall.args as Record<string, unknown>)
-                : "input" in toolCall
-                ? (toolCall.input as Record<string, unknown>)
-                : {};
-
-            // Extract result/error from toolResult
-            const result =
-              toolResult && "result" in toolResult
-                ? toolResult.result
-                : toolResult && "output" in toolResult
-                ? toolResult.output
-                : undefined;
-            const error =
-              toolResult && "error" in toolResult
-                ? String(toolResult.error)
-                : undefined;
-
-            parts.push({
-              type: "tool-invocation",
-              toolCallId: toolCall.toolCallId,
-              toolName: toolCall.toolName,
-              input,
-              state: error
-                ? "output-error"
-                : result !== undefined
-                ? "output-available"
-                : "input-available",
-              output: result,
-              errorText: error,
-            });
-          }
-        }
+        const parts: MessagePart[] = (responseMessage.parts || [])
+          .map(messagePartFromUIPart)
+          .filter((part): part is MessagePart => part !== null);
+        const text = parts
+          .filter(
+            (part): part is { type: "text"; text: string } =>
+              part.type === "text",
+          )
+          .map((part) => part.text)
+          .join("");
 
         await createMessage({
           conversationId: currentConversationId,
           role: "assistant",
           content: text,
-          parts,
+          parts: parts.length > 0 ? parts : [{ type: "text", text }],
         });
 
         // Auto-generate conversation title from first user message if title is null
@@ -304,7 +335,7 @@ export async function POST(req: Request) {
           const firstUserMessage = messages.find((m) => m.role === "user");
           if (firstUserMessage) {
             const textParts = (firstUserMessage.parts || []).filter(
-              (p): p is { type: "text"; text: string } => p.type === "text"
+              (p): p is { type: "text"; text: string } => p.type === "text",
             );
             const titleText = textParts
               .map((p) => p.text)
@@ -314,7 +345,7 @@ export async function POST(req: Request) {
               await updateConversationTitle(
                 currentConversationId,
                 user.id,
-                titleText
+                titleText,
               );
               revalidatePath("/");
             }
@@ -323,14 +354,10 @@ export async function POST(req: Request) {
       } catch (error) {
         console.error("Failed to save assistant message:", error);
       } finally {
-        // Clean up MCP client connection
         await closeMcpClient();
       }
     },
   });
-
-  // Return response with conversationId in headers
-  const response = result.toUIMessageStreamResponse();
   response.headers.set("X-Conversation-Id", currentConversationId);
   return response;
 }

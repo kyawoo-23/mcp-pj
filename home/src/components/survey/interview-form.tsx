@@ -26,6 +26,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { useWarnIfUnsavedChanges } from "@/hooks/use-warn-if-unsaved-changes";
+import { CURRENT_STUDY_PROTOCOL_VERSION } from "@/utils/study-protocol";
 
 interface InterviewFormProps {
   interviewQuestions: InterviewQuestionRow[];
@@ -112,13 +113,14 @@ export function InterviewForm({
         ([questionId, responseText]) => ({
           user_id: user.id,
           question_id: questionId,
+          protocol_version: CURRENT_STUDY_PROTOCOL_VERSION,
           response_text: responseText,
         }),
       );
 
       const { error } = await supabase
         .from("task_interview_responses")
-        .upsert(entries, { onConflict: "user_id,question_id" });
+        .upsert(entries, { onConflict: "user_id,question_id,protocol_version" });
 
       if (error) {
         toast.error("Failed to save interview responses", {

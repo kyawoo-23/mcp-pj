@@ -66,9 +66,9 @@ export default function ResetPassword() {
 
       toast.success("Password updated successfully 🎉");
       router.push(Routes.login);
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error(error);
-      toast.error(error.message || "Something went wrong.");
+      toast.error(error instanceof Error ? error.message : "Something went wrong.");
     } finally {
       setLoading(false);
     }

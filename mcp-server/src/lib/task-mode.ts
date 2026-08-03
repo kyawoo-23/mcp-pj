@@ -1,5 +1,6 @@
 import { SupabaseClient } from "@supabase/supabase-js";
 import { Database, Json } from "../../../supabase/types/database.types";
+import { CURRENT_STUDY_PROTOCOL_VERSION } from "./study-protocol.js";
 
 type SystemType = Database["public"]["Enums"]["system_type"];
 type TaskEventType = Database["public"]["Enums"]["task_event_type"];
@@ -75,6 +76,7 @@ export async function recordTaskCompletion(
     .select("status, started_at")
     .eq("session_id", session.id)
     .eq("task_definition_id", taskDefinition.id)
+    .eq("protocol_version", CURRENT_STUDY_PROTOCOL_VERSION)
     .maybeSingle();
 
   // Only mark as completed if task is currently in progress
@@ -92,18 +94,19 @@ export async function recordTaskCompletion(
   const now = new Date().toISOString();
   const nextStatus: TaskProgressStatus = "completed";
 
-  await supabase.from("task_progress").upsert(
-    {
-      session_id: session.id,
-      task_definition_id: taskDefinition.id,
+  // Use UPDATE (not upsert) so Supabase Realtime emits a clear UPDATE event.
+  await supabase
+    .from("task_progress")
+    .update({
       status: nextStatus,
       started_at: existingProgress?.started_at ?? session.started_at ?? now,
       completed_at: now,
       success_payload: successPayload,
       updated_at: now,
-    },
-    { onConflict: "session_id,task_definition_id" }
-  );
+    })
+    .eq("session_id", session.id)
+    .eq("task_definition_id", taskDefinition.id)
+    .eq("protocol_version", CURRENT_STUDY_PROTOCOL_VERSION);
 
   await recordTaskEvent(supabase, session.id, "system", "task_completed", {
     task_code: taskCode,

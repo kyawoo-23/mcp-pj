@@ -3,8 +3,10 @@ import { Inter, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { cn } from "@/lib/utils";
 import { ThemeProvider } from "@/components/theme-provider";
+import { PreviewEnvironmentBanner } from "@/components/preview-environment-banner";
 import { Toaster } from "@/components/ui/sonner";
 import Providers from "@/app/providers";
+import { isPreviewEnvironment } from "@/lib/preview-environment";
 
 const inter = Inter({
   variable: "--font-inter",
@@ -26,6 +28,8 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const isPreview = isPreviewEnvironment();
+
   return (
     <html lang='en' suppressHydrationWarning>
       <body
@@ -35,6 +39,7 @@ export default function RootLayout({
           geistMono.variable,
         )}
       >
+        <PreviewEnvironmentBanner show={isPreview} />
         <ThemeProvider
           attribute='class'
           defaultTheme='system'

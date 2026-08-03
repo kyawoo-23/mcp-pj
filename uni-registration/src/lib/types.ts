@@ -17,6 +17,7 @@ export type StudentRegistrationInsert = Database["public"]["Tables"]["student_re
 export type StudentRegistrationUpdate = Database["public"]["Tables"]["student_registrations"]["Update"];
 
 export type Profile = Database["public"]["Tables"]["profiles"]["Row"];
+export type ProfileRow = Profile;
 export type ProfileInsert = Database["public"]["Tables"]["profiles"]["Insert"];
 export type ProfileUpdate = Database["public"]["Tables"]["profiles"]["Update"];
 

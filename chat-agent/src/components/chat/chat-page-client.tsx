@@ -14,11 +14,6 @@ import type {
   MessageRole,
   ChatMessageData,
   MessagePart,
-  TextPart,
-  ToolInvocationPart,
-  AIMessagePart,
-  AITextPart,
-  AIToolPart,
   MessageRow,
   ConversationWithCount,
 } from "@/lib/types";
@@ -27,6 +22,11 @@ import {
   getConversationWithMessagesAction,
 } from "@/app/actions/conversations";
 import { toast } from "sonner";
+import { getBusyCaptionFromChatMessages } from "@/lib/chat-activity";
+import {
+  messagePartFromUIPart,
+  messageRowToUIMessage,
+} from "@/lib/chat-message-parts";
 
 interface ChatPageClientProps {
   initialConversations: ConversationWithCount[];
@@ -34,6 +34,53 @@ interface ChatPageClientProps {
   initialMessages?: MessageRow[];
   defaultCollapsed?: boolean;
   userProfile?: { full_name: string; email: string };
+}
+
+function getInitialMessagesSignature(messages: MessageRow[]): string {
+  return messages
+    .map((message) => {
+      const partsSize =
+        typeof message.parts === "string"
+          ? message.parts.length
+          : JSON.stringify(message.parts ?? []).length;
+      return `${message.id}:${partsSize}`;
+    })
+    .join("|");
+}
+
+function hasToolInvocationParts(
+  messages: Array<{ parts?: unknown[] }>,
+): boolean {
+  return messages.some((message) =>
+    message.parts?.some(
+      (part) => messagePartFromUIPart(part)?.type === "tool-invocation",
+    ),
+  );
+}
+
+function deriveConversationTitleFromMessage(
+  message:
+    | {
+        parts?: Array<{ type: string; text?: string }>;
+      }
+    | undefined,
+): string | null {
+  if (!message || !message.parts || message.parts.length === 0) {
+    return null;
+  }
+
+  const text = message.parts
+    .filter(
+      (part): part is { type: "text"; text: string } =>
+        part.type === "text" && typeof part.text === "string",
+    )
+    .map((part) => part.text.trim())
+    .filter(Boolean)
+    .join(" ")
+    .slice(0, 50)
+    .trim();
+
+  return text.length > 0 ? text : null;
 }
 
 export function ChatPageClient({
@@ -73,19 +120,14 @@ export function ChatPageClient({
     status,
     setMessages,
   } = useChat({
-    onFinish: () => {
-      // If this was the first exchange (User + AI = 2 messages),
-      // refresh to get the auto-generated title
-      // We check the ref because onFinish doesn't receive updated messages in this version
-      if (messagesRef.current && messagesRef.current.length === 2) {
-        // Refresh to validte the new title
-        router.refresh();
-      }
-    },
+    // Keep streamed messages as the source of truth after a response.
+    // A router refresh can race the server-side message persistence and replace
+    // rich tool parts with stale text-only rows.
   });
 
   // Keep messagesRef in sync with messages
   const messagesRef = React.useRef(messages);
+  const initialHydrationSignatureRef = React.useRef<string | null>(null);
   React.useEffect(() => {
     messagesRef.current = messages;
   }, [messages]);
@@ -110,16 +152,50 @@ export function ChatPageClient({
 
   // Initialize messages from initialMessages prop
   React.useEffect(() => {
-    if (initialMessages.length > 0 && activeConversationId) {
-      setMessages(
-        initialMessages.map((m) => ({
-          id: m.id,
-          role: m.role as MessageRole,
-          parts: [{ type: "text" as const, text: m.content }],
-        })),
-      );
+    if (initialMessages.length === 0 || !activeConversationId) {
+      return;
     }
-  }, []); // Only run on mount
+
+    const signature = `${activeConversationId}:${getInitialMessagesSignature(
+      initialMessages,
+    )}`;
+    if (initialHydrationSignatureRef.current === signature) {
+      return;
+    }
+
+    const hydratedMessages = initialMessages.map(messageRowToUIMessage);
+    const currentMessages = messagesRef.current;
+    const isSameConversation =
+      activeConversationId === initialActiveConversationId;
+    const currentHasToolParts = hasToolInvocationParts(currentMessages);
+    const incomingHasToolParts = hasToolInvocationParts(hydratedMessages);
+
+    // Do not let a router refresh replace the just-streamed tool UI with stale
+    // server props. Full page reloads still hydrate because currentMessages is empty.
+    if (
+      isSameConversation &&
+      currentMessages.length >= hydratedMessages.length &&
+      currentHasToolParts &&
+      !incomingHasToolParts
+    ) {
+      return;
+    }
+
+    if (
+      isSameConversation &&
+      currentMessages.length > hydratedMessages.length
+    ) {
+      return;
+    }
+
+    setMessages(hydratedMessages);
+    initialHydrationSignatureRef.current = signature;
+  }, [
+    activeConversationId,
+    initialActiveConversationId,
+    initialMessages,
+    setMessages,
+  ]);
 
   // Update conversations when initialConversations prop changes (e.g. after router.refresh())
   React.useEffect(() => {
@@ -162,6 +238,8 @@ export function ChatPageClient({
       };
 
       try {
+        const derivedTitle = deriveConversationTitleFromMessage(message);
+
         await originalSendMessage(message);
         // Update conversationId if we got a new one from the response
         if (
@@ -169,16 +247,62 @@ export function ChatPageClient({
           responseConversationId !== activeConversationId
         ) {
           setActiveConversationId(responseConversationId);
-          // Refresh page to get updated conversations
-          router.push(`/c/${responseConversationId}`);
-          router.refresh();
+          // Avoid a full route refresh here: it can race message persistence and
+          // briefly reload text-only rows and disturb in-flight streaming UI.
+          window.history.replaceState(null, "", `/c/${responseConversationId}`);
         }
+
+        const targetConversationId =
+          responseConversationId ?? activeConversationId;
+        if (!targetConversationId) {
+          return;
+        }
+
+        setConversations((prev) => {
+          const existingIndex = prev.findIndex(
+            (conversation) => conversation.id === targetConversationId,
+          );
+
+          if (existingIndex === -1) {
+            return [
+              {
+                id: targetConversationId,
+                user_id: "",
+                title: derivedTitle,
+                created_at: new Date().toISOString(),
+                updated_at: new Date().toISOString(),
+                messages: [{ count: 1 }] as [{ count: number }],
+              },
+              ...prev,
+            ];
+          }
+
+          const existing = prev[existingIndex];
+          const nextCount = Math.max(existing.messages?.[0]?.count ?? 0, 1);
+          const shouldUpdateTitle = !existing.title && !!derivedTitle;
+          const shouldUpdateCount = (existing.messages?.[0]?.count ?? 0) === 0;
+
+          if (!shouldUpdateTitle && !shouldUpdateCount) {
+            return prev;
+          }
+
+          const updated = {
+            ...existing,
+            title: shouldUpdateTitle ? derivedTitle : existing.title,
+            updated_at: new Date().toISOString(),
+            messages: [{ count: nextCount }] as [{ count: number }],
+          };
+
+          return prev.map((conversation, index) =>
+            index === existingIndex ? updated : conversation,
+          );
+        });
       } finally {
         // Restore original fetch
         globalThis.fetch = originalFetch;
       }
     },
-    [originalSendMessage, activeConversationId, router],
+    [originalSendMessage, activeConversationId],
   );
 
   // Load messages when conversation changes
@@ -206,13 +330,7 @@ export function ChatPageClient({
           setMessages([]);
           return;
         }
-        setMessages(
-          data.messages.map((m) => ({
-            id: m.id,
-            role: m.role as MessageRole,
-            parts: [{ type: "text" as const, text: m.content }],
-          })),
-        );
+        setMessages(data.messages.map(messageRowToUIMessage));
       } catch (error) {
         console.error("Failed to load conversation:", error);
         setMessages([]);
@@ -220,17 +338,25 @@ export function ChatPageClient({
     };
 
     loadConversation();
-  }, [activeConversationId, setMessages]);
+  }, [
+    activeConversationId,
+    initialActiveConversationId,
+    initialMessages.length,
+    setMessages,
+  ]);
 
-  const handleSendMessage = async (content: string) => {
-    await sendMessage(
-      {
-        role: "user",
-        parts: [{ type: "text", text: content }],
-      },
-      { conversationId: activeConversationId || undefined },
-    );
-  };
+  const handleSendMessage = React.useCallback(
+    async (content: string) => {
+      await sendMessage(
+        {
+          role: "user",
+          parts: [{ type: "text", text: content }],
+        },
+        { conversationId: activeConversationId || undefined },
+      );
+    },
+    [sendMessage, activeConversationId],
+  );
 
   const handleNewChat = async () => {
     // Check if we already have a new conversation (empty messages)
@@ -281,27 +407,8 @@ export function ChatPageClient({
 
   // Transform AI SDK messages to our ChatMessageData format
   const transformedMessages: ChatMessageData[] = messages.map((m) => {
-    const parts: MessagePart[] = (m.parts as AIMessagePart[])
-      .map((p): MessagePart | null => {
-        if (p.type === "text") {
-          return { type: "text", text: (p as AITextPart).text } as TextPart;
-        }
-        // Handle tool parts - they have type like "tool-search_courses"
-        if (p.type.startsWith("tool-")) {
-          const toolName = p.type.replace("tool-", "");
-          const toolPart = p as AIToolPart;
-          return {
-            type: "tool-invocation",
-            toolCallId: toolPart.toolCallId,
-            toolName: toolName,
-            input: toolPart.input || {},
-            state: toolPart.state,
-            output: toolPart.output,
-            errorText: toolPart.errorText,
-          } as ToolInvocationPart;
-        }
-        return null;
-      })
+    const parts: MessagePart[] = (m.parts ?? [])
+      .map(messagePartFromUIPart)
       .filter((p): p is MessagePart => p !== null);
 
     return {
@@ -327,6 +434,11 @@ export function ChatPageClient({
     (c) => c.messages && c.messages[0] && c.messages[0].count === 0,
   );
 
+  const busyCaption = React.useMemo(
+    () => getBusyCaptionFromChatMessages(messages, status),
+    [messages, status],
+  );
+
   return (
     <ChatLayout
       sidebarOpen={sidebarOpen}
@@ -349,9 +461,10 @@ export function ChatPageClient({
         title={activeConversation?.title || "New Chat"}
         onMobileMenuToggle={() => setSidebarOpen(true)}
         status={status}
+        busyCaption={busyCaption}
       />
 
-      <div className='flex flex-1 flex-col min-h-0 overflow-hidden'>
+      <div className="flex flex-1 flex-col min-h-0 overflow-hidden">
         <ChatMessageList
           messages={transformedMessages}
           onPromptSelect={(prompt) => {
@@ -360,6 +473,7 @@ export function ChatPageClient({
           }}
           isLoading={isLoading}
           status={status}
+          pendingCaption={busyCaption}
         />
 
         <ChatInput

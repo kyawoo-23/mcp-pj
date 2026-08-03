@@ -2,6 +2,17 @@ import type { Database, Json } from "../../../supabase/types/database.types";
 
 export type ProfileRow = Database["public"]["Tables"]["profiles"]["Row"];
 export type TaskSessionRow = Database["public"]["Tables"]["task_sessions"]["Row"];
+export type TaskAssignmentSetRow = Database["public"]["Tables"]["task_assignment_sets"]["Row"];
+export type TaskUserAssignmentRow = Database["public"]["Tables"]["task_user_assignments"]["Row"];
+
+export type UserAssignmentWithSet = {
+  id: string;
+  task_assignment_sets: {
+    id: string;
+    set_label: string;
+    targets: Json;
+  };
+};
 export type TaskDefinitionRow =
   Database["public"]["Tables"]["task_definitions"]["Row"];
 export type TaskProgressRow = Database["public"]["Tables"]["task_progress"]["Row"];
