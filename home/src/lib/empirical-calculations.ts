@@ -28,8 +28,8 @@ export function getAdvancedPayload(
     protocolVersion === "v1_simple"
       ? { dimension: "technical_proficiency" as const, values: ["advanced"] }
       : {
-          dimension: "programming_experience" as const,
-          values: ["three_plus_years"],
+          dimension: "technical_experience" as const,
+          values: ["more_than_three_years"],
         };
   return filterPayloadByDemographics(payload, [criteria]);
 }
@@ -55,11 +55,12 @@ export function getAdvancedSubgroupCopy(
     };
   }
   return {
-    tabLabel: "3+ Years Programming",
-    chartShortLabel: "3+ Yrs Programming",
-    introLongLabel: "3+ years of programming experience",
-    susFindingLead: "participants with 3+ years of programming experience",
-    susFindingTail: "Experienced programmers",
+    tabLabel: ">3 yrs technical",
+    chartShortLabel: ">3 yrs technical",
+    introLongLabel: "more than 3 years of technical/computer experience",
+    susFindingLead:
+      "participants with more than 3 years of technical/computer experience",
+    susFindingTail: "Experienced participants",
   };
 }
 

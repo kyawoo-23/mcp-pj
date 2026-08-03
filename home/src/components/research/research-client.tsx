@@ -38,7 +38,7 @@ export function ResearchClient({
   data,
 }: ResearchClientProps) {
   const skillChartMode: SkillChartMode =
-    protocolVersion === "v1_simple" ? "technical" : "programming";
+    protocolVersion === "v1_simple" ? "technical" : "years";
   const advancedSubgroupCopy = getAdvancedSubgroupCopy(protocolVersion);
 
   const advancedCriteria = useMemo(
@@ -47,8 +47,8 @@ export function ResearchClient({
         ? [{ dimension: "technical_proficiency" as const, values: ["advanced"] }]
         : [
             {
-              dimension: "programming_experience" as const,
-              values: ["three_plus_years"],
+              dimension: "technical_experience" as const,
+              values: ["more_than_three_years"],
             },
           ],
     [protocolVersion],

@@ -1,7 +1,7 @@
 import {
   getAgeRangeLabel,
   getGenderLabel,
-  getProgrammingExperienceLabel,
+  getTechnicalExperienceLabel,
   getTechnicalProficiencyLabel,
   getAiToolFrequencyLabel,
 } from "@/utils/constants";
@@ -12,7 +12,7 @@ export type DemographicsState = Pick<
   | "age_range"
   | "gender"
   | "technical_proficiency"
-  | "programming_experience"
+  | "technical_experience"
   | "ai_tool_frequency"
 >;
 
@@ -28,9 +28,9 @@ export const DEMOGRAPHIC_FIELDS: Array<{
   { key: "age_range", label: "Age range", format: getAgeRangeLabel },
   { key: "gender", label: "Gender", format: getGenderLabel },
   {
-    key: "programming_experience",
-    label: "Programming experience",
-    format: getProgrammingExperienceLabel,
+    key: "technical_experience",
+    label: "Years-based technical proficiency",
+    format: getTechnicalExperienceLabel,
   },
   {
     key: "ai_tool_frequency",
@@ -39,7 +39,7 @@ export const DEMOGRAPHIC_FIELDS: Array<{
   },
   {
     key: "technical_proficiency",
-    label: "Technical proficiency",
+    label: "Subjective technical proficiency",
     format: getTechnicalProficiencyLabel,
   },
 ];

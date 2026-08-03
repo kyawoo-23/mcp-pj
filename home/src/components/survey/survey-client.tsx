@@ -20,7 +20,7 @@ import { TraditionalSurvey } from "@/components/survey/traditional-survey";
 import { InterviewForm } from "@/components/survey/interview-form";
 import { SurveySection } from "@/components/survey/survey-section";
 import { DemographicsForm } from "@/components/survey/demographics-form";
-import { ProgrammingExperiencePrompt } from "@/components/survey/programming-experience-prompt";
+import { TechnicalExperiencePrompt } from "@/components/survey/technical-experience-prompt";
 import { useSurveyData } from "@/hooks/use-survey-data";
 import { SurveyNavbar } from "@/components/survey/survey-navbar";
 import { CriteriaMigrationNotice } from "@/components/survey/criteria-migration-notice";
@@ -42,7 +42,7 @@ interface SurveyPageClientProps {
     | "id"
     | "age_range"
     | "gender"
-    | "programming_experience"
+    | "technical_experience"
     | "ai_tool_frequency"
   > | null;
   sessions: TaskSessionRow[];
@@ -95,8 +95,8 @@ export function SurveyPageClient({
     savingDemographics,
     startingSurvey,
     requiresDemographics,
-    requiresProgrammingExperience,
-    saveProgrammingExperience,
+    requiresTechnicalExperience,
+    saveTechnicalExperience,
 
     // Derived data
     tasksBySystem,
@@ -256,17 +256,17 @@ export function SurveyPageClient({
         ) : null}
         <div className='p-6'>
           <div className='mx-auto w-full max-w-5xl'>
-            {requiresProgrammingExperience ? (
-              <ProgrammingExperiencePrompt
+            {requiresTechnicalExperience ? (
+              <TechnicalExperiencePrompt
                 saving={savingDemographics}
-                onSave={saveProgrammingExperience}
+                onSave={saveTechnicalExperience}
               />
             ) : (
               <DemographicsForm
                 initialAgeRange={profileState?.age_range ?? null}
                 initialGender={profileState?.gender ?? null}
-                initialProgrammingExperience={
-                  profileState?.programming_experience ?? null
+                initialTechnicalExperience={
+                  profileState?.technical_experience ?? null
                 }
                 initialAiToolFrequency={profileState?.ai_tool_frequency ?? null}
                 saving={savingDemographics}
