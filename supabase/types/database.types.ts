@@ -293,12 +293,12 @@ export type Database = {
           gender: Database["public"]["Enums"]["gender_identity"] | null
           id: string
           migrated_from_simple_tasks_at: string | null
-          programming_experience:
-            | Database["public"]["Enums"]["programming_experience"]
-            | null
           role: Database["public"]["Enums"]["user_role"]
           student_id: string | null
           study_protocol_version: Database["public"]["Enums"]["study_protocol_version"]
+          technical_experience:
+            | Database["public"]["Enums"]["technical_experience"]
+            | null
           technical_proficiency:
             | Database["public"]["Enums"]["technical_proficiency"]
             | null
@@ -316,12 +316,12 @@ export type Database = {
           gender?: Database["public"]["Enums"]["gender_identity"] | null
           id: string
           migrated_from_simple_tasks_at?: string | null
-          programming_experience?:
-            | Database["public"]["Enums"]["programming_experience"]
-            | null
           role?: Database["public"]["Enums"]["user_role"]
           student_id?: string | null
           study_protocol_version?: Database["public"]["Enums"]["study_protocol_version"]
+          technical_experience?:
+            | Database["public"]["Enums"]["technical_experience"]
+            | null
           technical_proficiency?:
             | Database["public"]["Enums"]["technical_proficiency"]
             | null
@@ -339,12 +339,12 @@ export type Database = {
           gender?: Database["public"]["Enums"]["gender_identity"] | null
           id?: string
           migrated_from_simple_tasks_at?: string | null
-          programming_experience?:
-            | Database["public"]["Enums"]["programming_experience"]
-            | null
           role?: Database["public"]["Enums"]["user_role"]
           student_id?: string | null
           study_protocol_version?: Database["public"]["Enums"]["study_protocol_version"]
+          technical_experience?:
+            | Database["public"]["Enums"]["technical_experience"]
+            | null
           technical_proficiency?:
             | Database["public"]["Enums"]["technical_proficiency"]
             | null
@@ -834,11 +834,6 @@ export type Database = {
         | "other"
       gender_identity: "female" | "male" | "prefer_not_say"
       message_role: "user" | "assistant" | "system"
-      programming_experience:
-        | "none"
-        | "under_1_year"
-        | "one_to_two_years"
-        | "three_plus_years"
       registration_status: "active" | "dropped" | "completed" | "waitlisted"
       study_protocol_version: "v1_simple" | "v2_criteria"
       survey_construct:
@@ -853,6 +848,11 @@ export type Database = {
       task_event_type: "step" | "turn" | "survey" | "interview" | "system"
       task_progress_status: "not_started" | "in_progress" | "completed"
       task_session_status: "not_started" | "in_progress" | "completed"
+      technical_experience:
+        | "none"
+        | "under_1_year"
+        | "one_to_three_years"
+        | "more_than_three_years"
       technical_proficiency: "none" | "limited" | "moderate" | "advanced"
       user_role: "student" | "admin"
     }
@@ -1007,12 +1007,6 @@ export const Constants = {
       ],
       gender_identity: ["female", "male", "prefer_not_say"],
       message_role: ["user", "assistant", "system"],
-      programming_experience: [
-        "none",
-        "under_1_year",
-        "one_to_two_years",
-        "three_plus_years",
-      ],
       registration_status: ["active", "dropped", "completed", "waitlisted"],
       study_protocol_version: ["v1_simple", "v2_criteria"],
       survey_construct: [
@@ -1028,6 +1022,12 @@ export const Constants = {
       task_event_type: ["step", "turn", "survey", "interview", "system"],
       task_progress_status: ["not_started", "in_progress", "completed"],
       task_session_status: ["not_started", "in_progress", "completed"],
+      technical_experience: [
+        "none",
+        "under_1_year",
+        "one_to_three_years",
+        "more_than_three_years",
+      ],
       technical_proficiency: ["none", "limited", "moderate", "advanced"],
       user_role: ["student", "admin"],
     },

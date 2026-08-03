@@ -28,7 +28,7 @@ type ProfileRow = {
   age_range: string | null
   gender: string | null
   technical_proficiency: string | null
-  programming_experience: string | null
+  technical_experience: string | null
   ai_tool_frequency: string | null
   created_at: string
 }
@@ -259,7 +259,7 @@ Deno.serve(async (req) => {
       supabase
         .from("profiles")
         .select(
-          "id, age_range, gender, technical_proficiency, programming_experience, ai_tool_frequency, created_at",
+          "id, age_range, gender, technical_proficiency, technical_experience, ai_tool_frequency, created_at",
         )
         .limit(100000),
       supabase

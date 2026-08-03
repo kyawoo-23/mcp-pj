@@ -455,12 +455,12 @@ export function calculateDemographics(payload: AnalysisPayload) {
       (techProficiencyCounts[proficiency] || 0) + 1;
   }
 
-  // Programming experience distribution (v2_criteria cohorts)
-  const programmingExpCounts: Record<string, number> = {};
+  // Years-based technical experience distribution (v2_criteria cohorts)
+  const technicalExperienceCounts: Record<string, number> = {};
   for (const profile of profiles) {
-    const experience = profile.programming_experience || "unknown";
-    programmingExpCounts[experience] =
-      (programmingExpCounts[experience] || 0) + 1;
+    const experience = profile.technical_experience || "unknown";
+    technicalExperienceCounts[experience] =
+      (technicalExperienceCounts[experience] || 0) + 1;
   }
 
   // AI usage frequency distribution
@@ -490,7 +490,7 @@ export function calculateDemographics(payload: AnalysisPayload) {
         percentage: total > 0 ? (count / total) * 100 : 0,
       }),
     ),
-    programmingExperience: Object.entries(programmingExpCounts).map(
+    technicalExperience: Object.entries(technicalExperienceCounts).map(
       ([key, count]) => ({
         label: key,
         count,
@@ -1089,7 +1089,7 @@ export type DemographicDimension =
   | "age_range"
   | "gender"
   | "technical_proficiency"
-  | "programming_experience"
+  | "technical_experience"
   | "ai_tool_frequency";
 
 export type DemographicCriterion = {
