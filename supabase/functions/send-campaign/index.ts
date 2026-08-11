@@ -31,12 +31,6 @@ const inviteText = [
 
 type Recipient = { email: string; name: string };
 
-/** Test-only allowlist — remove to send to all auth users. */
-const TEST_USER_IDS = new Set([
-  "e4959f34-6f03-44c8-abdd-9f552d845da0",
-  "663f9624-2472-4a78-80b0-d3e68f50e97c",
-]);
-
 async function listAllAuthRecipients(
   supabase: ReturnType<typeof createClient>,
 ): Promise<Recipient[]> {
@@ -55,7 +49,6 @@ async function listAllAuthRecipients(
     }
 
     for (const user of data.users) {
-      if (!TEST_USER_IDS.has(user.id)) continue;
       if (!user.email) continue;
       const name =
         (user.user_metadata?.full_name as string | undefined)?.trim() ||
