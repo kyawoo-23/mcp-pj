@@ -27,6 +27,7 @@ type ResearchClientProps = {
   data: AnalysisPayload;
   metrics: {
     totalUsers: number;
+    startedUsers: number;
     neverLoggedIn: number;
     inProgress: number;
     completedAllTasks: number;

@@ -71,6 +71,9 @@ type TaskInterviewResponseRow = {
 }
 
 // Keep in sync with home/src/lib/analysis-calculations.ts filterPayloadByProtocolVersion
+// Exclude users who only have seeded not_started progress (v2 migration copies
+// not_started rows for all v1 participants). Include users with in_progress/
+// completed progress, survey responses, or interview responses.
 function narrowPayloadByProtocol<
   TProfile extends ProfileRow,
   TSession extends TaskSessionRow,
@@ -84,23 +87,28 @@ function narrowPayloadByProtocol<
   taskSurveyResponses: TSurvey[],
   taskInterviewResponses: TInterview[],
 ): { profiles: TProfile[]; taskSessions: TSession[] } {
-  const activeSessionIds = new Set<string>()
-  for (const row of taskProgress) {
-    activeSessionIds.add(row.session_id)
-  }
-  for (const row of taskSurveyResponses) {
-    activeSessionIds.add(row.session_id)
-  }
-
-  const filteredTaskSessions = taskSessions.filter((s) =>
-    activeSessionIds.has(s.id)
+  const sessionIdToUserId = new Map(
+    taskSessions.map((s) => [s.id, s.user_id]),
   )
 
-  const activeUserIds = new Set(filteredTaskSessions.map((s) => s.user_id))
+  const activeUserIds = new Set<string>()
+  for (const row of taskProgress) {
+    if (row.status === "in_progress" || row.status === "completed") {
+      const userId = sessionIdToUserId.get(row.session_id)
+      if (userId) activeUserIds.add(userId)
+    }
+  }
+  for (const row of taskSurveyResponses) {
+    const userId = sessionIdToUserId.get(row.session_id)
+    if (userId) activeUserIds.add(userId)
+  }
   for (const row of taskInterviewResponses) {
     activeUserIds.add(row.user_id)
   }
 
+  const filteredTaskSessions = taskSessions.filter((s) =>
+    activeUserIds.has(s.user_id),
+  )
   const filteredProfiles = profiles.filter((p) => activeUserIds.has(p.id))
 
   return {

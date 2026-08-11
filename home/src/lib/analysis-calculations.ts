@@ -214,40 +214,70 @@ export function calculateSDT(
 // ============================================================================
 
 /**
+ * Users who have meaningfully started the study in this payload (not just seeded
+ * not_started progress rows — v2 migration copies not_started rows for all v1 users).
+ *
+ * Evidence: task_progress in_progress/completed, survey responses, or interview.
+ * Do not use task_sessions.status: it is shared across protocols.
+ */
+export function getStartedUserIds(payload: AnalysisPayload): Set<string> {
+  const sessionIdToUserId = new Map(
+    payload.task_sessions.map((s) => [s.id, s.user_id]),
+  );
+  const started = new Set<string>();
+
+  for (const tp of payload.task_progress) {
+    if (tp.status === "in_progress" || tp.status === "completed") {
+      const userId = sessionIdToUserId.get(tp.session_id);
+      if (userId) started.add(userId);
+    }
+  }
+
+  for (const response of payload.task_survey_responses) {
+    const userId = sessionIdToUserId.get(response.session_id);
+    if (userId) started.add(userId);
+  }
+
+  for (const response of payload.task_interview_responses) {
+    started.add(response.user_id);
+  }
+
+  return started;
+}
+
+/**
  * Compute user metrics from a payload.
  * For unfiltered data, uses server counts; for filtered views, derives from payload.
+ *
+ * Total Users and Never Logged In are always global auth.users counts
+ * (account-wide, not protocol-scoped).
+ * In Progress / All Done percentages use startedUsers (protocol cohort).
  */
 export function calculateUserMetricsFromPayload(
   payload: AnalysisPayload,
-  options?: { isFiltered: boolean },
+  _options?: { isFiltered: boolean },
 ): {
   totalUsers: number;
+  startedUsers: number;
   neverLoggedIn: number;
   inProgress: number;
   completedAllTasks: number;
 } {
-  const { task_sessions, task_interview_responses } = payload;
-
-  const totalUsers = options?.isFiltered
-    ? payload.profiles.length
-    : payload.total_auth_users_count;
-
-  const neverLoggedIn = options?.isFiltered
-    ? 0
-    : payload.never_logged_in_count;
-
-  const inProgressUserIds = new Set(
-    task_sessions
-      .filter((s) => s.status === "in_progress" || s.status === "not_started")
-      .map((s) => s.user_id),
-  );
+  const { task_interview_responses } = payload;
 
   const completedUserIds = getCompletedUserIds(task_interview_responses);
+  const startedUserIds = getStartedUserIds(payload);
+
+  let inProgress = 0;
+  for (const id of startedUserIds) {
+    if (!completedUserIds.has(id)) inProgress++;
+  }
 
   return {
-    totalUsers,
-    neverLoggedIn,
-    inProgress: inProgressUserIds.size,
+    totalUsers: payload.total_auth_users_count,
+    startedUsers: startedUserIds.size,
+    neverLoggedIn: payload.never_logged_in_count,
+    inProgress,
     completedAllTasks: completedUserIds.size,
   };
 }
@@ -969,12 +999,17 @@ function rowMatchesProtocolVersion(
 /**
  * Filters the analysis payload to rows for a single study protocol version.
  * Rows missing protocol_version are treated as v1_simple (pre-migration snapshots).
+ *
+ * Excludes users who only have seeded not_started progress for this protocol
+ * (v2 migration copies not_started rows for all v1 participants). A user is
+ * included only if they have in_progress/completed progress, survey responses,
+ * or interview responses for this version.
  */
 export function filterPayloadByProtocolVersion(
   payload: AnalysisPayload,
   version: StudyProtocolVersion,
 ): AnalysisPayload {
-  const filteredTaskProgress = payload.task_progress.filter((tp) =>
+  const versionProgress = payload.task_progress.filter((tp) =>
     rowMatchesProtocolVersion(tp.protocol_version, version),
   );
   const filteredTaskSurveyResponses = payload.task_survey_responses.filter(
@@ -985,22 +1020,34 @@ export function filterPayloadByProtocolVersion(
       rowMatchesProtocolVersion(r.protocol_version, version),
     );
 
-  const activeSessionIds = new Set<string>();
-  for (const row of filteredTaskProgress) {
-    activeSessionIds.add(row.session_id);
-  }
-  for (const row of filteredTaskSurveyResponses) {
-    activeSessionIds.add(row.session_id);
-  }
-
-  const filteredTaskSessions = payload.task_sessions.filter((s) =>
-    activeSessionIds.has(s.id),
+  const sessionIdToUserId = new Map(
+    payload.task_sessions.map((s) => [s.id, s.user_id]),
   );
 
-  const activeUserIds = new Set(filteredTaskSessions.map((s) => s.user_id));
+  const activeUserIds = new Set<string>();
+  for (const row of versionProgress) {
+    if (row.status === "in_progress" || row.status === "completed") {
+      const userId = sessionIdToUserId.get(row.session_id);
+      if (userId) activeUserIds.add(userId);
+    }
+  }
+  for (const row of filteredTaskSurveyResponses) {
+    const userId = sessionIdToUserId.get(row.session_id);
+    if (userId) activeUserIds.add(userId);
+  }
   for (const row of filteredTaskInterviewResponses) {
     activeUserIds.add(row.user_id);
   }
+
+  const filteredTaskSessions = payload.task_sessions.filter((s) =>
+    activeUserIds.has(s.user_id),
+  );
+  const activeSessionIds = new Set(filteredTaskSessions.map((s) => s.id));
+
+  // Keep all protocol progress for active users (including sibling not_started tasks)
+  const filteredTaskProgress = versionProgress.filter((tp) =>
+    activeSessionIds.has(tp.session_id),
+  );
 
   const filteredProfiles = payload.profiles.filter((p) =>
     activeUserIds.has(p.id),
@@ -1013,7 +1060,9 @@ export function filterPayloadByProtocolVersion(
     task_definitions: payload.task_definitions,
     task_surveys: payload.task_surveys,
     task_survey_questions: payload.task_survey_questions,
-    task_survey_responses: filteredTaskSurveyResponses,
+    task_survey_responses: filteredTaskSurveyResponses.filter((r) =>
+      activeSessionIds.has(r.session_id),
+    ),
     task_interview_questions: payload.task_interview_questions,
     task_interview_responses: filteredTaskInterviewResponses,
     never_logged_in_count: payload.never_logged_in_count,
