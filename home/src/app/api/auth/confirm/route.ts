@@ -9,7 +9,9 @@ export async function GET(req: Request) {
   const token_hash = url.searchParams.get("token_hash");
   const type = url.searchParams.get("type");
   const code = url.searchParams.get("code");
-  const next = url.searchParams.get("next") ?? Routes.home;
+  const next =
+    url.searchParams.get("next") ??
+    (type === "recovery" ? Routes.passwordReset : Routes.home);
 
   const origin = url.origin;
 
