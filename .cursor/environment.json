@@ -1,0 +1,27 @@
+{
+  "name": "mcp-pj",
+  "install": "bash .cursor/install.sh",
+  "start": "bash .cursor/start.sh",
+  "terminals": [
+    {
+      "name": "mcp-server",
+      "command": "cd mcp-server && bun run dev"
+    },
+    {
+      "name": "chat-agent",
+      "command": "cd chat-agent && pnpm run dev"
+    },
+    {
+      "name": "uni-booking",
+      "command": "cd uni-booking && pnpm run dev"
+    },
+    {
+      "name": "uni-registration",
+      "command": "cd uni-registration && pnpm run dev"
+    },
+    {
+      "name": "home",
+      "command": "cd home && pnpm run dev"
+    }
+  ]
+}
