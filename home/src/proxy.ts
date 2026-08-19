@@ -49,6 +49,7 @@ export async function proxy(request: NextRequest) {
   if (
     request.nextUrl.pathname.startsWith("/auth/") &&
     !request.nextUrl.pathname.startsWith("/auth/reset-password") &&
+    !request.nextUrl.pathname.startsWith("/auth/error") &&
     user
   ) {
     return NextResponse.redirect(new URL("/survey", request.url));
