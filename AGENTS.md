@@ -427,6 +427,38 @@ operational facts for agents.
 
 ---
 
+## Cursor Cloud specific instructions
+
+The Cloud Agent dev environment is defined by `.cursor/environment.json`
+(repo-file managed) and two scripts. It reproduces the `make dev` experience
+on a Cloud Agent VM.
+
+- **`.cursor/install.sh`** (one-time, idempotent): installs the toolchains the
+  base image lacks — Bun, the Supabase CLI, and Docker CE + `fuse-overlayfs` —
+  then app deps (`pnpm` ×4 + `bun`), and writes local env files with the
+  well-known local Supabase demo keys (`USE_MCP=true`; MCP auth disabled).
+- **`.cursor/start.sh`** (per-boot): starts `dockerd` (fuse-overlayfs storage
+  driver), disables bridge netfilter so nested container-to-container traffic is
+  not dropped, runs `supabase start`, then applies `scripts/fix-supabase-grants.sql`.
+- **`scripts/fix-supabase-grants.sql`**: restores the standard Supabase
+  API-role privileges (`anon`/`authenticated`/`service_role`) on the `public`
+  schema. The local Postgres image ships default privileges that omit
+  `INSERT/SELECT/UPDATE/DELETE` for those roles on `public`; RLS still governs
+  row access. Re-run it after any `supabase db reset`.
+- **`terminals`**: `mcp-server` (4004), `chat-agent` (4000), `uni-booking`
+  (4001), `uni-registration` (4002), `home` (4003).
+
+Docker runs inside the VM (nested), so `dockerd` and the bridge-netfilter
+sysctls are handled by `start.sh`, not systemd.
+
+**Testing in Cloud**: the traditional modality can be exercised via the web UIs
+or the Supabase REST API (anon key). The conversational data path can be
+exercised by calling the MCP server tools directly (StreamableHTTP at
+`/mcp`). `GOOGLE_GENERATIVE_AI_API_KEY` is optional — add it as a Cloud Agent
+secret to enable live chat-agent LLM responses; everything else works without it.
+
+---
+
 ## 15. Quick contact
 
 **Author**: Kyaw Kyaw Oo — Department of Mathematics and Computer Science,
