@@ -92,12 +92,16 @@ export function TaskIndicator() {
         .maybeSingle();
 
       let specificTitle;
-      const taskAssignmentSets = assignment?.task_assignment_sets as {
+      type AssignmentSetShape = {
         targets?: Record<
           string,
           { title: string; description: string; criteria: Record<string, string> }
         >;
-      } | null;
+      };
+      const rawAssignmentSets = assignment?.task_assignment_sets;
+      const taskAssignmentSets: AssignmentSetShape | null = Array.isArray(rawAssignmentSets)
+        ? (rawAssignmentSets[0] as AssignmentSetShape) ?? null
+        : (rawAssignmentSets as AssignmentSetShape) ?? null;
       if (taskAssignmentSets?.targets) {
         const targets = taskAssignmentSets.targets;
         specificTitle = targets[definition?.task_code ?? ""]?.title;
@@ -115,6 +119,9 @@ export function TaskIndicator() {
         status: current.status as "in_progress" | "completed",
       });
       setIsVisible(true);
+    } catch (err) {
+      console.error("[TaskIndicator] refreshActiveTask error:", err);
+      setActiveTask(null);
     } finally {
       if (!options?.silent) {
         setLoading(false);
@@ -125,7 +132,10 @@ export function TaskIndicator() {
   useEffect(() => {
     (async () => {
       await refreshActiveTask();
-    })();
+    })().catch((err) => {
+      console.error("[TaskIndicator] mount error:", err);
+      setActiveTask(null);
+    });
 
     const {
       data: { subscription },
