@@ -17,6 +17,21 @@ const taskLabels: Record<string, string> = {
   cancel_booking: "Cancel a booking",
 };
 
+type AssignmentSetShape = {
+  targets?: Record<
+    string,
+    { title: string; description: string; criteria: Record<string, string> }
+  >;
+};
+
+/** Nested `task_assignment_sets` may be an object, an array, or missing. */
+function unwrapAssignmentSet(raw: unknown): AssignmentSetShape | null {
+  if (raw == null) return null;
+  const candidate = Array.isArray(raw) ? raw[0] : raw;
+  if (candidate == null || typeof candidate !== "object") return null;
+  return candidate as AssignmentSetShape;
+}
+
 export function TaskIndicator() {
   const supabase = useMemo(() => createClient(), []);
   const [activeTask, setActiveTask] = useState<{
@@ -92,16 +107,9 @@ export function TaskIndicator() {
         .maybeSingle();
 
       let specificTitle;
-      type AssignmentSetShape = {
-        targets?: Record<
-          string,
-          { title: string; description: string; criteria: Record<string, string> }
-        >;
-      };
-      const rawAssignmentSets = assignment?.task_assignment_sets;
-      const taskAssignmentSets: AssignmentSetShape | null = Array.isArray(rawAssignmentSets)
-        ? (rawAssignmentSets[0] as AssignmentSetShape) ?? null
-        : (rawAssignmentSets as AssignmentSetShape) ?? null;
+      const taskAssignmentSets = unwrapAssignmentSet(
+        assignment?.task_assignment_sets
+      );
       if (taskAssignmentSets?.targets) {
         const targets = taskAssignmentSets.targets;
         specificTitle = targets[definition?.task_code ?? ""]?.title;
