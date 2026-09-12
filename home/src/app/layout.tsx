@@ -8,6 +8,7 @@ import { Toaster } from "@/components/ui/sonner";
 import { ThemeProvider } from "@/components/theme-provider";
 import { cn } from "@/lib/utils";
 import { isPreviewEnvironment } from "@/lib/preview-environment";
+import { getDeploymentId } from "@/lib/deployment-id";
 import "./globals.css";
 
 const outfit = Outfit({ variable: "--font-outfit", subsets: ["latin"] });
@@ -75,7 +76,11 @@ export default function RootLayout({
   const isPreview = isPreviewEnvironment();
 
   return (
-    <html lang='en' suppressHydrationWarning>
+    <html
+      lang='en'
+      suppressHydrationWarning
+      data-mcp-deployment-id={getDeploymentId()}
+    >
       <body
         className={cn(
           "min-h-screen bg-background font-sans antialiased",

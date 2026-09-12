@@ -7,6 +7,7 @@ import { PreviewEnvironmentBanner } from "@/components/preview-environment-banne
 import { Toaster } from "@/components/ui/sonner";
 import Providers from "@/app/providers";
 import { isPreviewEnvironment } from "@/lib/preview-environment";
+import { getDeploymentId } from "@/lib/deployment-id";
 
 const inter = Inter({
   variable: "--font-inter",
@@ -31,7 +32,11 @@ export default function RootLayout({
   const isPreview = isPreviewEnvironment();
 
   return (
-    <html lang='en' suppressHydrationWarning>
+    <html
+      lang='en'
+      suppressHydrationWarning
+      data-mcp-deployment-id={getDeploymentId()}
+    >
       <body
         className={cn(
           "min-h-screen bg-background font-sans antialiased",

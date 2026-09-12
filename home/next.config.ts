@@ -4,6 +4,10 @@ import type { NextConfig } from "next";
 const nextConfig: NextConfig = {
   /* config options here */
   reactCompiler: true,
+  // Lets Next.js tag assets/requests with this deployment so Vercel skew
+  // protection (when enabled on the plan) can pin Server Actions to the
+  // build that minted their action IDs.
+  deploymentId: process.env.VERCEL_DEPLOYMENT_ID,
 };
 
 export default withSentryConfig(nextConfig, {
