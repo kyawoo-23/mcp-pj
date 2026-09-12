@@ -3,6 +3,7 @@
 // https://docs.sentry.io/platforms/javascript/guides/nextjs/
 
 import * as Sentry from "@sentry/nextjs";
+import { installStaleDeploymentGuard } from "@/lib/stale-deployment-guard";
 
 Sentry.init({
   dsn: "https://bcabe69f96f1a420ed43851eaf11bc2c@o4510703920676864.ingest.us.sentry.io/4510703923363840",
@@ -27,5 +28,7 @@ Sentry.init({
   // https://docs.sentry.io/platforms/javascript/guides/nextjs/configuration/options/#sendDefaultPii
   sendDefaultPii: true,
 });
+
+installStaleDeploymentGuard();
 
 export const onRouterTransitionStart = Sentry.captureRouterTransitionStart;
