@@ -24,8 +24,15 @@ export function ResearchV2EmptyState() {
           <code className='text-xs bg-muted px-1 py-0.5 rounded'>
             home/src/data/research-v2.json
           </code>{" "}
-          using the same <code className='text-xs bg-muted px-1 py-0.5 rounded'>json_build_object</code>{" "}
-          wrapper shape as <code className='text-xs bg-muted px-1 py-0.5 rounded'>research.json</code>.
+          using the same{" "}
+          <code className='text-xs bg-muted px-1 py-0.5 rounded'>
+            json_build_object
+          </code>{" "}
+          wrapper shape as{" "}
+          <code className='text-xs bg-muted px-1 py-0.5 rounded'>
+            research-v1.json
+          </code>
+          .
         </CardDescription>
       </CardHeader>
       <CardContent className='text-sm text-muted-foreground'>

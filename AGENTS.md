@@ -19,9 +19,9 @@ For per-project agent rules, see also:
 
 `mcp-pj` is the **prototype + research artifact** for the study:
 
-> *"Comparing Intent-Driven and Interface-Driven Interaction: An Empirical
+> _"Comparing Intent-Driven and Interface-Driven Interaction: An Empirical
 > Study of Traditional UI and Conversational AI Using the Model Context
-> Protocol (MCP)."*
+> Protocol (MCP)."_
 
 It implements **two interaction modalities for the same task scenarios**
 (university course registration + facility booking) on top of a **single
@@ -94,7 +94,7 @@ Key invariants:
   direct Supabase writes from `chat-agent` for task-related actions —
   those must go through MCP tools so the experiment stays clean.
 - **Both modalities share the same schema and seeds.** New behavior must
-  be expressed both as MCP tool(s) *and* as traditional-UI flow(s) when
+  be expressed both as MCP tool(s) _and_ as traditional-UI flow(s) when
   the change affects user-facing tasks.
 
 See `mcp-architecture.md` for the full mermaid diagrams (high-level
@@ -124,16 +124,16 @@ architecture + MCP request sequence).
 
 ## 5. Local URLs & ports
 
-| Service                     | URL                              |
-| --------------------------- | -------------------------------- |
-| Chat agent                  | http://localhost:4000            |
-| Facility booking UI         | http://localhost:4001            |
-| Course registration UI      | http://localhost:4002            |
-| Home / research UI          | http://localhost:4003            |
-| MCP server                  | http://localhost:4004/mcp        |
-| Supabase API                | http://127.0.0.1:23456           |
-| Postgres                    | 127.0.0.1:34567                  |
-| Supabase Studio             | http://127.0.0.1:56789           |
+| Service                | URL                       |
+| ---------------------- | ------------------------- |
+| Chat agent             | http://localhost:4000     |
+| Facility booking UI    | http://localhost:4001     |
+| Course registration UI | http://localhost:4002     |
+| Home / research UI     | http://localhost:4003     |
+| MCP server             | http://localhost:4004/mcp |
+| Supabase API           | http://127.0.0.1:23456    |
+| Postgres               | 127.0.0.1:34567           |
+| Supabase Studio        | http://127.0.0.1:56789    |
 
 Non-standard Supabase ports are configured in `supabase/config.toml` —
 keep them in sync with app `.env.local` files.
@@ -199,10 +199,10 @@ After adding a **new** migration file, apply it incrementally and regenerate
 types. **Do not** default to `make db-reset` — that wipes local data and
 re-seeds unnecessarily.
 
-| Situation | Local | Remote (linked project) | Then |
-| --------- | ----- | --------------------- | ---- |
-| New migration file (additive SQL) | `supabase migration up --local` | `supabase migration up --linked` or `supabase db push --linked` | `make db-gen` |
-| Edited an already-applied migration, broken migration history, or need fresh seeds | `make db-reset` | repair manually / new migration on remote | `make db-gen` |
+| Situation                                                                          | Local                           | Remote (linked project)                                         | Then          |
+| ---------------------------------------------------------------------------------- | ------------------------------- | --------------------------------------------------------------- | ------------- |
+| New migration file (additive SQL)                                                  | `supabase migration up --local` | `supabase migration up --linked` or `supabase db push --linked` | `make db-gen` |
+| Edited an already-applied migration, broken migration history, or need fresh seeds | `make db-reset`                 | repair manually / new migration on remote                       | `make db-gen` |
 
 **Always run `make db-gen`** after the schema changes so
 `supabase/types/database.types.ts` stays in sync. Commit the generated types
@@ -385,7 +385,7 @@ This is a research artifact. Some changes have experimental implications:
   messages) without flagging it.
 - Analytics tables (`task_mode_*`, analysis edge function) record
   experiment data; treat them as append-only from app code.
-- **`research.json` is the frozen v1 paper snapshot** — do not rewrite it
+- **`research-v1.json` is the frozen v1 paper snapshot** — do not rewrite it
   to reflect v2_criteria behavior. Analysis and research pages use
   protocol switchers (`v1` / `v2` route slugs) to filter cohorts.
 - **My study results compare view** — metrics shown side-by-side for
