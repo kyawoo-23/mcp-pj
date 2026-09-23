@@ -5,12 +5,12 @@ import type { AnalysisPayload } from "@/lib/types";
 import type { StudyProtocolVersion } from "@/lib/analysis-calculations";
 import { parseProtocolFromSearchParam } from "@/lib/study-protocol-labels";
 
-import rawDataV1 from "@/data/research.json";
+const RESEARCH_DATA_DIR = path.join(process.cwd(), "src/data");
 
-const RESEARCH_V2_JSON_PATH = path.join(
-  process.cwd(),
-  "src/data/research-v2.json",
-);
+const RESEARCH_SNAPSHOT_PATHS = {
+  v1_simple: path.join(RESEARCH_DATA_DIR, "research-v1.json"),
+  v2_criteria: path.join(RESEARCH_DATA_DIR, "research-v2.json"),
+} satisfies Record<StudyProtocolVersion, string>;
 
 type ResearchJsonWrapper = Array<{ json_build_object: AnalysisPayload }>;
 
@@ -39,18 +39,14 @@ function injectProtocolVersion(
   };
 }
 
-export function getResearchPayloadV1(): AnalysisPayload {
-  const payload = unwrapResearchJson(rawDataV1 as ResearchJsonWrapper);
-  return injectProtocolVersion(payload, "v1_simple");
-}
-
-/** Returns v2 snapshot when `research-v2.json` exists; otherwise null. */
-export async function getResearchPayloadV2(): Promise<AnalysisPayload | null> {
+async function loadResearchSnapshot(
+  version: StudyProtocolVersion,
+): Promise<AnalysisPayload | null> {
   try {
-    const raw = await readFile(RESEARCH_V2_JSON_PATH, "utf-8");
+    const raw = await readFile(RESEARCH_SNAPSHOT_PATHS[version], "utf-8");
     const parsed = JSON.parse(raw) as ResearchJsonWrapper;
     const payload = unwrapResearchJson(parsed);
-    return injectProtocolVersion(payload, "v2_criteria");
+    return injectProtocolVersion(payload, version);
   } catch {
     return null;
   }
@@ -65,12 +61,12 @@ export async function getResearchPayload(
 }> {
   const version =
     parseProtocolFromSearchParam(protocolParam) ?? "v1_simple";
-  const v2Payload = await getResearchPayloadV2();
+  const [v1Payload, v2Payload] = await Promise.all([
+    loadResearchSnapshot("v1_simple"),
+    loadResearchSnapshot("v2_criteria"),
+  ]);
   const v2Available = v2Payload !== null;
+  const payload = version === "v2_criteria" ? v2Payload : v1Payload;
 
-  if (version === "v2_criteria") {
-    return { version, payload: v2Payload, v2Available };
-  }
-
-  return { version, payload: getResearchPayloadV1(), v2Available };
+  return { version, payload, v2Available };
 }

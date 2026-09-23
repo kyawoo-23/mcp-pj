@@ -18,15 +18,15 @@ rules are in root [`../AGENTS.md`](../AGENTS.md) §14.
 
 ## Routes
 
-| Path | Purpose |
-| ---- | ------- |
-| `/` | Landing / study entry |
-| `/survey` | Participant survey + task list |
-| `/survey/history` | **My study results** — compare view across protocol versions |
-| `/research` | Research description, protocol, consent (`src/data/research.json`) |
-| `/analysis` | Researcher analysis dashboards (edge function) |
-| `/statistics` | Aggregate stats (`recharts`, `simple-statistics`) |
-| `/auth/*`, `/settings`, `/api/*` | Auth, account, API surface |
+| Path                             | Purpose                                                               |
+| -------------------------------- | --------------------------------------------------------------------- |
+| `/`                              | Landing / study entry                                                 |
+| `/survey`                        | Participant survey + task list                                        |
+| `/survey/history`                | **My study results** — compare view across protocol versions          |
+| `/research`                      | Research description, protocol, consent (`src/data/research-v1.json`) |
+| `/analysis`                      | Researcher analysis dashboards (edge function)                        |
+| `/statistics`                    | Aggregate stats (`recharts`, `simple-statistics`)                     |
+| `/auth/*`, `/settings`, `/api/*` | Auth, account, API surface                                            |
 
 ## Study protocol
 

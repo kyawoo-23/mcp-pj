@@ -6,7 +6,7 @@ A label that distinguishes which era of task instructions a participant complete
 
 ## v1_simple
 
-The original study protocol. Participants received open-ended task instructions without criteria-based verification. The frozen research paper snapshot (`research.json`) represents this cohort.
+The original study protocol. Participants received open-ended task instructions without criteria-based verification. The frozen research paper snapshot (`research-v1.json`) represents this cohort.
 
 ## v2_criteria
 
@@ -31,10 +31,10 @@ One participant's stored task progress, survey responses, and interview answers 
 
 ## Subjective technical proficiency
 
-A v1_simple self-rating of technical skill: none, limited, moderate, or advanced.
-_Avoid_: Technical proficiency (alone, when contrasting protocols), programming experience
+A v1*simple self-rating of technical skill: none, limited, moderate, or advanced.
+\_Avoid*: Technical proficiency (alone, when contrasting protocols), programming experience
 
 ## Years-based technical proficiency
 
-A v2_criteria time-anchored measure of computer and technical experience: none, under 1 year, 1–3 years, or more than 3 years. “More than 3 years” means strictly more than three years; exactly three years belongs in 1–3 years.
-_Avoid_: Programming experience, technical proficiency (alone, when contrasting protocols), advanced (as a years bucket)
+A v2*criteria time-anchored measure of computer and technical experience: none, under 1 year, 1–3 years, or more than 3 years. “More than 3 years” means strictly more than three years; exactly three years belongs in 1–3 years.
+\_Avoid*: Programming experience, technical proficiency (alone, when contrasting protocols), advanced (as a years bucket)
