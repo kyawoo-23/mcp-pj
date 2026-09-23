@@ -13,12 +13,12 @@ export function SurveyCTA() {
               <CheckCircle className='w-10 h-10 text-accent-foreground' />
             </div>
             <h2 className='text-3xl md:text-4xl font-medium tracking-tight mb-4'>
-              Participate in the Experiment
+              Thank You to Our Participants
             </h2>
             <p className='text-lg text-foreground/90 max-w-2xl mx-auto mb-8'>
-              Complete the same tasks with both systems. We measure usability,
-              how in control you feel, and cognitive workload using standard
-              scales (SUS, SDT, NASA-TLX).
+              The criteria-task study round (August 6–September 12, 2026) is
+              complete and data analysis is finished. Thank you to everyone who
+              took part.
             </p>
           </div>
 
@@ -82,15 +82,18 @@ export function SurveyCTA() {
 
           <div className='flex flex-col sm:flex-row items-center justify-center gap-6'>
             <Link
-              href='/survey'
+              href='/research?protocol=v2'
               className='inline-flex items-center gap-2 px-8 py-4 bg-foreground text-primary-foreground rounded-full text-base font-medium hover:bg-foreground/90 transition-colors shadow-md'
             >
-              Start Participating
+              View v2 Analysis
               <ArrowRight className='w-5 h-5' />
             </Link>
-            <p className='text-sm text-foreground/80 font-medium'>
-              Takes about 15-20 minutes
-            </p>
+            <Link
+              href='/survey/history'
+              className='text-sm text-foreground/80 font-medium underline underline-offset-4 hover:text-foreground transition-colors'
+            >
+              My study results
+            </Link>
           </div>
         </div>
       </div>

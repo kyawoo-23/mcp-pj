@@ -431,3 +431,28 @@ operational facts for agents.
 
 **Author**: Kyaw Kyaw Oo — Department of Mathematics and Computer Science,
 Chulalongkorn University. Email: `kyawkyawjek@gmail.com`.
+
+---
+
+## Learned User Preferences
+
+- Do not change font sizes when editing UI unless explicitly asked.
+- In participant-facing copy, avoid protocol jargon such as "v1", "v2", or "cohort"; use plain language users understand.
+- Do not mention JCSSE in README files, `package.json`, or any visible UI.
+- Keep UI changes simple; avoid over-engineering or unnecessary complexity.
+- When changing UI or behavior in one app, apply the same pattern across `home`, `chat-agent`, `uni-booking`, and `uni-registration` unless scope is intentionally single-app.
+- Use existing theme colors for generated emails and templates; do not use `home/public/logo.svg` as branding.
+- Chat-agent textarea should use rotating short placeholder tips (fade in/out), including that users may use any preferred language.
+- Chat loading should show tool-call progress in real time and stream assistant text; do not dump all tool results only after a static "Thinking..." state.
+- Intent handling must be language-agnostic (model/structured blocks), not English-only regex heuristics.
+- Extract separate component files when it improves clarity; keep related UI DRY.
+- Prefer incremental `supabase migration up --local` over `make db-reset` for additive schema changes.
+
+## Learned Workspace Facts
+
+- GitHub `main` is branch-protected; land changes via feature branch and pull request, not direct push.
+- `home/src/data/research-v1.json` is the frozen v1 paper snapshot; do not rewrite it for v2 behavior.
+- Roughly 80% of study participants are undergraduates — factor this into demographic and onboarding UX.
+- Campaign/invite contact in `supabase/functions/send-campaign/` should use the author's Chula email only, with a note not to reply to the email directly.
+- Password-reset flows in `home` must redirect to the password-reset URL, not `/survey`.
+- `pnpm` may block dependency build scripts; `chat-agent` needs approved build dependencies configured for local `make dev` to succeed.
