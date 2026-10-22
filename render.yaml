@@ -7,7 +7,7 @@ services:
     startCommand: bun run start
     envVars:
       - key: BUN_VERSION
-        value: 1.1.0
+        value: 1.4.4
       - key: SUPABASE_URL
         sync: false
       - key: SUPABASE_SERVICE_ROLE_KEY

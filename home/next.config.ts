@@ -4,6 +4,15 @@ import type { NextConfig } from "next";
 const nextConfig: NextConfig = {
   /* config options here */
   reactCompiler: true,
+  images: {
+    remotePatterns: [
+      {
+        protocol: "https",
+        hostname: "i.ytimg.com",
+        pathname: "/vi/**",
+      },
+    ],
+  },
   // Lets Next.js tag assets/requests with this deployment so Vercel skew
   // protection (when enabled on the plan) can pin Server Actions to the
   // build that minted their action IDs.
