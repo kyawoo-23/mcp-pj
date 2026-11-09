@@ -4,6 +4,7 @@ import "./globals.css";
 import { cn } from "@/lib/utils";
 import { ThemeProvider } from "@/components/theme-provider";
 import { PreviewEnvironmentBanner } from "@/components/preview-environment-banner";
+import { StudyConsentPrompt } from "@/components/consent/study-consent-prompt";
 import { Toaster } from "@/components/ui/sonner";
 import Providers from "@/app/providers";
 import { isPreviewEnvironment } from "@/lib/preview-environment";
@@ -53,6 +54,7 @@ export default function RootLayout({
         >
           <Providers>
             {children}
+            <StudyConsentPrompt />
             <Toaster />
           </Providers>
         </ThemeProvider>
