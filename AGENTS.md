@@ -447,6 +447,7 @@ Chulalongkorn University. Email: `kyawkyawjek@gmail.com`.
 - Intent handling must be language-agnostic (model/structured blocks), not English-only regex heuristics.
 - Extract separate component files when it improves clarity; keep related UI DRY.
 - Prefer incremental `supabase migration up --local` over `make db-reset` for additive schema changes.
+- Study consent is a scroll-to-agree popup on signup and for signed-in users in all four apps: agree stays disabled until the statement is scrolled to the bottom. Do not inline the long statement on the form or use a full-page survey gate.
 
 ## Learned Workspace Facts
 
@@ -456,3 +457,4 @@ Chulalongkorn University. Email: `kyawkyawjek@gmail.com`.
 - Campaign/invite contact in `supabase/functions/send-campaign/` should use the author's Chula email only, with a note not to reply to the email directly.
 - Password-reset flows in `home` must redirect to the password-reset URL, not `/survey`.
 - `pnpm` may block dependency build scripts; `chat-agent` needs approved build dependencies configured for local `make dev` to succeed.
+- Study agreement is stored on `profiles` (`consent_version`, `consented_at`). All four apps must require the current version before participation; users who decline can sign out. The statement does not claim an ethics-board approval number.

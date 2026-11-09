@@ -4,6 +4,7 @@ import { Outfit, Geist_Mono } from "next/font/google";
 import { Analytics } from "@vercel/analytics/next";
 import Providers from "@/components/providers";
 import { PreviewEnvironmentBanner } from "@/components/preview-environment-banner";
+import { StudyConsentPrompt } from "@/components/consent/study-consent-prompt";
 import { Toaster } from "@/components/ui/sonner";
 import { ThemeProvider } from "@/components/theme-provider";
 import { cn } from "@/lib/utils";
@@ -97,6 +98,7 @@ export default function RootLayout({
         >
           <Providers>
             {children}
+            <StudyConsentPrompt />
             <Toaster />
             <Analytics />
           </Providers>

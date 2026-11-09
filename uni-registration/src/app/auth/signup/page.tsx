@@ -26,6 +26,8 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { toast } from "sonner";
+import { STUDY_CONSENT_VERSION } from "@/lib/study-consent";
+import { StudyConsentDialog } from "@/components/consent/study-consent-dialog";
 
 const signupSchema = z
   .object({
@@ -34,6 +36,9 @@ const signupSchema = z
     full_name: z.string().min(2, "Full name is required"),
     student_id: z.string().min(2, "Student ID is required"),
     confirmPassword: z.string(),
+    consent: z.boolean().refine((value) => value, {
+      message: "Please agree to take part before creating an account.",
+    }),
   })
   .refine((data) => data.password === data.confirmPassword, {
     message: "Passwords do not match",
@@ -48,14 +53,18 @@ export default function SignupPage() {
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [consentOpen, setConsentOpen] = useState(false);
   const supabase = createClient();
 
   const {
     register,
     handleSubmit,
+    setValue,
+    watch,
     formState: { errors },
   } = useForm<SignupFormData>({
     resolver: zodResolver(signupSchema),
+    defaultValues: { consent: false },
   });
 
   const onSubmit = async (data: SignupFormData) => {
@@ -72,6 +81,7 @@ export default function SignupPage() {
             full_name: data.full_name,
             student_id: data.student_id || null,
             role: "student",
+            consent_version: STUDY_CONSENT_VERSION,
           },
         },
       });
@@ -241,7 +251,40 @@ export default function SignupPage() {
               )}
             </div>
 
-            <Button type='submit' className='w-full' disabled={loading}>
+            <div className='space-y-2'>
+              <Button
+                type='button'
+                variant='outline'
+                className='w-full'
+                aria-required='true'
+                aria-invalid={errors.consent ? true : undefined}
+                onClick={() => setConsentOpen(true)}
+              >
+                {watch("consent")
+                  ? "Study information accepted"
+                  : "Read the study information *"}
+              </Button>
+              {errors.consent && (
+                <p className='text-sm text-destructive'>
+                  {errors.consent.message}
+                </p>
+              )}
+            </div>
+
+            <StudyConsentDialog
+              open={consentOpen}
+              onAgree={() => {
+                setValue("consent", true, { shouldValidate: true });
+                setConsentOpen(false);
+              }}
+              onDismiss={() => setConsentOpen(false)}
+            />
+
+            <Button
+              type='submit'
+              className='w-full'
+              disabled={loading || !watch("consent")}
+            >
               {loading ? "Creating account..." : "Sign Up"}
             </Button>
 

@@ -2,12 +2,44 @@
 
 import { createClient } from "@/lib/supabase/server";
 import type { ProfileRow, TaskSessionRow } from "@/lib/types";
+import { STUDY_CONSENT_VERSION } from "@/lib/study-consent";
 import { CURRENT_STUDY_PROTOCOL_VERSION } from "@/utils/study-protocol";
 import { revalidatePath } from "next/cache";
 
 type SuccessResult<T> = { ok: true; data: T };
 type ErrorResult = { ok: false; error: string };
 export type ActionResult<T = void> = SuccessResult<T> | ErrorResult;
+
+async function assertStudyConsent(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  userId: string,
+): Promise<ErrorResult | null> {
+  const { data, error } = await supabase
+    .from("profiles")
+    .select("consent_version, consented_at")
+    .eq("id", userId)
+    .maybeSingle();
+
+  if (error) {
+    console.error("Failed to load study consent:", error);
+    return {
+      ok: false,
+      error: "Failed to check your consent. Please try again.",
+    };
+  }
+
+  if (
+    !data?.consented_at ||
+    data.consent_version !== STUDY_CONSENT_VERSION
+  ) {
+    return {
+      ok: false,
+      error: "Please agree to take part before continuing.",
+    };
+  }
+
+  return null;
+}
 
 export async function saveDemographicsAction(
   userId: string,
@@ -18,6 +50,9 @@ export async function saveDemographicsAction(
 ): Promise<ActionResult<TaskSessionRow>> {
   const supabase = await createClient();
   const now = new Date().toISOString();
+
+  const consentError = await assertStudyConsent(supabase, userId);
+  if (consentError) return consentError;
 
   // 1. Update profile
   const { error: profileError } = await supabase
@@ -94,6 +129,9 @@ export async function startSurveyAction(userId: string): Promise<ActionResult<vo
   const supabase = await createClient();
   const now = new Date().toISOString();
 
+  const consentError = await assertStudyConsent(supabase, userId);
+  if (consentError) return consentError;
+
   // Start only traditional session first
   const { error } = await supabase
     .from("task_sessions")
@@ -169,6 +207,16 @@ export async function openTaskAction(
 ): Promise<ActionResult<void>> {
   const supabase = await createClient();
   const now = new Date().toISOString();
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) {
+    return { ok: false, error: "You need to sign in again." };
+  }
+
+  const consentError = await assertStudyConsent(supabase, user.id);
+  if (consentError) return consentError;
 
   // 0. Check if task is already completed
   const { data: existingProgress } = await supabase

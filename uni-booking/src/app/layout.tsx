@@ -4,6 +4,7 @@ import "./globals.css";
 import { AuthProvider } from "@/components/auth/auth-provider";
 import { Navbar } from "@/components/layout/navbar";
 import { PreviewEnvironmentBanner } from "@/components/preview-environment-banner";
+import { StudyConsentPrompt } from "@/components/consent/study-consent-prompt";
 import { TaskIndicator } from "@/components/tasks/task-indicator";
 import { Toaster } from "@/components/ui/sonner";
 import { isPreviewEnvironment } from "@/lib/preview-environment";
@@ -39,6 +40,7 @@ export default function RootLayout({
           <div className='flex min-h-screen flex-col'>
             <Navbar />
             <main className='flex-1'>{children}</main>
+            <StudyConsentPrompt />
             <TaskIndicator />
           </div>
           <Toaster />
