@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { Routes } from "@/lib/constants";
 
 export async function POST(req: Request) {
   const supabase = await createClient();
@@ -12,7 +13,7 @@ export async function POST(req: Request) {
   try {
     const origin = new URL(req.url).origin;
     const { data, error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${origin}/api/auth/confirm`,
+      redirectTo: `${origin}/api/auth/confirm?next=${Routes.passwordReset}`,
     });
 
     if (error) {

@@ -4,45 +4,57 @@ import { HeroSection } from "@/components/home/hero-section";
 import { ScrollToTopClient } from "@/components/home/scroll-to-top-client";
 
 // Lazy load below-the-fold components for better initial load performance
+const ProjectVideo = dynamic(
+  () => import("@/components/home/project-video").then((m) => m.ProjectVideo),
+  { ssr: true },
+);
 const ResearchAnalysis = dynamic(
-  () => import("@/components/home/research-analysis").then((m) => m.ResearchAnalysis),
-  { ssr: true }
+  () =>
+    import("@/components/home/research-analysis").then(
+      (m) => m.ResearchAnalysis,
+    ),
+  { ssr: true },
 );
 const ResearchTarget = dynamic(
-  () => import("@/components/home/research-target").then((m) => m.ResearchTarget),
-  { ssr: true }
+  () =>
+    import("@/components/home/research-target").then((m) => m.ResearchTarget),
+  { ssr: true },
 );
 const TraditionalPortals = dynamic(
-  () => import("@/components/home/traditional-portals").then((m) => m.TraditionalPortals),
-  { ssr: true }
+  () =>
+    import("@/components/home/traditional-portals").then(
+      (m) => m.TraditionalPortals,
+    ),
+  { ssr: true },
 );
 const MCPChatAgent = dynamic(
   () => import("@/components/home/mcp-chat-agent").then((m) => m.MCPChatAgent),
-  { ssr: true }
+  { ssr: true },
 );
 const ComparisonTable = dynamic(
-  () => import("@/components/home/comparison-table").then((m) => m.ComparisonTable),
-  { ssr: true }
+  () =>
+    import("@/components/home/comparison-table").then((m) => m.ComparisonTable),
+  { ssr: true },
 );
 const WorkflowDiagram = dynamic(
-  () => import("@/components/home/workflow-diagram").then((m) => m.WorkflowDiagram),
-  { ssr: true }
+  () =>
+    import("@/components/home/workflow-diagram").then((m) => m.WorkflowDiagram),
+  { ssr: true },
 );
 const TechStack = dynamic(
   () => import("@/components/home/tech-stack").then((m) => m.TechStack),
-  { ssr: true }
-);
-const SurveyCTA = dynamic(
-  () => import("@/components/home/survey-cta").then((m) => m.SurveyCTA),
-  { ssr: true }
+  { ssr: true },
 );
 const ExpectedOutcomes = dynamic(
-  () => import("@/components/home/expected-outcomes").then((m) => m.ExpectedOutcomes),
-  { ssr: true }
+  () =>
+    import("@/components/home/expected-outcomes").then(
+      (m) => m.ExpectedOutcomes,
+    ),
+  { ssr: true },
 );
 const Footer = dynamic(
   () => import("@/components/home/footer").then((m) => m.Footer),
-  { ssr: true }
+  { ssr: true },
 );
 
 export const metadata: Metadata = {
@@ -114,6 +126,7 @@ export default function HomePage() {
   return (
     <main>
       <HeroSection />
+      <ProjectVideo />
       <ResearchAnalysis />
       <ResearchTarget />
       <TraditionalPortals />
@@ -121,7 +134,6 @@ export default function HomePage() {
       <ComparisonTable />
       <WorkflowDiagram />
       <TechStack />
-      <SurveyCTA />
       <ExpectedOutcomes />
       <Footer />
       <ScrollToTopClient />

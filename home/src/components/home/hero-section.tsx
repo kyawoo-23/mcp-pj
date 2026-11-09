@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowRight, Github, ChevronDown, Sparkles } from "lucide-react";
+import { Github, ChevronDown, Sparkles } from "lucide-react";
 import Link from "next/link";
 
 const navLinks = [
@@ -90,23 +90,14 @@ export function HeroSection() {
               Model Context Protocol (MCP)
             </p>
 
-            {/* CTAs */}
-            <div className='flex flex-col sm:flex-row items-start gap-4'>
-              <Link
-                href='/survey'
-                className='inline-flex items-center gap-2 px-6 py-3 bg-primary-foreground text-foreground rounded-full text-sm font-semibold hover:bg-primary-foreground/90 transition-all hover:scale-105 shadow-lg shadow-foreground/10'
-              >
-                Start Survey
-                <ArrowRight className='w-4 h-4' />
-              </Link>
-              <button
-                onClick={scrollToResearch}
-                className='inline-flex items-center gap-2 px-6 py-3 border border-primary-foreground/30 rounded-full text-sm font-medium hover:bg-primary-foreground/10 hover:border-primary-foreground/50 transition-all cursor-pointer text-primary-foreground'
-              >
-                Learn More
-                <ChevronDown className='w-4 h-4' />
-              </button>
-            </div>
+            {/* CTA */}
+            <button
+              onClick={scrollToResearch}
+              className='inline-flex items-center gap-2 px-6 py-3 border border-primary-foreground/30 rounded-full text-sm font-medium hover:bg-primary-foreground/10 hover:border-primary-foreground/50 transition-all cursor-pointer text-primary-foreground'
+            >
+              Learn More
+              <ChevronDown className='w-4 h-4' />
+            </button>
           </div>
         </div>
       </div>

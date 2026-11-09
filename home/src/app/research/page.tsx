@@ -79,7 +79,7 @@ export default async function ResearchPage({ searchParams }: ResearchPageProps) 
                   Total Participants
                 </span>
                 <span className='text-2xl font-bold tabular-nums'>
-                  {metrics.totalUsers}
+                  {metrics.startedUsers}
                 </span>
               </div>
               <div className='flex flex-col'>
@@ -95,8 +95,8 @@ export default async function ResearchPage({ searchParams }: ResearchPageProps) 
                   Completion Rate
                 </span>
                 <span className='text-2xl font-bold tabular-nums'>
-                  {metrics.totalUsers > 0
-                    ? `${((metrics.completedAllTasks / metrics.totalUsers) * 100).toFixed(0)}%`
+                  {metrics.startedUsers > 0
+                    ? `${((metrics.completedAllTasks / metrics.startedUsers) * 100).toFixed(0)}%`
                     : "—"}
                 </span>
               </div>

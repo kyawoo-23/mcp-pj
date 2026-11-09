@@ -14,6 +14,7 @@ export const Routes = {
   signup: "/auth/signup",
   passwordReset: "/auth/reset-password",
   passwordRecovery: "/auth/password-recovery",
+  authError: "/auth/error",
 };
 
 export const APIRoutes = {

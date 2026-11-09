@@ -247,9 +247,7 @@ export function ChatPageClient({
           responseConversationId !== activeConversationId
         ) {
           setActiveConversationId(responseConversationId);
-          // Avoid a full route refresh here: it can race message persistence and
-          // briefly reload text-only rows and disturb in-flight streaming UI.
-          window.history.replaceState(null, "", `/c/${responseConversationId}`);
+          router.replace(`/c/${responseConversationId}`);
         }
 
         const targetConversationId =

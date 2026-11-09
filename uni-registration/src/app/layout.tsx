@@ -4,9 +4,11 @@ import "./globals.css";
 import { AuthProvider } from "@/components/auth/auth-provider";
 import { Navbar } from "@/components/layout/navbar";
 import { PreviewEnvironmentBanner } from "@/components/preview-environment-banner";
+import { StudyConsentPrompt } from "@/components/consent/study-consent-prompt";
 import { TaskIndicator } from "@/components/tasks/task-indicator";
 import { Toaster } from "@/components/ui/sonner";
 import { isPreviewEnvironment } from "@/lib/preview-environment";
+import { getDeploymentId } from "@/lib/deployment-id";
 
 const inter = Inter({
   variable: "--font-inter",
@@ -31,13 +33,14 @@ export default function RootLayout({
   const isPreview = isPreviewEnvironment();
 
   return (
-    <html lang='en'>
+    <html lang='en' data-mcp-deployment-id={getDeploymentId()}>
       <body className={`${inter.variable} ${geistMono.variable} antialiased`}>
         <PreviewEnvironmentBanner show={isPreview} />
         <AuthProvider>
           <div className='flex min-h-screen flex-col'>
             <Navbar />
             <main className='flex-1'>{children}</main>
+            <StudyConsentPrompt />
             <TaskIndicator />
           </div>
           <Toaster />

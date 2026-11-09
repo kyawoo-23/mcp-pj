@@ -295,6 +295,8 @@ export type Database = {
           migrated_from_simple_tasks_at: string | null
           role: Database["public"]["Enums"]["user_role"]
           student_id: string | null
+          consent_version: string | null
+          consented_at: string | null
           study_protocol_version: Database["public"]["Enums"]["study_protocol_version"]
           technical_experience:
             | Database["public"]["Enums"]["technical_experience"]
@@ -318,6 +320,8 @@ export type Database = {
           migrated_from_simple_tasks_at?: string | null
           role?: Database["public"]["Enums"]["user_role"]
           student_id?: string | null
+          consent_version?: string | null
+          consented_at?: string | null
           study_protocol_version?: Database["public"]["Enums"]["study_protocol_version"]
           technical_experience?:
             | Database["public"]["Enums"]["technical_experience"]
@@ -341,6 +345,8 @@ export type Database = {
           migrated_from_simple_tasks_at?: string | null
           role?: Database["public"]["Enums"]["user_role"]
           student_id?: string | null
+          consent_version?: string | null
+          consented_at?: string | null
           study_protocol_version?: Database["public"]["Enums"]["study_protocol_version"]
           technical_experience?:
             | Database["public"]["Enums"]["technical_experience"]

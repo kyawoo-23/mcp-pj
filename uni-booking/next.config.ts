@@ -4,6 +4,7 @@ import type { NextConfig } from "next";
 const nextConfig: NextConfig = {
   /* config options here */
   reactCompiler: true,
+  deploymentId: process.env.VERCEL_DEPLOYMENT_ID,
 };
 
 export default withSentryConfig(nextConfig, {

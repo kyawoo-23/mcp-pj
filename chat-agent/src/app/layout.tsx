@@ -4,9 +4,11 @@ import "./globals.css";
 import { cn } from "@/lib/utils";
 import { ThemeProvider } from "@/components/theme-provider";
 import { PreviewEnvironmentBanner } from "@/components/preview-environment-banner";
+import { StudyConsentPrompt } from "@/components/consent/study-consent-prompt";
 import { Toaster } from "@/components/ui/sonner";
 import Providers from "@/app/providers";
 import { isPreviewEnvironment } from "@/lib/preview-environment";
+import { getDeploymentId } from "@/lib/deployment-id";
 
 const inter = Inter({
   variable: "--font-inter",
@@ -31,7 +33,11 @@ export default function RootLayout({
   const isPreview = isPreviewEnvironment();
 
   return (
-    <html lang='en' suppressHydrationWarning>
+    <html
+      lang='en'
+      suppressHydrationWarning
+      data-mcp-deployment-id={getDeploymentId()}
+    >
       <body
         className={cn(
           "min-h-screen bg-background font-sans antialiased",
@@ -48,6 +54,7 @@ export default function RootLayout({
         >
           <Providers>
             {children}
+            <StudyConsentPrompt />
             <Toaster />
           </Providers>
         </ThemeProvider>

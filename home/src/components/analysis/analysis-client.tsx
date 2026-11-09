@@ -45,6 +45,7 @@ type AnalysisClientProps = {
   initialError: string | null;
   metrics: {
     totalUsers: number;
+    startedUsers: number;
     neverLoggedIn: number;
     inProgress: number;
     completedAllTasks: number;
@@ -241,8 +242,8 @@ export function AnalysisClient({
   return (
     <>
       {/* Overview Cards (always using full data) */}
-      <section className='mb-12'>
-        <h2 className='text-2xl font-semibold mb-4'>Overview</h2>
+      <section className='mb-8'>
+        <h2 className='mb-3 text-lg font-semibold tracking-tight'>Overview</h2>
         <OverviewCards metrics={metrics} />
       </section>
 
@@ -289,7 +290,7 @@ export function AnalysisClient({
               variant='secondary'
               className='ml-1 px-1.5 py-0 text-[10px] h-4 min-w-5 justify-center transition-colors group-data-[state=active]:bg-primary-foreground/20 group-data-[state=active]:text-primary-foreground'
             >
-              {metrics.totalUsers}
+              {metrics.startedUsers}
             </Badge>
           </TabsTrigger>
         </TabsList>

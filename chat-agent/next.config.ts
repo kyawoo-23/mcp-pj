@@ -3,6 +3,7 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   reactCompiler: true,
+  deploymentId: process.env.VERCEL_DEPLOYMENT_ID,
   experimental: {
     // Direct-import transform for heavy packages (Vercel bundle-size rule 2.1).
     optimizePackageImports: ["@openuidev/react-lang", "lucide-react"],
